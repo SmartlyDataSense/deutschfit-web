@@ -7,9 +7,10 @@ import { getServerClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ locale: string }> };
 
-// Pricing rows change rarely; revalidate every 5 minutes so an operator
-// edit ripples to the public surface without a redeploy.
-export const revalidate = 300;
+// Pricing depends on Supabase env at request time; render dynamically so
+// the build passes without env vars seeded and an operator plan edit
+// shows up on the next request rather than waiting on revalidation.
+export const dynamic = "force-dynamic";
 
 /**
  * Public pricing page. Reads `plans` from Supabase server-side, renders

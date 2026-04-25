@@ -10,6 +10,8 @@ import { signOut } from "./actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
+export const dynamic = "force-dynamic";
+
 /**
  * Read-only account page. If the user has no session, redirect to the
  * locale-aware login. Otherwise, surface entitlement, trial usage, and
