@@ -15,14 +15,18 @@
     "subhead": "Practice Lesen, Hören, Schreiben, and Sprechen for Goethe, telc, ÖSD, TestDaF and ECL — with AI feedback aligned to the official rubrics.",
     "ctaPricing": "See pricing",
     "ctaAccount": "Sign in",
+    "appHeading": "App",
+    "appBody": "DeutschFit is a mobile app for learners preparing for German-language certification exams. The app is currently in closed beta on TestFlight (iOS) and Internal App Sharing (Android).",
     "legalHeading": "Legal & support",
+    "supportEmail": "Email support",
     "legal": {
       "tos": "Terms of Service",
       "privacy": "Privacy Policy",
-      "impressum": "Impressum",
+      "impressum": "Impressum / Mentions légales",
       "refund": "Refunds & cancellation",
       "about": "About"
-    }
+    },
+    "footer": "© 2026 DeutschFit. Operated by Jordan Moyo (Douala, Cameroon). DeutschFit and SmartlyDataSense are unregistered trade names."
   },
   "pricing": {
     "title": "Pricing",

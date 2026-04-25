@@ -15,14 +15,18 @@
     "subhead": "Entraînez-vous au Lesen, Hören, Schreiben et Sprechen pour Goethe, telc, ÖSD, TestDaF et ECL — avec un retour IA aligné sur les barèmes officiels.",
     "ctaPricing": "Voir les tarifs",
     "ctaAccount": "Se connecter",
+    "appHeading": "L'application",
+    "appBody": "DeutschFit est une application mobile pour les apprenants qui préparent des examens de certification en allemand. L'application est actuellement en bêta fermée sur TestFlight (iOS) et Internal App Sharing (Android).",
     "legalHeading": "Mentions légales et support",
+    "supportEmail": "Contacter le support",
     "legal": {
       "tos": "Conditions d'utilisation",
       "privacy": "Politique de confidentialité",
-      "impressum": "Mentions légales",
+      "impressum": "Mentions légales / Impressum",
       "refund": "Remboursements et annulation",
       "about": "À propos"
-    }
+    },
+    "footer": "© 2026 DeutschFit. Exploité par Jordan Moyo (Douala, Cameroun). DeutschFit et SmartlyDataSense sont des noms commerciaux non immatriculés."
   },
   "pricing": {
     "title": "Tarifs",
