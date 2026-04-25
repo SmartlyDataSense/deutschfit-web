@@ -44,3 +44,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
           NEXT_PUBLIC_SITE_URL: https://example.com
+          # Operator payment handles — empty in CI; pages render
+          # "Coming soon" placeholders for unset channels.
+          NEXT_PUBLIC_PAY_MOMO_NUMBER: ""
+          NEXT_PUBLIC_PAY_OM_NUMBER: ""
+          NEXT_PUBLIC_PAY_BANK_DETAILS: ""
+          NEXT_PUBLIC_PAY_PAYPAL_HANDLE: ""
+          NEXT_PUBLIC_PAY_WISE_HANDLE: ""
+          NEXT_PUBLIC_PAY_EMAIL: support@deutschfit.app
