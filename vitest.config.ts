@@ -13,6 +13,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      // Stub `server-only` so unit tests can import server-only modules.
+      // In production builds, Next.js enforces server-only imports at the
+      // bundler boundary; vitest doesn't run the Next.js bundler.
+      "server-only": path.resolve(__dirname, "tests/stubs/server-only.ts"),
     },
   },
 });

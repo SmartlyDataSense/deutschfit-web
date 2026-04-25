@@ -30,21 +30,66 @@
   },
   "pricing": {
     "title": "Tarifs",
-    "subtitle": "Achat unique ou abonnement mensuel. Tous les prix en XAF.",
-    "ctaToHowToPay": "Comment payer",
-    "from": "à partir de",
-    "perMonth": "par mois",
-    "oneTime": "achat unique",
-    "comingSoon": "Détails des tarifs à venir."
+    "subtitle": "Tous les prix en XAF, taxes incluses.",
+    "antiSteeringNote": "Les abonnements sont activés manuellement après un paiement hors-app. Voir les instructions de paiement.",
+    "antiSteeringCta": "Comment payer",
+    "durationDays": "{days, plural, one {# jour} other {# jours}}",
+    "tierBadge": "Niveau",
+    "loadError": "Les tarifs sont momentanément indisponibles. Réessayez dans un instant.",
+    "empty": "Aucun forfait actif pour le moment."
   },
-  "howToPay": {
+  "payinfo": {
     "title": "Comment payer",
-    "comingSoon": "Instructions de paiement à venir.",
-    "supportEmail": "Contacter le support"
+    "intro": "Choisissez le canal qui vous convient. Payez le montant exact en XAF, puis envoyez la preuve par email. Nous activons votre forfait sous 24 heures.",
+    "cameroonHeader": "Cameroun",
+    "diasporaHeader": "Hors Cameroun",
+    "comingSoon": "Bientôt disponible — ce canal n'est pas encore configuré.",
+    "momoTitle": "MTN Mobile Money",
+    "momoBody": "Envoyez le montant exact en XAF au {number}. Indiquez votre email de compte en référence.",
+    "omTitle": "Orange Money",
+    "omBody": "Envoyez le montant exact en XAF au {number}. Indiquez votre email de compte en référence.",
+    "bankTitle": "Virement bancaire",
+    "bankBody": "{details}",
+    "bankNote": "Frais SWIFT à la charge de l'expéditeur.",
+    "paypalTitle": "PayPal",
+    "paypalBody": "Envoyez à {handle} en mode Famille & Amis si votre pays le permet ; sinon, ajoutez 4 % pour couvrir les frais.",
+    "wiseTitle": "Wise / Remitly",
+    "wiseBody": "Envoyez à {handle}.",
+    "proofTitle": "Envoyer la preuve de paiement",
+    "proofBody": "Envoyez la preuve de paiement à {email} avec la capture ou l'identifiant de transaction. Nous activons sous 24 heures."
   },
   "account": {
-    "title": "Compte",
-    "comingSoon": "Connexion par lien magique à venir."
+    "title": "Votre compte",
+    "loadingError": "Impossible de charger votre compte pour l'instant. Rafraîchissez la page.",
+    "entitlementHeading": "Forfait actuel",
+    "entitlementFree": "Niveau gratuit",
+    "entitlementValidUntil": "Valable jusqu'au {date}",
+    "entitlementSeePricing": "Voir les tarifs",
+    "trialUsageHeading": "Utilisation gratuite",
+    "trialUsageEmpty": "Vous n'avez encore utilisé aucune action gratuite.",
+    "trialUsageRow": "{kind} : {count} utilisé(s)",
+    "subscriptionHeading": "Abonnement actif",
+    "subscriptionNone": "Aucun abonnement actif.",
+    "subscriptionRow": "{plan} · du {from} au {until}",
+    "signOut": "Se déconnecter",
+    "trialKind": {
+      "schreiben_grade": "Corrections Schreiben",
+      "sprechen_grade": "Corrections Sprechen",
+      "lesen_set": "Séries Lesen",
+      "hoeren_set": "Séries Hören",
+      "coach_message": "Messages au coach",
+      "mock_exam": "Examens blancs"
+    }
+  },
+  "auth": {
+    "title": "Connectez-vous à votre compte",
+    "subtitle": "Nous vous envoyons un lien de connexion par email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "vous@exemple.com",
+    "submit": "M'envoyer un lien de connexion",
+    "checkInbox": "Vérifiez votre boîte mail pour le lien de connexion.",
+    "errorGeneric": "Une erreur est survenue. Réessayez.",
+    "signedOutHeading": "Se connecter"
   },
   "legal": {
     "tos": { "title": "Conditions d'utilisation" },
