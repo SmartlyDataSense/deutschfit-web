@@ -30,21 +30,66 @@
   },
   "pricing": {
     "title": "Pricing",
-    "subtitle": "Pay once or monthly. All prices in XAF.",
-    "ctaToHowToPay": "How to pay",
-    "from": "from",
-    "perMonth": "per month",
-    "oneTime": "one-time",
-    "comingSoon": "Pricing details coming soon."
+    "subtitle": "All prices in XAF, taxes included.",
+    "antiSteeringNote": "Subscriptions are activated manually after out-of-band payment. See payment instructions.",
+    "antiSteeringCta": "How to pay",
+    "durationDays": "{days, plural, one {# day} other {# days}}",
+    "tierBadge": "Tier",
+    "loadError": "Plans are temporarily unavailable. Please try again shortly.",
+    "empty": "No active plans yet."
   },
-  "howToPay": {
+  "payinfo": {
     "title": "How to pay",
-    "comingSoon": "Payment instructions coming soon.",
-    "supportEmail": "Email support"
+    "intro": "Pick the channel that suits you. Pay the exact XAF amount, then email proof of payment. We activate your plan within 24 hours.",
+    "cameroonHeader": "Cameroon",
+    "diasporaHeader": "Outside Cameroon",
+    "comingSoon": "Coming soon — this channel isn't configured yet.",
+    "momoTitle": "MTN Mobile Money",
+    "momoBody": "Send the exact XAF amount to {number}. Use your account email as the reference.",
+    "omTitle": "Orange Money",
+    "omBody": "Send the exact XAF amount to {number}. Use your account email as the reference.",
+    "bankTitle": "Bank transfer",
+    "bankBody": "{details}",
+    "bankNote": "SWIFT fees borne by the sender.",
+    "paypalTitle": "PayPal",
+    "paypalBody": "Send to {handle} as Friends & Family if your country supports it; otherwise add 4% to cover fees.",
+    "wiseTitle": "Wise / Remitly",
+    "wiseBody": "Send to {handle}.",
+    "proofTitle": "Email proof of payment",
+    "proofBody": "Send proof of payment to {email} with the screenshot or transaction ID. We activate within 24 hours."
   },
   "account": {
-    "title": "Account",
-    "comingSoon": "Magic-link sign-in coming soon."
+    "title": "Your account",
+    "loadingError": "Couldn't load your account just now. Please refresh.",
+    "entitlementHeading": "Current plan",
+    "entitlementFree": "Free tier",
+    "entitlementValidUntil": "Valid until {date}",
+    "entitlementSeePricing": "See pricing",
+    "trialUsageHeading": "Free-tier usage",
+    "trialUsageEmpty": "You haven't used any free-tier actions yet.",
+    "trialUsageRow": "{kind}: used {count}",
+    "subscriptionHeading": "Active subscription",
+    "subscriptionNone": "No active subscription.",
+    "subscriptionRow": "{plan} · valid from {from} to {until}",
+    "signOut": "Sign out",
+    "trialKind": {
+      "schreiben_grade": "Schreiben gradings",
+      "sprechen_grade": "Sprechen gradings",
+      "lesen_set": "Lesen sets",
+      "hoeren_set": "Hören sets",
+      "coach_message": "Coach messages",
+      "mock_exam": "Mock exams"
+    }
+  },
+  "auth": {
+    "title": "Sign in to your account",
+    "subtitle": "We'll email you a magic sign-in link.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Email me a sign-in link",
+    "checkInbox": "Check your inbox for a sign-in link.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "signedOutHeading": "Sign in"
   },
   "legal": {
     "tos": { "title": "Terms of Service" },
