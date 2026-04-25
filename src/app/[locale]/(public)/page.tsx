@@ -72,10 +72,7 @@ export default async function LandingPage({ params }: Props) {
               </Link>
             </li>
             <li>
-              <a
-                href="mailto:lordmoyojordan@gmail.com"
-                className="underline underline-offset-4"
-              >
+              <a href="mailto:lordmoyojordan@gmail.com" className="underline underline-offset-4">
                 {t("supportEmail")} — lordmoyojordan@gmail.com
               </a>
             </li>
@@ -84,10 +81,7 @@ export default async function LandingPage({ params }: Props) {
       </main>
 
       <footer className="border-t border-line-soft px-6 py-6">
-        <Text
-          variant="caption"
-          className="mx-auto max-w-3xl text-center text-text-tertiary"
-        >
+        <Text variant="caption" className="mx-auto max-w-3xl text-center text-text-tertiary">
           {t("footer")}
         </Text>
       </footer>

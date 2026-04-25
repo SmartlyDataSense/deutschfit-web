@@ -9,11 +9,7 @@ import clsx from "clsx";
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx(
-        "bg-bg-card border border-line-soft rounded-lg shadow-sm",
-        "p-6",
-        className
-      )}
+      className={clsx("bg-bg-card border border-line-soft rounded-lg shadow-sm", "p-6", className)}
       {...rest}
     />
   );
