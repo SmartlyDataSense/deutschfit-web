@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
+/*
+ * Brand tokens — mirror src/theme/tokens.ts (which is hard-copied from
+ * deutschfit-mobile/src/theme/tokens.ts as of 2026-04-25).
+ *
+ * Never introduce a hex literal in component code — read from these CSS
+ * custom properties or use the matching Tailwind aliases declared in the
+ * @theme inline block below.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* palette */
+  --color-cream: #f2e9d8;
+  --color-cream-deep: #eadfc8;
+  --color-cream-ink: #1a1714;
+  --color-premium-black: #0f1012;
+  --color-premium-ink: #f4ead3;
+  --color-cta: #d56e3a;
+  --color-cta-ink: #ffffff;
+  --color-coach: #4dac99;
+  --color-coach-ink: #ffffff;
+  --color-accent-gold: #e5b367;
+  --color-accent-gold-ink: #1a1714;
+  --color-warning-red: #c2492e;
+  --color-success-green: #2e8b64;
+  --color-priority-amber: #d99b3c;
+
+  /* text */
+  --color-text-primary: #1a1714;
+  --color-text-secondary: #4a423b;
+  --color-text-tertiary: #6e6257;
+
+  /* lines */
+  --color-line-soft: #e0d3b8;
+  --color-line-strong: #bdae91;
+
+  /* surfaces */
+  --color-bg-hero: #f2e9d8;
+  --color-bg-content: #eadfc8;
+  --color-bg-card: #ffffff;
+  --color-bg-premium: #0f1012;
+
+  /* radius (mirrors tokens.radius — px) */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-cream: var(--color-cream);
+  --color-cream-deep: var(--color-cream-deep);
+  --color-cream-ink: var(--color-cream-ink);
+  --color-premium-black: var(--color-premium-black);
+  --color-premium-ink: var(--color-premium-ink);
+  --color-cta: var(--color-cta);
+  --color-cta-ink: var(--color-cta-ink);
+  --color-coach: var(--color-coach);
+  --color-coach-ink: var(--color-coach-ink);
+  --color-accent-gold: var(--color-accent-gold);
+  --color-accent-gold-ink: var(--color-accent-gold-ink);
+  --color-warning-red: var(--color-warning-red);
+  --color-success-green: var(--color-success-green);
+  --color-priority-amber: var(--color-priority-amber);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+
+  --color-line-soft: var(--color-line-soft);
+  --color-line-strong: var(--color-line-strong);
+
+  --color-bg-hero: var(--color-bg-hero);
+  --color-bg-content: var(--color-bg-content);
+  --color-bg-card: var(--color-bg-card);
+  --color-bg-premium: var(--color-bg-premium);
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-ibm-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-hero);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
