@@ -1,15 +1,16 @@
 import { setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { Box, Text } from "@/components/primitives";
+import { Link } from "@/i18n/navigation";
+import { AdminLoginForm } from "./AdminLoginForm";
 
 type Props = { params: Promise<{ locale: string }> };
 
 /**
- * Admin sign-in placeholder. Wired in W2 with @supabase/ssr server helpers +
- * the operator-only RLS policy on `admin_users`. The middleware excludes
- * `/admin` from the i18n matcher, so this page is reachable at /admin/login
- * without a locale prefix as well; the locale-prefixed variant exists too so
- * Next finds the route under the route group.
+ * Admin sign-in page. Magic-link entry only — operators are seeded
+ * server-side via `user_profiles.is_operator = true`. The auth gate
+ * (`requireOperator()`) lives on the dashboard layout, so a successful
+ * sign-in by a non-operator account silently 404s instead of leaking the
+ * existence of the operator surface.
  */
 export default async function AdminLoginPage({ params }: Props) {
   const { locale } = await params;
@@ -29,10 +30,11 @@ export default async function AdminLoginPage({ params }: Props) {
         <Text variant="h1" as="h1" className="text-text-primary">
           Admin sign-in
         </Text>
-        <Box className="mt-6 rounded-md border border-line-soft bg-cream-deep p-6">
-          <Text variant="body" className="text-cream-ink">
-            Magic-link sign-in for the operator. Wired up in W2.
-          </Text>
+        <Text variant="body" className="mt-3 text-text-secondary">
+          Operator-only entry. Use the email seeded in <code>user_profiles</code>.
+        </Text>
+        <Box className="mt-8">
+          <AdminLoginForm locale={locale} />
         </Box>
       </main>
     </div>
