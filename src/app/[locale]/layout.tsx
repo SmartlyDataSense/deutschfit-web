@@ -53,8 +53,28 @@ const ibmPlexMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "DeutschFit",
+  title: { default: "DeutschFit", template: "%s · DeutschFit" },
   description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+  applicationName: "DeutschFit",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "any" },
+      { url: "/brand/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "DeutschFit",
+    description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+    images: ["/brand/icon.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "DeutschFit",
+    description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+    images: ["/brand/icon.png"],
+  },
 };
 
 export function generateStaticParams() {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Box, Text } from "@/components/primitives";
 import { Link } from "@/i18n/navigation";
 import { signOutAction } from "./signOutAction";
@@ -24,11 +25,17 @@ export function AdminNav({ operatorEmail }: Props) {
     <header className="border-b border-line-soft bg-bg-card">
       <Box className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
         <Box className="flex items-center gap-8">
-          <Link
-            href="/admin"
-            className="font-display text-xl font-bold tracking-tight text-text-primary"
-          >
-            DeutschFit · Admin
+          <Link href="/admin" className="flex items-center gap-2" aria-label="DeutschFit Admin">
+            <Image
+              src="/brand/icon.png"
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-md"
+            />
+            <span className="font-display text-xl font-bold tracking-tight text-text-primary">
+              DeutschFit · Admin
+            </span>
           </Link>
           <nav className="hidden items-center gap-5 sm:flex">
             {NAV_ITEMS.map((item) => (
