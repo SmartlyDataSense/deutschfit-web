@@ -1,0 +1,52 @@
+{
+  "common": {
+    "appName": "DeutschFit",
+    "tagline": "Préparation aux examens d'allemand — Goethe, telc, ÖSD, TestDaF, ECL"
+  },
+  "nav": {
+    "pricing": "Tarifs",
+    "howToPay": "Comment payer",
+    "account": "Compte",
+    "switchToFr": "Français",
+    "switchToEn": "English"
+  },
+  "landing": {
+    "headline": "La prép' allemand, concentrée.",
+    "subhead": "Entraînez-vous au Lesen, Hören, Schreiben et Sprechen pour Goethe, telc, ÖSD, TestDaF et ECL — avec un retour IA aligné sur les barèmes officiels.",
+    "ctaPricing": "Voir les tarifs",
+    "ctaAccount": "Se connecter",
+    "legalHeading": "Mentions légales et support",
+    "legal": {
+      "tos": "Conditions d'utilisation",
+      "privacy": "Politique de confidentialité",
+      "impressum": "Mentions légales",
+      "refund": "Remboursements et annulation",
+      "about": "À propos"
+    }
+  },
+  "pricing": {
+    "title": "Tarifs",
+    "subtitle": "Achat unique ou abonnement mensuel. Tous les prix en XAF.",
+    "ctaToHowToPay": "Comment payer",
+    "from": "à partir de",
+    "perMonth": "par mois",
+    "oneTime": "achat unique",
+    "comingSoon": "Détails des tarifs à venir."
+  },
+  "howToPay": {
+    "title": "Comment payer",
+    "comingSoon": "Instructions de paiement à venir.",
+    "supportEmail": "Contacter le support"
+  },
+  "account": {
+    "title": "Compte",
+    "comingSoon": "Connexion par lien magique à venir."
+  },
+  "legal": {
+    "tos": { "title": "Conditions d'utilisation" },
+    "privacy": { "title": "Politique de confidentialité" },
+    "impressum": { "title": "Mentions légales / Impressum" },
+    "refund": { "title": "Remboursements et annulation" },
+    "about": { "title": "À propos de DeutschFit" }
+  }
+}
