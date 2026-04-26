@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Link } from "@/i18n/navigation";
 import { Text } from "@/components/primitives";
 
 type Props = {
@@ -11,8 +10,9 @@ type Props = {
 
 /**
  * Shared shell for /legal/* pages. Keeps the typography stack consistent
- * (Playfair display heading + Inter body) and gives a back link to the
- * landing page so users on a deep link have an obvious way out.
+ * (Playfair display heading + Inter body) and renders a non-link wordmark
+ * so the page still feels branded without offering one-click navigation
+ * back to the marketing/pricing surface (Apple App Review 3.1.3 lead-in).
  *
  * Body content uses a token-driven `prose-legal` class instead of pulling
  * in @tailwindcss/typography — the legal pages are short enough that a
@@ -23,12 +23,9 @@ export function LegalShell({ title, effective, version, children }: Props) {
     <div className="min-h-screen flex flex-col">
       <main className="mx-auto w-full max-w-3xl px-6 py-10 sm:py-14 flex-1">
         <header className="mb-8">
-          <Link
-            href="/"
-            className="inline-block text-sm text-text-secondary underline underline-offset-4 hover:text-text-primary"
-          >
-            ← DeutschFit
-          </Link>
+          <span className="inline-block text-sm font-semibold text-text-primary">
+            DeutschFit
+          </span>
           <Text variant="h1" as="h1" className="mt-4 text-text-primary">
             {title}
           </Text>
