@@ -5,10 +5,14 @@ import { LandingNav } from "@/components/public/LandingNav";
 import { EntitlementCard } from "@/components/public/EntitlementCard";
 import { TrialUsageList } from "@/components/public/TrialUsageList";
 import { SubscriptionCard } from "@/components/public/SubscriptionCard";
+import { DeleteAccountSection } from "@/components/public/DeleteAccountSection";
 import { getServerClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ delete?: string }>;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +21,13 @@ export const dynamic = "force-dynamic";
  * locale-aware login. Otherwise, surface entitlement, trial usage, and
  * the most recent active subscription. No CTAs to change a plan from
  * here — operators do that.
+ *
+ * Also hosts the in-app account-deletion path: the `DeleteAccountSection`
+ * is the web fallback for the Apple App Privacy "data deletion URL"
+ * requirement (Review Guideline 5.1.1(v)) and is reached via the
+ * `#delete` anchor from the privacy policy.
  */
-export default async function AccountPage({ params }: Props) {
+export default async function AccountPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("account");
@@ -33,6 +42,10 @@ export default async function AccountPage({ params }: Props) {
     redirect({ href: "/account/login", locale });
     return null;
   }
+
+  const { delete: deleteStatusRaw } = await searchParams;
+  const deleteStatus: "invalid_confirm" | "failed" | null =
+    deleteStatusRaw === "invalid_confirm" || deleteStatusRaw === "failed" ? deleteStatusRaw : null;
 
   const userId = user.id;
   const nowIso = new Date().toISOString();
@@ -102,6 +115,8 @@ export default async function AccountPage({ params }: Props) {
             {t("signOut")}
           </button>
         </form>
+
+        <DeleteAccountSection locale={locale} status={deleteStatus} />
       </main>
     </div>
   );

@@ -79,6 +79,20 @@
       "hoeren_set": "Séries Hören",
       "coach_message": "Messages au coach",
       "mock_exam": "Examens blancs"
+    },
+    "delete": {
+      "heading": "Zone sensible",
+      "subtitle": "Supprimer définitivement votre compte et toutes vos données.",
+      "disclosureLabel": "Supprimer le compte",
+      "body1": "Cette action effacera définitivement votre compte DeutschFit, vos productions écrites et orales, vos tentatives d'examen, votre progression et vos exercices enregistrés.",
+      "body2": "Les abonnements actifs sont facturés sur le site web. Si un abonnement est en cours, annulez-le avant de supprimer votre compte.",
+      "irreversible": "Cette action est définitive et irréversible.",
+      "subsHint": "Un enregistrement d'audit immuable (votre identifiant utilisateur, votre email, la date et la source) est conservé pendant 12 mois comme preuve au titre de l'article 30 du RGPD.",
+      "confirmLabel": "Tapez DELETE pour confirmer",
+      "confirmPlaceholder": "DELETE",
+      "confirmCta": "Supprimer mon compte",
+      "errorInvalidConfirm": "Vous devez taper DELETE exactement pour confirmer.",
+      "errorFailed": "Une erreur est survenue. Votre compte est toujours actif. Réessayez et, si le problème persiste, écrivez à lordmoyojordan@gmail.com."
     }
   },
   "auth": {
