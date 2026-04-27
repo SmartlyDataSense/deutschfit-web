@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID_PLACEHOLDER.com.deutschfit.app"],
+        "components": [{ "/": "/auth/*", "comment": "auth deep links" }]
+      }
+    ]
+  }
+}
