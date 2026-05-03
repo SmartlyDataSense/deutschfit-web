@@ -97,18 +97,29 @@ describe("GET /auth/confirm", () => {
     expect(loc).toContain("refresh_token=rt_test");
   });
 
-  it("redirects recovery to deutschfit://reset?token_hash on Android UA without verifying server-side", async () => {
-    const androidUa = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36";
-    const req = makeRequest(
-      "https://web.example/auth/confirm?token_hash=abc&type=recovery",
-      androidUa
-    );
-    const res = await GET(req);
-    expect(res.status).toBe(302);
-    const loc = res.headers.get("location") ?? "";
-    expect(loc).toBe("deutschfit://reset?token_hash=abc");
-    expect(verifyOtpMock).not.toHaveBeenCalled();
-  });
+  it.each([
+    ["Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36", "Android"],
+    ["Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15", "iPhone"],
+    [
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121",
+      "Desktop",
+    ],
+  ])(
+    "redirects recovery to /auth/reset-password for %s UA without verifying server-side",
+    async (ua) => {
+      const req = makeRequest(
+        "https://web.example/auth/confirm?token_hash=abc&type=recovery",
+        ua
+      );
+      const res = await GET(req);
+      expect(res.status).toBe(302);
+      const loc = res.headers.get("location") ?? "";
+      expect(loc).toContain("/auth/reset-password");
+      expect(loc).toContain("token_hash=abc");
+      expect(loc).not.toContain("deutschfit://");
+      expect(verifyOtpMock).not.toHaveBeenCalled();
+    }
+  );
 
   it("redirects to /auth/confirmed for desktop UA after successful verify", async () => {
     verifyOtpMock.mockResolvedValueOnce({ error: null });

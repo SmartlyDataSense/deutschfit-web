@@ -13,7 +13,6 @@ const APP_LINK = "deutschfit://auth/callback?status=ok";
 const HEADINGS: Record<string, string> = {
   email: "Email confirmé",
   signup: "Compte confirmé",
-  recovery: "Mot de passe réinitialisable",
   invite: "Invitation acceptée",
   email_change: "Nouvel email confirmé",
   magiclink: "Connexion confirmée",
@@ -22,7 +21,6 @@ const HEADINGS: Record<string, string> = {
 const BODIES: Record<string, string> = {
   email: "Votre adresse email est vérifiée. Vous pouvez maintenant ouvrir DeutschFit.",
   signup: "Votre compte est prêt. Ouvrez DeutschFit pour commencer.",
-  recovery: "Ouvrez DeutschFit pour choisir un nouveau mot de passe.",
   invite: "Invitation acceptée. Ouvrez DeutschFit pour terminer la configuration.",
   email_change: "Votre nouvelle adresse email est vérifiée. Ouvrez DeutschFit pour continuer.",
   magiclink: "Connexion réussie. Ouvrez DeutschFit pour reprendre votre session.",
