@@ -19,18 +19,6 @@ export async function LandingNav() {
 
       <div className="hidden items-center gap-6 sm:flex">
         <Link
-          href="/pricing"
-          className="text-sm font-medium text-text-secondary hover:text-text-primary"
-        >
-          {t("nav.pricing")}
-        </Link>
-        <Link
-          href="/how-to-pay"
-          className="text-sm font-medium text-text-secondary hover:text-text-primary"
-        >
-          {t("nav.howToPay")}
-        </Link>
-        <Link
           href="/account"
           className="text-sm font-medium text-text-secondary hover:text-text-primary"
         >

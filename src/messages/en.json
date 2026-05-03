@@ -4,8 +4,6 @@
     "tagline": "German exam prep — Goethe, telc, ÖSD, TestDaF, ECL"
   },
   "nav": {
-    "pricing": "Pricing",
-    "howToPay": "How to pay",
     "account": "Account",
     "switchToFr": "Français",
     "switchToEn": "English"
@@ -13,7 +11,6 @@
   "landing": {
     "headline": "German exam prep, focused.",
     "subhead": "Practice Lesen, Hören, Schreiben, and Sprechen for Goethe, telc, ÖSD, TestDaF and ECL — with AI feedback aligned to the official rubrics.",
-    "ctaPricing": "See pricing",
     "ctaAccount": "Sign in",
     "appHeading": "App",
     "appBody": "DeutschFit is a mobile app for learners preparing for German-language certification exams. The app is currently in closed beta on TestFlight (iOS) and Internal App Sharing (Android).",
@@ -28,27 +25,13 @@
     },
     "footer": "© 2026 DeutschFit. Operated by Jordan Moyo (Douala, Cameroon). DeutschFit and SmartlyDataSense are unregistered trade names."
   },
-  "pricing": {
-    "title": "Pricing",
-    "subtitle": "Pay once or monthly. All prices in XAF.",
-    "ctaToHowToPay": "How to pay",
-    "from": "from",
-    "perMonth": "per month",
-    "oneTime": "one-time",
-    "comingSoon": "Pricing details coming soon."
-  },
-  "howToPay": {
-    "title": "How to pay",
-    "comingSoon": "Payment instructions coming soon.",
-    "supportEmail": "Email support"
-  },
   "account": {
     "title": "Your account",
+    "comingSoon": "Account management coming soon.",
     "loadingError": "Couldn't load your account just now. Please refresh.",
     "entitlementHeading": "Current plan",
     "entitlementFree": "Free tier",
     "entitlementValidUntil": "Valid until {date}",
-    "entitlementSeePricing": "See pricing",
     "trialUsageHeading": "Free-tier usage",
     "trialUsageEmpty": "You haven't used any free-tier actions yet.",
     "trialUsageRow": "{kind}: used {count}",
