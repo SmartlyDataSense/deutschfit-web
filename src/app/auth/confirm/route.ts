@@ -7,13 +7,13 @@ import { createClient } from "@supabase/supabase-js";
  * Supabase emails (sign-up, recovery, invite, magic-link, email-change) point
  * here with `?token_hash=…&type=…`. Behaviour splits by type and UA:
  *
- *   recovery + mobile UA
- *     → deutschfit://reset?token_hash=… (no server-side verify)
- *     The app calls verifyOtp() with the anon key, which fires
- *     PASSWORD_RECOVERY and routes to the ResetPassword screen via the
- *     linking config. We must NOT consume the token here — setSession()
- *     from a server-side session fires SIGNED_IN (not PASSWORD_RECOVERY),
- *     which breaks screen routing.
+ *   recovery (any UA)
+ *     → /auth/reset-password?token_hash=… (no server-side verify)
+ *     The web form calls verifyOtp() + admin.updateUserById() server-side.
+ *     We must NOT consume the token here — verifyOtp is single-use and the
+ *     web form needs it intact. Deep-linking deutschfit://reset was removed
+ *     because WKWebView (Apple Mail, Gmail on iOS) silently blocks custom-
+ *     scheme redirects from 302 responses.
  *
  *   all other types + mobile UA
  *     → verify server-side, extract session tokens, redirect to
@@ -56,10 +56,11 @@ export async function GET(req: NextRequest) {
   const ua = req.headers.get("user-agent") ?? "";
   const isMobile = /iPhone|iPad|Android/i.test(ua);
 
-  // Recovery on mobile: pass token_hash to the app without consuming it here.
-  if (isMobile && type === "recovery") {
+  // Recovery: redirect to web form without consuming the token here.
+  // verifyOtp is single-use — the web form needs it intact.
+  if (type === "recovery") {
     return NextResponse.redirect(
-      `deutschfit://reset?token_hash=${encodeURIComponent(token_hash)}`,
+      new URL(`/auth/reset-password?token_hash=${encodeURIComponent(token_hash)}`, req.url),
       { status: 302 }
     );
   }
