@@ -92,7 +92,7 @@
       "confirmPlaceholder": "DELETE",
       "confirmCta": "Delete my account",
       "errorInvalidConfirm": "You must type DELETE exactly to confirm.",
-      "errorFailed": "Something went wrong on our side. Your account is still active. Please try again, and if it keeps failing, email lordmoyojordan@gmail.com."
+      "errorFailed": "Something went wrong on our side. Your account is still active. Please try again, and if it keeps failing, email support@deutschfit.app."
     }
   },
   "auth": {

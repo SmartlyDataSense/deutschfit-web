@@ -82,7 +82,7 @@ export default async function TosPage({ params }: Props) {
       </ul>
       <p>
         Both paths erase your account and your associated data immediately. You can also email{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a> if you cannot access
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> if you cannot access
         either surface — we will process the request within 30 days. We may suspend accounts that
         violate these Terms.
       </p>
@@ -104,7 +104,7 @@ export default async function TosPage({ params }: Props) {
 
       <h2>11. Contact</h2>
       <p>
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
     </LegalShell>
   );
