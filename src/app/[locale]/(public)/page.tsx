@@ -72,8 +72,8 @@ export default async function LandingPage({ params }: Props) {
               </Link>
             </li>
             <li>
-              <a href="mailto:lordmoyojordan@gmail.com" className="underline underline-offset-4">
-                {t("supportEmail")} — lordmoyojordan@gmail.com
+              <a href="mailto:support@deutschfit.app" className="underline underline-offset-4">
+                {t("supportEmail")} — support@deutschfit.app
               </a>
             </li>
           </ul>

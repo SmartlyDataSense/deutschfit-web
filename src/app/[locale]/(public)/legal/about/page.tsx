@@ -50,7 +50,7 @@ export default async function AboutPage({ params }: Props) {
 
       <h2>Contact</h2>
       <p>
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
     </LegalShell>
   );

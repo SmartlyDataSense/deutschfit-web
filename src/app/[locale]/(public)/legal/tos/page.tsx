@@ -65,9 +65,10 @@ export default async function TosPage({ params }: Props) {
 
       <h2>8. Termination</h2>
       <p>
-        You can delete your account at any time from the Profile screen or by emailing{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>. We may suspend
-        accounts that violate these Terms.
+        Both paths erase your account and your associated data immediately. You can also email{" "}
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> if you cannot access
+        either surface — we will process the request within 30 days. We may suspend accounts that
+        violate these Terms.
       </p>
 
       <h2>9. Liability</h2>
@@ -87,7 +88,7 @@ export default async function TosPage({ params }: Props) {
 
       <h2>11. Contact</h2>
       <p>
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
     </LegalShell>
   );

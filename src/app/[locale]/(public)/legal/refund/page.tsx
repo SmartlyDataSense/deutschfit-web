@@ -29,7 +29,7 @@ export default async function RefundPage({ params }: Props) {
       <p>
         We offer a 7-day discretionary refund window from the date of the original charge. If you
         contact us within 7 days at{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a> we will refund the
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> we will refund the
         full amount of the affected billing period, less any third-party processing fees we cannot
         recover, provided you have not used the service heavily during that window. We reserve the
         right to decline refunds where there is evidence of abuse (e.g. repeat signup-and-refund
@@ -42,7 +42,7 @@ export default async function RefundPage({ params }: Props) {
         from a distance contract for digital services within 14 days of the contract being
         concluded, under Directive 2011/83/EU as transposed into your national law. To exercise this
         right, send an unequivocal statement (e.g. an email to{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>) before the 14-day
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>) before the 14-day
         period expires.
       </p>
       <p>
@@ -56,7 +56,7 @@ export default async function RefundPage({ params }: Props) {
       <p>
         You can cancel a subscription at any time from the <Link href="/account">Account</Link>{" "}
         screen on this website, or by emailing{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>. Cancellation takes
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>. Cancellation takes
         effect at the end of the current billing period — you keep access until then. We do not
         pro-rate cancellations as a rule (see §5 for prorated refunds tied to a refund request).
       </p>
@@ -94,7 +94,7 @@ export default async function RefundPage({ params }: Props) {
       <h2>8. Disputes</h2>
       <p>
         If you disagree with a refund decision, contact us first at{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a> so we can try to
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> so we can try to
         resolve the dispute amicably. The dispute-resolution section of our{" "}
         <Link href="/legal/impressum">Impressum / Mentions légales</Link> explains the EU online
         dispute-resolution platform option for EU consumers.
@@ -102,7 +102,7 @@ export default async function RefundPage({ params }: Props) {
 
       <h2>9. Contact</h2>
       <p>
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
     </LegalShell>
   );

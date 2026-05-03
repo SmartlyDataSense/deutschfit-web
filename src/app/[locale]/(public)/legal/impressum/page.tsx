@@ -22,11 +22,9 @@ export default async function ImpressumPage({ params }: Props) {
       <p>
         Jordan Moyo (natural person)
         <br />
-        [STREET PENDING], Douala
+        Douala, Cameroon
         <br />
-        Cameroon
-        <br />
-        Email: <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        Email: <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
       <p>
         DeutschFit and SmartlyDataSense are unregistered trade names used by the operator. There is

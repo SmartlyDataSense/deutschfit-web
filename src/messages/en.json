@@ -43,8 +43,51 @@
     "supportEmail": "Email support"
   },
   "account": {
-    "title": "Account",
-    "comingSoon": "Magic-link sign-in coming soon."
+    "title": "Your account",
+    "loadingError": "Couldn't load your account just now. Please refresh.",
+    "entitlementHeading": "Current plan",
+    "entitlementFree": "Free tier",
+    "entitlementValidUntil": "Valid until {date}",
+    "entitlementSeePricing": "See pricing",
+    "trialUsageHeading": "Free-tier usage",
+    "trialUsageEmpty": "You haven't used any free-tier actions yet.",
+    "trialUsageRow": "{kind}: used {count}",
+    "subscriptionHeading": "Active subscription",
+    "subscriptionNone": "No active subscription.",
+    "subscriptionRow": "{plan} · valid from {from} to {until}",
+    "signOut": "Sign out",
+    "trialKind": {
+      "schreiben_grade": "Schreiben gradings",
+      "sprechen_grade": "Sprechen gradings",
+      "lesen_set": "Lesen sets",
+      "hoeren_set": "Hören sets",
+      "coach_message": "Coach messages",
+      "mock_exam": "Mock exams"
+    },
+    "delete": {
+      "heading": "Danger zone",
+      "subtitle": "Permanently erase your account and all of your data.",
+      "disclosureLabel": "Delete account",
+      "body1": "This will permanently erase your DeutschFit account, your writing and speaking submissions, your exam attempts, your progress, and any saved drills.",
+      "body2": "Active subscriptions are billed on the website. If you have an active plan, cancel it before deleting your account.",
+      "irreversible": "This is permanent and cannot be undone.",
+      "subsHint": "An immutable audit record (your user ID, email, timestamp, and source) is retained for 12 months as evidence under GDPR Art. 30.",
+      "confirmLabel": "Type DELETE to confirm",
+      "confirmPlaceholder": "DELETE",
+      "confirmCta": "Delete my account",
+      "errorInvalidConfirm": "You must type DELETE exactly to confirm.",
+      "errorFailed": "Something went wrong on our side. Your account is still active. Please try again, and if it keeps failing, email support@deutschfit.app."
+    }
+  },
+  "auth": {
+    "title": "Sign in to your account",
+    "subtitle": "We'll email you a magic sign-in link.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Email me a sign-in link",
+    "checkInbox": "Check your inbox for a sign-in link.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "signedOutHeading": "Sign in"
   },
   "legal": {
     "tos": { "title": "Terms of Service" },
