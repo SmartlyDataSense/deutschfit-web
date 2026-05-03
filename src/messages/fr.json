@@ -27,7 +27,6 @@
   },
   "account": {
     "title": "Votre compte",
-    "comingSoon": "La gestion du compte arrive bientôt.",
     "loadingError": "Impossible de charger votre compte pour l'instant. Rafraîchissez la page.",
     "entitlementHeading": "Forfait actuel",
     "entitlementFree": "Niveau gratuit",

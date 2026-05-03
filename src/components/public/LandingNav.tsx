@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./LocaleSwitcher";
@@ -10,11 +11,18 @@ export async function LandingNav() {
   const t = await getTranslations();
   return (
     <nav className="flex items-center justify-between border-b border-line-soft pb-4">
-      <Link
-        href="/"
-        className="font-display text-2xl font-bold tracking-tight text-text-primary"
-      >
-        {t("common.appName")}
+      <Link href="/" className="flex items-center gap-2" aria-label={t("common.appName")}>
+        <Image
+          src="/brand/icon.png"
+          alt=""
+          width={32}
+          height={32}
+          priority
+          className="h-8 w-8 rounded-md"
+        />
+        <span className="font-display text-2xl font-bold tracking-tight text-text-primary">
+          {t("common.appName")}
+        </span>
       </Link>
 
       <div className="hidden items-center gap-6 sm:flex">

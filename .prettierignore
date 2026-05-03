@@ -7,3 +7,6 @@ playwright-report/
 test-results/
 public/
 package-lock.json
+
+# Generated — owned by deutschfit-backend, mirrored via `npm run types:sync`
+src/shared/database.types.ts

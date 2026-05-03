@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { LegalShell } from "@/components/public/LegalShell";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -15,7 +16,7 @@ export default async function PrivacyPage({ params }: Props) {
   const t = await getTranslations("legal.privacy");
 
   return (
-    <LegalShell title={t("title")} effective="2026-04-22" version="1.0.0 (beta)">
+    <LegalShell title={t("title")} effective="2026-04-26" version="1.0.1 (beta)">
       <h2>1. Who we are</h2>
       <p>
         DeutschFit (the &ldquo;app&rdquo;) is operated by Jordan Moyo (a natural person), working
@@ -54,7 +55,7 @@ export default async function PrivacyPage({ params }: Props) {
         </li>
         <li>
           <strong>Device diagnostics:</strong> crash reports and anonymous performance metrics (via
-          Expo / Sentry) to improve stability.
+          Expo) to improve stability.
         </li>
       </ul>
 
@@ -89,8 +90,32 @@ export default async function PrivacyPage({ params }: Props) {
       <ul>
         <li>Graded submissions: retained while your account is active.</li>
         <li>Raw audio recordings: deleted 90 days after grading.</li>
-        <li>Account data: deleted within 30 days of account deletion request.</li>
+        <li>
+          <strong>Account data:</strong> deleted <strong>immediately</strong> when you delete your
+          account from inside the mobile app (<em>Settings → Delete account</em>) or from the
+          website (
+          <em>
+            <Link href={{ pathname: "/account", hash: "delete" }}>
+              deutschfit.app/account → Delete account
+            </Link>
+          </em>
+          ). The deletion is processed synchronously and is irreversible. An immutable audit record
+          of the deletion (your user ID, email, timestamp, and source) is retained for 12 months as
+          evidence under GDPR Art. 30 record-of-processing requirements; it is never used for any
+          other purpose and is accessible only to the data controller.
+        </li>
+        <li>
+          <strong>Graded submissions and audio recordings:</strong> deleted in the same transaction
+          as your account.
+        </li>
       </ul>
+      <p className="text-text-tertiary">
+        If you cannot delete your account from the app, you can do it here:{" "}
+        <Link href={{ pathname: "/account", hash: "delete" }}>
+          deutschfit.app/account → Delete account
+        </Link>
+        .
+      </p>
 
       <h2>7. Your rights (GDPR)</h2>
       <p>
@@ -105,6 +130,25 @@ export default async function PrivacyPage({ params }: Props) {
         We do not sell your data. We share data only with the processors listed above (Supabase,
         OpenAI, Expo) strictly to run the service.
       </p>
+      <h2>8a. Account deletion</h2>
+      <p>
+        You can permanently delete your DeutschFit account, your graded submissions, and your audio
+        recordings at any time, in one click — there is no email queue or 30-day delay:
+      </p>
+      <ul>
+        <li>
+          <strong>In the mobile app:</strong> <em>Settings → Delete account</em>.
+        </li>
+        <li>
+          <strong>On the website:</strong>{" "}
+          <em>
+            <Link href={{ pathname: "/account", hash: "delete" }}>
+              deutschfit.app/account → Delete account
+            </Link>
+          </em>
+          .
+        </li>
+      </ul>
 
       <h2>9. Children</h2>
       <p>

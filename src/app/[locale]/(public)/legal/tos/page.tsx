@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { LegalShell } from "@/components/public/LegalShell";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -14,7 +15,7 @@ export default async function TosPage({ params }: Props) {
   const t = await getTranslations("legal.tos");
 
   return (
-    <LegalShell title={t("title")} effective="2026-04-22" version="1.0.0 (beta)">
+    <LegalShell title={t("title")} effective="2026-04-26" version="1.0.1 (beta)">
       <h2>1. Acceptance</h2>
       <p>
         By downloading or using DeutschFit, you agree to these Terms. If you do not agree, do not
@@ -64,6 +65,21 @@ export default async function TosPage({ params }: Props) {
       </p>
 
       <h2>8. Termination</h2>
+      <p>You can delete your account at any time, in one click:</p>
+      <ul>
+        <li>
+          In the mobile app: <em>Settings → Danger Zone → Delete account</em>.
+        </li>
+        <li>
+          On the website:{" "}
+          <em>
+            <Link href={{ pathname: "/account", hash: "delete" }}>
+              deutschfit.app/account → Delete account
+            </Link>
+          </em>
+          .
+        </li>
+      </ul>
       <p>
         Both paths erase your account and your associated data immediately. You can also email{" "}
         <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> if you cannot access

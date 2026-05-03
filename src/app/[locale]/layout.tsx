@@ -52,9 +52,42 @@ const ibmPlexMono = localFont({
   display: "swap",
 });
 
+// Used to resolve relative paths in `openGraph.images`, `twitter.images`,
+// and `alternates.canonical` to absolute URLs. Falls back to the deployed
+// origin in CI/preview where `NEXT_PUBLIC_SITE_URL` may not be set.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "https://deutschfit.app";
+
 export const metadata: Metadata = {
-  title: "DeutschFit",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "DeutschFit", template: "%s · DeutschFit" },
   description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+  applicationName: "DeutschFit",
+  alternates: {
+    languages: {
+      en: "/en",
+      fr: "/fr",
+    },
+  },
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "any" },
+      { url: "/brand/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "DeutschFit",
+    description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+    images: ["/brand/icon.png"],
+    type: "website",
+    siteName: "DeutschFit",
+  },
+  twitter: {
+    card: "summary",
+    title: "DeutschFit",
+    description: "Préparation aux examens d'allemand · Goethe, ÖSD, telc, TestDaF",
+    images: ["/brand/icon.png"],
+  },
 };
 
 export function generateStaticParams() {
