@@ -92,7 +92,7 @@
       "confirmPlaceholder": "DELETE",
       "confirmCta": "Supprimer mon compte",
       "errorInvalidConfirm": "Vous devez taper DELETE exactement pour confirmer.",
-      "errorFailed": "Une erreur est survenue. Votre compte est toujours actif. Réessayez et, si le problème persiste, écrivez à lordmoyojordan@gmail.com."
+      "errorFailed": "Une erreur est survenue. Votre compte est toujours actif. Réessayez et, si le problème persiste, écrivez à support@deutschfit.app."
     }
   },
   "auth": {
