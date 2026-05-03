@@ -77,8 +77,11 @@ describe("GET /auth/confirm", () => {
     expect(loc).toContain("reason=token%20expired");
   });
 
-  it("redirects to deutschfit:// scheme on iPhone UA after successful verify", async () => {
-    verifyOtpMock.mockResolvedValueOnce({ error: null });
+  it("redirects to deutschfit:// with session tokens on iPhone UA after successful verify", async () => {
+    verifyOtpMock.mockResolvedValueOnce({
+      data: { session: { access_token: "at_test", refresh_token: "rt_test" } },
+      error: null,
+    });
     const iosUa =
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15";
     const req = makeRequest(
@@ -88,11 +91,13 @@ describe("GET /auth/confirm", () => {
     const res = await GET(req);
     expect(res.status).toBe(302);
     const loc = res.headers.get("location") ?? "";
-    expect(loc).toBe(`${APP_SCHEME}?type=email&status=ok`);
+    expect(loc).toContain(`${APP_SCHEME}`);
+    expect(loc).toContain("type=email");
+    expect(loc).toContain("access_token=at_test");
+    expect(loc).toContain("refresh_token=rt_test");
   });
 
-  it("redirects to deutschfit:// scheme on Android UA after successful verify", async () => {
-    verifyOtpMock.mockResolvedValueOnce({ error: null });
+  it("redirects recovery to deutschfit://reset?token_hash on Android UA without verifying server-side", async () => {
     const androidUa = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36";
     const req = makeRequest(
       "https://web.example/auth/confirm?token_hash=abc&type=recovery",
@@ -101,7 +106,8 @@ describe("GET /auth/confirm", () => {
     const res = await GET(req);
     expect(res.status).toBe(302);
     const loc = res.headers.get("location") ?? "";
-    expect(loc).toBe(`${APP_SCHEME}?type=recovery&status=ok`);
+    expect(loc).toBe("deutschfit://reset?token_hash=abc");
+    expect(verifyOtpMock).not.toHaveBeenCalled();
   });
 
   it("redirects to /auth/confirmed for desktop UA after successful verify", async () => {

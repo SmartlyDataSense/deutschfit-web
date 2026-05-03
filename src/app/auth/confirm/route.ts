@@ -5,19 +5,27 @@ import { createClient } from "@supabase/supabase-js";
  * Email-confirmation bridge for DeutschFit.
  *
  * Supabase emails (sign-up, recovery, invite, magic-link, email-change) point
- * here with `?token_hash=…&type=…`. We verify the OTP server-side using the
- * service-role key (bypasses RLS, no session is persisted), then redirect:
- *   - mobile UA  → `deutschfit://auth/callback` (Universal/App Link)
- *   - desktop UA → `/auth/confirmed`
+ * here with `?token_hash=…&type=…`. Behaviour splits by type and UA:
  *
- * Failures land on `/auth/error?reason=…` so the user always sees a page.
+ *   recovery + mobile UA
+ *     → deutschfit://reset?token_hash=… (no server-side verify)
+ *     The app calls verifyOtp() with the anon key, which fires
+ *     PASSWORD_RECOVERY and routes to the ResetPassword screen via the
+ *     linking config. We must NOT consume the token here — setSession()
+ *     from a server-side session fires SIGNED_IN (not PASSWORD_RECOVERY),
+ *     which breaks screen routing.
  *
- * Locale-agnostic on purpose: the link in the email is opened from a mail
- * client that may not preserve the user's site locale, and the success /
- * error pages are short and self-contained.
+ *   all other types + mobile UA
+ *     → verify server-side, extract session tokens, redirect to
+ *       deutschfit://auth/callback?access_token=…&refresh_token=…
+ *     deepLinkHandler Path B calls setSession() → SIGNED_IN → auto sign-in.
  *
- * NEVER expose `SUPABASE_SERVICE_ROLE_KEY` to the client. The `nodejs`
- * runtime + server-only handler keeps it on the server.
+ *   desktop UA → verify server-side → /auth/confirmed
+ *
+ * Failures land on /auth/error?reason=… so the user always sees a page.
+ *
+ * NEVER expose SUPABASE_SERVICE_ROLE_KEY to the client. The nodejs runtime +
+ * server-only handler keeps it on the server.
  */
 
 export const dynamic = "force-dynamic";
@@ -45,6 +53,17 @@ export async function GET(req: NextRequest) {
   }
   const type: ConfirmType = typeRaw;
 
+  const ua = req.headers.get("user-agent") ?? "";
+  const isMobile = /iPhone|iPad|Android/i.test(ua);
+
+  // Recovery on mobile: pass token_hash to the app without consuming it here.
+  if (isMobile && type === "recovery") {
+    return NextResponse.redirect(
+      `deutschfit://reset?token_hash=${encodeURIComponent(token_hash)}`,
+      { status: 302 }
+    );
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
@@ -55,17 +74,21 @@ export async function GET(req: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { error } = await sb.auth.verifyOtp({ token_hash, type });
+  const { data, error } = await sb.auth.verifyOtp({ token_hash, type });
   if (error) {
     return NextResponse.redirect(
       new URL(`/auth/error?reason=${encodeURIComponent(error.message)}`, req.url)
     );
   }
 
-  const ua = req.headers.get("user-agent") ?? "";
-  const isMobile = /iPhone|iPad|Android/i.test(ua);
-
   if (isMobile) {
+    if (data.session) {
+      const { access_token, refresh_token } = data.session;
+      return NextResponse.redirect(
+        `${APP_SCHEME}?type=${type}&access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`,
+        { status: 302 }
+      );
+    }
     return NextResponse.redirect(`${APP_SCHEME}?type=${type}&status=ok`, { status: 302 });
   }
   return NextResponse.redirect(new URL(`${WEB_FALLBACK}?type=${type}`, req.url));
