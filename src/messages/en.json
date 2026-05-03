@@ -27,6 +27,7 @@
   },
   "account": {
     "title": "Your account",
+    "comingSoon": "Account management coming soon.",
     "loadingError": "Couldn't load your account just now. Please refresh.",
     "entitlementHeading": "Current plan",
     "entitlementFree": "Free tier",
