@@ -4,8 +4,6 @@
     "tagline": "German exam prep — Goethe, telc, ÖSD, TestDaF, ECL"
   },
   "nav": {
-    "pricing": "Pricing",
-    "howToPay": "How to pay",
     "account": "Account",
     "switchToFr": "Français",
     "switchToEn": "English"
@@ -13,7 +11,6 @@
   "landing": {
     "headline": "German exam prep, focused.",
     "subhead": "Practice Lesen, Hören, Schreiben, and Sprechen for Goethe, telc, ÖSD, TestDaF and ECL — with AI feedback aligned to the official rubrics.",
-    "ctaPricing": "See pricing",
     "ctaAccount": "Sign in",
     "appHeading": "App",
     "appBody": "DeutschFit is a mobile app for learners preparing for German-language certification exams. The app is currently in closed beta on TestFlight (iOS) and Internal App Sharing (Android).",
@@ -28,43 +25,12 @@
     },
     "footer": "© 2026 DeutschFit. Operated by Jordan Moyo (Douala, Cameroon). DeutschFit and SmartlyDataSense are unregistered trade names."
   },
-  "pricing": {
-    "title": "Pricing",
-    "subtitle": "All prices in XAF, taxes included.",
-    "antiSteeringNote": "Subscriptions are activated manually after out-of-band payment. See payment instructions.",
-    "antiSteeringCta": "How to pay",
-    "durationDays": "{days, plural, one {# day} other {# days}}",
-    "tierBadge": "Tier",
-    "loadError": "Plans are temporarily unavailable. Please try again shortly.",
-    "empty": "No active plans yet."
-  },
-  "payinfo": {
-    "title": "How to pay",
-    "intro": "Pick the channel that suits you. Pay the exact XAF amount, then email proof of payment. We activate your plan within 24 hours.",
-    "cameroonHeader": "Cameroon",
-    "diasporaHeader": "Outside Cameroon",
-    "comingSoon": "Coming soon — this channel isn't configured yet.",
-    "momoTitle": "MTN Mobile Money",
-    "momoBody": "Send the exact XAF amount to {number}. Use your account email as the reference.",
-    "omTitle": "Orange Money",
-    "omBody": "Send the exact XAF amount to {number}. Use your account email as the reference.",
-    "bankTitle": "Bank transfer",
-    "bankBody": "{details}",
-    "bankNote": "SWIFT fees borne by the sender.",
-    "paypalTitle": "PayPal",
-    "paypalBody": "Send to {handle} as Friends & Family if your country supports it; otherwise add 4% to cover fees.",
-    "wiseTitle": "Wise / Remitly",
-    "wiseBody": "Send to {handle}.",
-    "proofTitle": "Email proof of payment",
-    "proofBody": "Send proof of payment to {email} with the screenshot or transaction ID. We activate within 24 hours."
-  },
   "account": {
     "title": "Your account",
     "loadingError": "Couldn't load your account just now. Please refresh.",
     "entitlementHeading": "Current plan",
     "entitlementFree": "Free tier",
     "entitlementValidUntil": "Valid until {date}",
-    "entitlementSeePricing": "See pricing",
     "trialUsageHeading": "Free-tier usage",
     "trialUsageEmpty": "You haven't used any free-tier actions yet.",
     "trialUsageRow": "{kind}: used {count}",
