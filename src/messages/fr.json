@@ -4,8 +4,6 @@
     "tagline": "Préparation aux examens d'allemand — Goethe, telc, ÖSD, TestDaF, ECL"
   },
   "nav": {
-    "pricing": "Tarifs",
-    "howToPay": "Comment payer",
     "account": "Compte",
     "switchToFr": "Français",
     "switchToEn": "English"
@@ -13,7 +11,6 @@
   "landing": {
     "headline": "La prép' allemand, concentrée.",
     "subhead": "Entraînez-vous au Lesen, Hören, Schreiben et Sprechen pour Goethe, telc, ÖSD, TestDaF et ECL — avec un retour IA aligné sur les barèmes officiels.",
-    "ctaPricing": "Voir les tarifs",
     "ctaAccount": "Se connecter",
     "appHeading": "L'application",
     "appBody": "DeutschFit est une application mobile pour les apprenants qui préparent des examens de certification en allemand. L'application est actuellement en bêta fermée sur TestFlight (iOS) et Internal App Sharing (Android).",
@@ -27,20 +24,6 @@
       "about": "À propos"
     },
     "footer": "© 2026 DeutschFit. Exploité par Jordan Moyo (Douala, Cameroun). DeutschFit et SmartlyDataSense sont des noms commerciaux non immatriculés."
-  },
-  "pricing": {
-    "title": "Tarifs",
-    "subtitle": "Achat unique ou abonnement mensuel. Tous les prix en XAF.",
-    "ctaToHowToPay": "Comment payer",
-    "from": "à partir de",
-    "perMonth": "par mois",
-    "oneTime": "achat unique",
-    "comingSoon": "Détails des tarifs à venir."
-  },
-  "howToPay": {
-    "title": "Comment payer",
-    "comingSoon": "Instructions de paiement à venir.",
-    "supportEmail": "Contacter le support"
   },
   "account": {
     "title": "Compte",

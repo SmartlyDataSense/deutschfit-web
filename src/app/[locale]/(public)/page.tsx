@@ -19,14 +19,8 @@ export default async function LandingPage({ params }: Props) {
 
         <Box className="mt-10 flex flex-wrap gap-3">
           <Link
-            href="/pricing"
-            className="inline-flex items-center justify-center rounded-md bg-cta px-5 py-2.5 text-base font-semibold text-cta-ink hover:opacity-90"
-          >
-            {t("ctaPricing")}
-          </Link>
-          <Link
             href="/account"
-            className="inline-flex items-center justify-center rounded-md bg-cream-deep px-5 py-2.5 text-base font-semibold text-cream-ink hover:bg-cream"
+            className="inline-flex items-center justify-center rounded-md bg-cta px-5 py-2.5 text-base font-semibold text-cta-ink hover:opacity-90"
           >
             {t("ctaAccount")}
           </Link>
