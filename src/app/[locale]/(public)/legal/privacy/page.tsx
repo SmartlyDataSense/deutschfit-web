@@ -24,11 +24,9 @@ export default async function PrivacyPage({ params }: Props) {
       <p>
         Jordan Moyo
         <br />
-        [STREET PENDING], Douala
+        Douala, Cameroon
         <br />
-        Cameroon
-        <br />
-        Email: <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>
+        Email: <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>
       </p>
       <p>
         Although the data controller is established outside the EU, this policy is written to comply
@@ -97,9 +95,9 @@ export default async function PrivacyPage({ params }: Props) {
       <h2>7. Your rights (GDPR)</h2>
       <p>
         You can request access to, correction of, or deletion of your data at any time by emailing{" "}
-        <a href="mailto:lordmoyojordan@gmail.com">lordmoyojordan@gmail.com</a>. You also have the
-        right to lodge a complaint with your local data-protection authority (e.g. the BfDI in
-        Germany, the CNIL in France).
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>. You also have the right
+        to lodge a complaint with your local data-protection authority (e.g. the BfDI in Germany,
+        the CNIL in France).
       </p>
 
       <h2>8. Sharing</h2>
