@@ -29,8 +29,8 @@ export default async function RefundPage({ params }: Props) {
       <p>
         We offer a 7-day discretionary refund window from the date of the original charge. If you
         contact us within 7 days at{" "}
-        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> we will refund the
-        full amount of the affected billing period, less any third-party processing fees we cannot
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> we will refund the full
+        amount of the affected billing period, less any third-party processing fees we cannot
         recover, provided you have not used the service heavily during that window. We reserve the
         right to decline refunds where there is evidence of abuse (e.g. repeat signup-and-refund
         cycles).
@@ -42,8 +42,8 @@ export default async function RefundPage({ params }: Props) {
         from a distance contract for digital services within 14 days of the contract being
         concluded, under Directive 2011/83/EU as transposed into your national law. To exercise this
         right, send an unequivocal statement (e.g. an email to{" "}
-        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>) before the 14-day
-        period expires.
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a>) before the 14-day period
+        expires.
       </p>
       <p>
         At checkout, EU consumers are offered the option to expressly request immediate access to
@@ -94,8 +94,8 @@ export default async function RefundPage({ params }: Props) {
       <h2>8. Disputes</h2>
       <p>
         If you disagree with a refund decision, contact us first at{" "}
-        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> so we can try to
-        resolve the dispute amicably. The dispute-resolution section of our{" "}
+        <a href="mailto:support@deutschfit.app">support@deutschfit.app</a> so we can try to resolve
+        the dispute amicably. The dispute-resolution section of our{" "}
         <Link href="/legal/impressum">Impressum / Mentions légales</Link> explains the EU online
         dispute-resolution platform option for EU consumers.
       </p>
