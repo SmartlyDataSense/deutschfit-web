@@ -2,7 +2,8 @@
 
 > Goal: every push to `dev` builds and serves at a stable URL — `https://dev.deutschfit.app` — with env vars pointed at the **dev Supabase project**, while production (`main` → `deutschfit.app`) keeps pointing at the prod Supabase project.
 
-Last audit: 2026-04-26.
+Last audit: 2026-04-26.  
+Last update: 2026-05-28 (NEXT_PUBLIC_SITE_URL set for all environments).
 
 ---
 
@@ -55,19 +56,19 @@ None of the attached domains is pinned to a specific Git branch yet. The apex (`
 
 **Env var matrix (names + scopes — values not echoed)**
 
-| Variable name                   | Development | Preview     | Production  |
-| ------------------------------- | ----------- | ----------- | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | yes         | yes         | yes         |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes         | yes         | yes         |
-| `SUPABASE_SERVICE_ROLE_KEY`     | yes         | yes         | yes         |
-| `RESEND_API_KEY`                | yes         | yes         | yes         |
-| `NEXT_PUBLIC_SITE_URL`          | yes         | yes         | yes         |
-| `NEXT_PUBLIC_PAY_EMAIL`         | yes         | yes         | yes         |
-| `NEXT_PUBLIC_PAY_MOMO_NUMBER`   | **missing** | **missing** | **missing** |
-| `NEXT_PUBLIC_PAY_OM_NUMBER`     | **missing** | **missing** | **missing** |
-| `NEXT_PUBLIC_PAY_BANK_DETAILS`  | **missing** | **missing** | **missing** |
-| `NEXT_PUBLIC_PAY_PAYPAL_HANDLE` | **missing** | **missing** | **missing** |
-| `NEXT_PUBLIC_PAY_WISE_HANDLE`   | **missing** | **missing** | **missing** |
+| Variable name                   | Development                      | Preview (preprod)                | Production                       |
+| ------------------------------- | -------------------------------- | -------------------------------- | -------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes                              | yes                              | yes                              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes                              | yes                              | yes                              |
+| `SUPABASE_SERVICE_ROLE_KEY`     | yes                              | yes                              | yes                              |
+| `RESEND_API_KEY`                | yes                              | yes                              | yes                              |
+| `NEXT_PUBLIC_SITE_URL`          | `web-dev.deutschfit.app` ✅       | `deutschfit.app` ✅ (2026-05-28) | `deutschfit.app` ✅ (2026-05-28) |
+| `NEXT_PUBLIC_PAY_EMAIL`         | yes                              | yes                              | yes                              |
+| `NEXT_PUBLIC_PAY_MOMO_NUMBER`   | **missing**                      | **missing**                      | **missing**                      |
+| `NEXT_PUBLIC_PAY_OM_NUMBER`     | **missing**                      | **missing**                      | **missing**                      |
+| `NEXT_PUBLIC_PAY_BANK_DETAILS`  | **missing**                      | **missing**                      | **missing**                      |
+| `NEXT_PUBLIC_PAY_PAYPAL_HANDLE` | **missing**                      | **missing**                      | **missing**                      |
+| `NEXT_PUBLIC_PAY_WISE_HANDLE`   | **missing**                      | **missing**                      | **missing**                      |
 
 Two issues this surfaces:
 
