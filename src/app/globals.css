@@ -61,6 +61,26 @@
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-full: 999px;
+
+  /*
+   * Learner nav layout (Task 1.3) — web-only, no mobile mirror source:
+   * mobile has no persistent Sidebar (React Navigation's bottom tabs are
+   * its only chrome). The tab-bar height/safe-area-minimum values DO
+   * mirror mobile's BAR_CONTENT_HEIGHT (60) / MIN_BOTTOM_INSET (8) from
+   * deutschfit-mobile/src/app/tabbar/tabbar.styles.ts. `--nav-tabbar-total-height`
+   * folds the real browser safe-area inset (falls back to the mobile
+   * minimum when the browser reports none) into one value so `TabBar`'s
+   * own bottom padding and the content wrapper's offset in
+   * `(protected)/layout.tsx` can never drift out of sync.
+   */
+  --nav-tabbar-height: 60px;
+  --nav-tabbar-safe-min: 8px;
+  --nav-tabbar-total-height: calc(
+    var(--nav-tabbar-height) + max(env(safe-area-inset-bottom, 0px), var(--nav-tabbar-safe-min))
+  );
+  --nav-sidebar-width: 240px;
+  /* mirrors tokens.zIndex.header — floating nav chrome sits above page content. */
+  --z-header: 20;
 }
 
 @theme inline {
@@ -155,5 +175,24 @@ body {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .learner-glass-surface {
     background-color: var(--color-bg-premium);
+  }
+}
+
+/*
+ * `TabBar` surface (src/learner/ui/nav/TabBar.tsx) — web port of mobile's
+ * `LiquidGlassTabBar`, a light frosted `expo-blur` material (tint="light")
+ * with a faint bgCard wash, NOT the dark `.learner-glass-surface` premium
+ * treatment above. Falls back to an opaque bg-card surface when
+ * `backdrop-filter` isn't supported.
+ */
+.learner-tabbar-glass {
+  background-color: color-mix(in srgb, var(--color-bg-card) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--color-line-soft);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .learner-tabbar-glass {
+    background-color: var(--color-bg-card);
   }
 }
