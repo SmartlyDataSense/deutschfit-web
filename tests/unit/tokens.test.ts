@@ -22,6 +22,23 @@ describe("theme tokens", () => {
     expect(theme.coachSubtle).toBe("#E4F1EE");
   });
 
+  it("theme exposes the mobile status subtle/text pairs (success/warning/error)", () => {
+    expect(theme.successSubtle).toBe("#EBF5F0");
+    expect(theme.successText).toBe("#1A6B45");
+    expect(theme.warningSubtle).toBe("#FEF8EC");
+    expect(theme.warningText).toBe("#8B5E1A");
+    expect(theme.errorSubtle).toBe("#FEF0EE");
+    expect(theme.errorText).toBe("#8B2518");
+  });
+
+  it("theme exposes bgHero/bgContent/bgCard/onPremium/navActive", () => {
+    expect(theme.bgHero).toBe(palette.cream);
+    expect(theme.bgContent).toBe(palette.creamDeep);
+    expect(theme.bgCard).toBe("#FFFFFF");
+    expect(theme.onPremium).toBe(palette.premiumInk);
+    expect(theme.navActive).toBe(palette.ctaOrange);
+  });
+
   it("spacing scale is the mobile 4-pt scale", () => {
     expect(spacing.xs).toBe(4);
     expect(spacing.sm).toBe(8);
