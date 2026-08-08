@@ -17,6 +17,11 @@ describe("theme tokens", () => {
     expect(theme.textPrimary).toBe(palette.textPrimary);
   });
 
+  it("theme exposes the mobile subtle-surface tokens (bgSubtle, coachSubtle)", () => {
+    expect(theme.bgSubtle).toBe("#F7F3EC");
+    expect(theme.coachSubtle).toBe("#E4F1EE");
+  });
+
   it("spacing scale is the mobile 4-pt scale", () => {
     expect(spacing.xs).toBe(4);
     expect(spacing.sm).toBe(8);

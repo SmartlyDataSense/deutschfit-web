@@ -1,4 +1,4 @@
-// COPIED from deutschfit-mobile/src/theme/tokens.ts on 2026-04-25.
+// COPIED from deutschfit-mobile/src/theme/tokens.ts on 2026-08-08.
 // When mobile tokens change, manually re-copy. No automated sync in v1.
 // Source repo: https://github.com/SmartlyDataSense/deutschfit-mobile
 //
@@ -42,6 +42,7 @@ export const theme = {
   bgHero: palette.cream,
   bgContent: palette.creamDeep,
   bgCard: "#FFFFFF",
+  bgSubtle: "#F7F3EC",
   bgPremium: palette.premiumBlack,
   onPremium: palette.premiumInk,
   textPrimary: palette.textPrimary,
@@ -51,6 +52,9 @@ export const theme = {
   onCta: palette.ctaOrangeInk,
   coach: palette.coachTeal,
   onCoach: palette.coachTealInk,
+  // Low-emphasis teal wash — pairs with `coach` for icon badges and
+  // tinted surfaces on the Betreuer hub (mirrors `successSubtle`).
+  coachSubtle: "#E4F1EE",
   brandGold: palette.accentGold,
   onBrandGold: palette.accentGoldInk,
   warningRed: palette.warningRed,

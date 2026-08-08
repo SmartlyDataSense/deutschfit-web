@@ -24,6 +24,7 @@
   --color-warning-red: #c2492e;
   --color-success-green: #2e8b64;
   --color-priority-amber: #d99b3c;
+  --color-coach-subtle: #e4f1ee;
 
   /* text */
   --color-text-primary: #1a1714;
@@ -38,6 +39,7 @@
   --color-bg-hero: #f2e9d8;
   --color-bg-content: #eadfc8;
   --color-bg-card: #ffffff;
+  --color-bg-subtle: #f7f3ec;
   --color-bg-premium: #0f1012;
 
   /* radius (mirrors tokens.radius — px) */
@@ -62,6 +64,7 @@
   --color-warning-red: var(--color-warning-red);
   --color-success-green: var(--color-success-green);
   --color-priority-amber: var(--color-priority-amber);
+  --color-coach-subtle: var(--color-coach-subtle);
 
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -73,11 +76,14 @@
   --color-bg-hero: var(--color-bg-hero);
   --color-bg-content: var(--color-bg-content);
   --color-bg-card: var(--color-bg-card);
+  --color-bg-subtle: var(--color-bg-subtle);
   --color-bg-premium: var(--color-bg-premium);
 
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-ibm-mono), ui-monospace, SFMono-Regular, monospace;
+  /* Learner surface only — see src/app/[locale]/layout.tsx for scoping note. */
+  --font-serif-learner: var(--font-source-serif), Georgia, serif;
 }
 
 body {
