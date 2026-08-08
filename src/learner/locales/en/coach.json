@@ -1,0 +1,198 @@
+{
+  "home": {
+    "title": "Betreuer",
+    "subtitle": "Ask your Betreuer a question, request a drill, or get feedback.",
+    "startTitle": "New conversation",
+    "startMeta": "Start a chat with your Betreuer.",
+    "startA11y": "Start a new conversation with the Betreuer"
+  },
+  "hub": {
+    "eyebrow": "Betreuer",
+    "titleLead": "Que veux-tu",
+    "titleAccent": "travailler",
+    "titleTrail": "aujourd'hui ?",
+    "subtitle": "Choisis un mode. Chacun reprend tes points faibles repérés dans tes expressions.",
+    "available": "Disponible",
+    "comingSoon": "À venir",
+    "tiles": {
+      "discuter": {
+        "title": "Discuter",
+        "description": "Pose une question, échange librement"
+      },
+      "exercices": {
+        "title": "Exercices ciblés",
+        "description": "Tes points à renforcer, en court"
+      },
+      "correction": {
+        "title": "Comprendre une correction",
+        "description": "Reprends une copie, ligne par ligne"
+      },
+      "oral": {
+        "title": "Entraînement à l'oral guidé",
+        "description": "Conversation guidée, à ton rythme"
+      }
+    }
+  },
+  "correction": {
+    "picker": {
+      "title": "Understand a correction",
+      "subtitle": "Revisit a graded answer, line by line.",
+      "backA11y": "Back",
+      "empty": {
+        "title": "No graded answers yet",
+        "body": "Finish a writing or speaking task — its correction will show up here."
+      },
+      "error": {
+        "title": "Couldn't load",
+        "body": "Check your connection, then try again."
+      },
+      "retryCta": "Try again",
+      "loadMoreCta": "Show more",
+      "rowA11y": "Open the correction from {{date}}"
+    },
+    "walkthrough": {
+      "backA11y": "Back",
+      "title": "Understand a correction",
+      "scoreLabel": "Overall score",
+      "bands": {
+        "solide": "Solid",
+        "proche_du_seuil": "Near the threshold",
+        "a_retravailler": "Needs work"
+      },
+      "dimensionScoreLabel": "{{score}} / 100",
+      "examinerLabel": "Examiner · DE",
+      "betreuerLabel": "✦ Betreuer · FR",
+      "transcriptHint": "Tap a highlighted passage to see the note.",
+      "diffLegend": {
+        "removed": "To fix",
+        "added": "Suggestion"
+      },
+      "drillCta": "Work on this",
+      "drillCtaA11y": "Start a drill on {{dimension}}",
+      "error": {
+        "title": "Correction unavailable",
+        "body": "This answer couldn't be loaded. Try again later."
+      }
+    },
+    "dimensions": {
+      "aufgabe": {
+        "name": "Task",
+        "blurb": "What the examiner expects from the content."
+      },
+      "kohaerenz": {
+        "name": "Coherence",
+        "blurb": "How clearly ideas connect."
+      },
+      "wortschatz": {
+        "name": "Vocabulary",
+        "blurb": "Range and accuracy of word choice."
+      },
+      "grammatik": { "name": "Grammar", "blurb": "Accuracy of structures." },
+      "aussprache": {
+        "name": "Pronunciation",
+        "blurb": "Clarity when speaking."
+      },
+      "erfuellung": {
+        "name": "Task completion",
+        "blurb": "How fully the prompt is covered."
+      },
+      "strukturen": {
+        "name": "Structures",
+        "blurb": "Command of written constructions."
+      }
+    }
+  },
+  "chat": {
+    "title": "Betreuer",
+    "subtitle": "Ask your question.",
+    "subtitleSending": "Betreuer is thinking…",
+    "backA11y": "Back",
+    "overflowA11y": "Conversation options",
+    "header": {
+      "title": "Betreuer",
+      "subtitle": "Calibrated on your B2 · 63d",
+      "avatarInitials": "IA"
+    },
+    "scripted": {
+      "coachOpener": "Hi! I'm your Betreuer. Ask me anything or request a targeted drill on your weak points.",
+      "observation": {
+        "overline": "AI observation",
+        "body": "You used 'und' 11 times in 3 min. At B2, examiners expect variety:",
+        "connectors": ["außerdem", "trotzdem", "deshalb", "obwohl"]
+      }
+    },
+    "empty": {
+      "title": "Start a conversation",
+      "body": "Type your first question — the Betreuer will reply in a few seconds."
+    },
+    "composer": {
+      "placeholder": "Write to the Betreuer…",
+      "sendA11y": "Send message",
+      "inputA11y": "Message to the Betreuer"
+    },
+    "errors": {
+      "coach_empty_request": "Type a message before sending.",
+      "coach_send_failed": "Could not send. Try again.",
+      "coach_empty_response": "Empty Betreuer response. Try again.",
+      "coach_malformed_response": "Empty Betreuer response. Try again.",
+      "coach_transport_failed": "Could not reach the Betreuer. Check your connection.",
+      "coach_service_unavailable": "The Betreuer is unavailable right now. Try again in a moment.",
+      "coach_server_error": "Something went wrong. Try again.",
+      "coach_rate_limited": "You're sending messages quickly. Try again in {{seconds}}s.",
+      "coach_offline": "You're offline. Reconnect to chat with the Betreuer.",
+      "coach_unauthorized": "Your session expired — sign in again.",
+      "coach_forbidden": "You don't have access to the Betreuer right now.",
+      "coach_profile_incomplete": "Finish your profile (level + exam board) to chat with the Betreuer."
+    },
+    "fallbackBanner": "Sign in for personalised analysis · scripted feedback in the meantime."
+  },
+  "drills": {
+    "startCta": {
+      "title": "Mini-drill · 4 min",
+      "subtitle": "Chain 4 sentences with the right connector.",
+      "buttonLabel": "Start the drill"
+    },
+    "header": {
+      "title": "Betreuer",
+      "subtitle": "Targeted drill · connectors",
+      "avatarInitials": "IA",
+      "backA11y": "Back",
+      "closeA11y": "Exit drill"
+    },
+    "progressLabel": "Drill",
+    "card": {
+      "overline": "Drill · connector",
+      "explanationLabel": "Why",
+      "optionA11yPrefix": "Pick"
+    },
+    "feedback": {
+      "correct": "Richtig! Good connector.",
+      "wrong": "Not quite — the right answer is {{answer}}."
+    },
+    "tally": "{{correct}} / {{total}} correct",
+    "continueCta": "Continue",
+    "submitCta": "Pick an option",
+    "finishCta": "Finish",
+    "fallback": "Drill complete.",
+    "summary": {
+      "overline": "Done",
+      "tally": "{{correct}} / {{total}} korrekt",
+      "signoffPerfect": "Perfect — you've nailed these connectors. Keep going?",
+      "signoffGood": "Solid progress! Same time tomorrow?",
+      "signoffPractice": "We'll revisit these connectors tomorrow — see you soon!",
+      "returnCta": "Back to Betreuer"
+    }
+  },
+  "sideMenu": {
+    "title": "Conversations",
+    "empty": "No conversations yet",
+    "closeA11y": "Close conversations",
+    "newConversation": "New conversation",
+    "newConversationA11y": "Start a new conversation"
+  },
+  "threadHeader": {
+    "menuA11y": "View conversations",
+    "online": "Online",
+    "offline": "Offline"
+  }
+}

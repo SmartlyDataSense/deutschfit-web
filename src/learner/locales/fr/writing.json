@@ -1,0 +1,131 @@
+{
+  "promptList": {
+    "title": "Schreiben",
+    "subtitle": "Choisis une situation et rédige ton texte.",
+    "wordRange": "{{min}}–{{max}} mots",
+    "searchPlaceholder": "Rechercher une consigne…",
+    "filterAll": "Tous les niveaux",
+    "teilSection": "Teil {{teil}}",
+    "noResultsTitle": "Aucun résultat",
+    "noResultsBody": "Aucune consigne ne correspond à ta recherche.",
+    "empty": "Aucune consigne disponible pour le moment.",
+    "emptyTitle": "Pas encore de consigne",
+    "emptyBody": "Reviens bientôt — on ajoute de nouvelles situations chaque semaine.",
+    "emptyCta": "Actualiser",
+    "errorTitle": "Impossible de charger les consignes",
+    "errorBody": "Vérifie ta connexion et réessaie.",
+    "errorRetry": "Réessayer",
+    "addPrompt": "+ Proposer un sujet",
+    "communityBadge": "Communauté",
+    "actions": {
+      "keyboard": "Au clavier",
+      "camera": "En photo"
+    }
+  },
+  "customPrompt": {
+    "title": "Nouveau sujet",
+    "subtitle": "Crée ta propre situation d'écriture — elle sera proposée à toute la communauté.",
+    "cancel": "Annuler",
+    "themeLabel": "Thème",
+    "themePlaceholder": "Ex. : Une invitation à un anniversaire",
+    "boardLabel": "Examen",
+    "levelLabel": "Niveau",
+    "teilLabel": "Teil",
+    "teilOption": "Teil {{teil}}",
+    "teilHint": "Teil {{teil}} est conseillé pour le niveau {{level}}.",
+    "wordsLabel": "Nombre de mots",
+    "minWords": "Minimum",
+    "maxWords": "Maximum",
+    "submit": "Créer le sujet",
+    "shareNote": "Ton sujet sera visible par les autres apprenants.",
+    "errors": {
+      "invalid_payload": "Vérifie le thème et le nombre de mots.",
+      "invalid_json": "Vérifie le thème et le nombre de mots.",
+      "db_write_failed": "Enregistrement impossible. Réessaie dans un instant.",
+      "generic": "Création impossible. Vérifie ta connexion et réessaie."
+    }
+  },
+  "composer": {
+    "title": "Rédaction",
+    "placeholder": "Écris ici ton e-mail en allemand…",
+    "wordCount": "{{count}} mots",
+    "range": "{{min}}–{{max}} mots",
+    "wordHint": {
+      "tooShort": "Trop court — il te manque {{count}} mots.",
+      "tooLong": "Trop long — réduis de {{count}} mots."
+    },
+    "submit": "Envoyer",
+    "draftSaved": "Brouillon enregistré",
+    "confirmSubmit": {
+      "title": "Envoyer ta copie ?",
+      "body": "Ta copie part au Betreuer. La notation prend ~3 min — tu peux continuer à naviguer en attendant.",
+      "cancel": "Continuer la rédaction",
+      "confirm": "Envoyer"
+    },
+    "submittedToast": "Reçu · ta correction arrive dans ~3 min",
+    "submitError": "Envoi impossible. Vérifie ta connexion.",
+    "errors": {
+      "offline": "Connexion échouée. Brouillon enregistré — réessaie.",
+      "tooShort": "Trop court — il faut au moins {{min}} mots.",
+      "tooLong": "Trop long — maximum {{max}} mots.",
+      "rateLimited": "Tu as déjà envoyé une rédaction aujourd'hui. Réessaie demain.",
+      "network": {
+        "message": "Connexion échouée. Brouillon enregistré — réessaie.",
+        "cta": "Réessayer"
+      },
+      "body_language_not_german": {
+        "message": "Pour que je puisse t'évaluer, écris ton texte en allemand. Ton brouillon est conservé.",
+        "cta": "Ouvrir le brouillon"
+      },
+      "rate_limit_exceeded": {
+        "message": "Tu as soumis beaucoup d'exercices. Réessaie dans {{minutes}} min.",
+        "messageFallback": "Tu as soumis beaucoup d'exercices. Réessaie un peu plus tard."
+      },
+      "idempotency_replay": {
+        "message": "Cette soumission a déjà été enregistrée — pas de duplicata.",
+        "cta": "Voir la correction"
+      },
+      "validation_failed": {
+        "message": "Ta soumission n'a pas pu être validée. Vérifie le contenu et réessaie.",
+        "cta": "Réessayer"
+      },
+      "server": {
+        "message": "Le serveur a un souci temporaire. Réessaie dans un instant.",
+        "cta": "Réessayer"
+      },
+      "unknown": {
+        "message": "Envoi impossible. Brouillon enregistré — réessaie.",
+        "cta": "Réessayer"
+      }
+    }
+  },
+  "feedback": {
+    "pending": "Notre grader analyse ta copie…",
+    "grading": "Correction en cours…",
+    "poll_exhausted": {
+      "title": "On vous prévient dès que c'est prêt",
+      "body": "La correction prend un peu plus de temps que prévu. Vous pouvez fermer l'app — on vous envoie une notification quand c'est terminé.",
+      "cta": "Fermer"
+    },
+    "failed": {
+      "title": "La correction a échoué",
+      "message": "On n'a pas pu noter ta copie. Réessaie.",
+      "retry": "Nouvelle tentative"
+    },
+    "promptHeader": "Consigne",
+    "teilLabel": "Schreiben Teil {{teil}}",
+    "textTitle": "Ton texte",
+    "prueferTitle": "Le Prüfer aurait écrit",
+    "betreuerTitle": "Le Betreuer te dit",
+    "scorecard": {
+      "totalLabel": "Total",
+      "moduleLabel": "Schreiben",
+      "unitLabel": "points",
+      "objectiveLabel": "Objectif"
+    },
+    "scoreOutOf100": "{{score}} / 100",
+    "legacyFormatNote": "Cette correction est dans l'ancien format.",
+    "retake": "Recommencer",
+    "backToHome": "Retour à l'accueil"
+  }
+}

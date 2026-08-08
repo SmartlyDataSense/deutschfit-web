@@ -1,0 +1,98 @@
+{
+  "actions": {
+    "continue": "Continuer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "skip": "Ignorer",
+    "save": "Enregistrer",
+    "retry": "Réessayer",
+    "submit": "Valider",
+    "close": "Fermer",
+    "done": "Terminé"
+  },
+  "status": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "offline": "Hors ligne",
+    "saved": "Enregistré"
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "Anglais"
+  },
+  "tabs": {
+    "accueil": "Accueil",
+    "apprendre": "Pratique",
+    "examen": "Examen",
+    "coach": "Betreuer",
+    "profil": "Profil"
+  },
+  "tabsA11y": {
+    "accueil": "Onglet Accueil",
+    "apprendre": "Onglet Pratique",
+    "examen": "Onglet Examen",
+    "coach": "Onglet Betreuer",
+    "profil": "Onglet Profil"
+  },
+  "offline": {
+    "banner": "Hors ligne — certaines fonctionnalités sont indisponibles"
+  },
+  "empty": {
+    "genericTitle": "Rien pour l'instant",
+    "genericBody": "Reviens bientôt — cette section est en cours de chargement."
+  },
+  "error": {
+    "genericTitle": "Une erreur est survenue",
+    "genericBody": "Vérifie ta connexion et réessaie."
+  },
+  "examBoards": {
+    "goethe": "Goethe",
+    "telc": "telc",
+    "oesd": "ÖSD",
+    "testdaf": "TestDaF",
+    "ecl": "ECL",
+    "pflege": "Pflege",
+    "beruf_tourismus": "Beruf / Tourisme"
+  },
+  "examLevels": {
+    "a1": "A1",
+    "a2": "A2",
+    "b1": "B1",
+    "b2": "B2",
+    "c1": "C1",
+    "c2": "C2"
+  },
+  "alignment": {
+    "official": "Barème officiel",
+    "partial": "Alignement partiel",
+    "approx": "Approximation CECRL"
+  },
+  "passStatus": {
+    "pass": "Réussi",
+    "fail": "À revoir"
+  },
+  "corrections": {
+    "title": "Corrections"
+  },
+  "coach": {
+    "title": "Retour du Betreuer"
+  },
+  "focus": {
+    "label": "Points à travailler"
+  },
+  "personalizedModel": {
+    "title": "Réponse modèle",
+    "subtitle": "Générée par IA à partir de ta réponse"
+  },
+  "moduleResult": {
+    "competencesTitle": "DÉTAIL PAR COMPÉTENCE",
+    "transcriptTitle": "VOTRE TRANSCRIPTION",
+    "verdictTitle": "✦ VERDICT DU BETREUER"
+  },
+  "disclaimer": {
+    "full": "DeutschFit est un outil de préparation aux examens. Les scores sont des estimations générées par IA et ne constituent pas des résultats officiels d'un organisme d'examen.",
+    "short": "Estimations IA — pas des résultats officiels."
+  }
+}

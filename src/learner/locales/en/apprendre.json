@@ -1,0 +1,93 @@
+{
+  "title": "Practice",
+  "subtitle": "Pick a skill.",
+  "cards": {
+    "schreiben": {
+      "title": "Schreiben",
+      "description": "Write an email in German and get detailed feedback."
+    },
+    "lesen": {
+      "title": "Lesen",
+      "description": "Reading comprehension exercises."
+    },
+    "sprachbausteine": {
+      "title": "Sprachbausteine",
+      "description": "Exam grammar and vocabulary, in context."
+    },
+    "hoeren": {
+      "title": "Hören",
+      "description": "Listening comprehension exercises."
+    },
+    "sprechen": {
+      "title": "Sprechen",
+      "description": "Practise your pronunciation."
+    },
+    "coach": {
+      "title": "Betreuer",
+      "description": "Ask the Betreuer your questions in German."
+    },
+    "srs": {
+      "title": "Revision",
+      "description": "Review your grammar and vocabulary flashcards due today."
+    }
+  },
+  "practice": {
+    "hubTitle": "Übungen",
+    "hubSubtitle": "Practice module by module, no timer.",
+    "rows": {
+      "lesen": "Lesen",
+      "sprachbausteine": "Sprachbausteine",
+      "hoeren": "Hören",
+      "schreiben": "Schreiben"
+    },
+    "chips": {
+      "done": "✓ Done",
+      "inProgress": "In progress {{locked}}/{{total}}",
+      "todo": "To do"
+    },
+    "emptyTitle": "No exercises here yet",
+    "emptyDescription": "Exercises for your exam are coming soon. Check back shortly!",
+    "unsupported": "Available for levels B1 and B2 for now.",
+    "picker": {
+      "subtitle": "Pick your Übungstest.",
+      "setLabel": "Übungstest {{n}}",
+      "errorTitle": "Couldn't load the Übungstests"
+    },
+    "session": {
+      "teilChip": "Teil {{number}}",
+      "progress": "{{locked}}/{{total}}",
+      "restart": "Restart",
+      "next": "Next",
+      "previous": "Previous",
+      "recapTitle": "Recap",
+      "recapScore": "{{correct}}/{{total}} correct answers",
+      "backToHub": "Back to exercises",
+      "pickerTitle": "Pick the right answer",
+      "errorTitle": "Couldn't load the exercise",
+      "retry": "Try again",
+      "loading": "Loading the exercise…",
+      "missingStem": "(Question coming in an upcoming content release.)"
+    },
+    "results": {
+      "empty": "No results available.",
+      "eyebrow": "Results · {{module}}",
+      "headline": "{{correct}} correct answers out of {{total}}",
+      "percentCorrect": "{{pct}}% correct",
+      "answered": "Answered",
+      "unanswered": "Unanswered",
+      "correct": "Correct",
+      "correctHelper": "out of {{total}}",
+      "accuracy": "Accuracy",
+      "accuracyHelper": "of the exercise",
+      "submission": "Submission",
+      "perTeil": "Per Teil",
+      "viewCorrections": "View corrections",
+      "back": "Back to exercises"
+    }
+  },
+  "comingSoon": "Bientôt disponible",
+  "retake": {
+    "title": "Retake your diagnostic",
+    "subtitle": "15 MCQ · ~12 min · refreshes your level"
+  }
+}

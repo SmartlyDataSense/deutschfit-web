@@ -1,0 +1,140 @@
+{
+  "greeting": {
+    "hi": "Hi, {{name}}",
+    "fallback": "there"
+  },
+  "dailyGoal": {
+    "title": "Today's goal",
+    "progress": "{{done}} / {{goal}} min"
+  },
+  "continue": {
+    "title": "Pick up where you left off",
+    "cta": "Continue"
+  },
+  "exam": {
+    "noDateSet": "No exam date set",
+    "countdownTapA11y": "View my performance history"
+  },
+  "today": "TODAY",
+  "hero": {
+    "teaserNoDate": "Set your exam date so we can shape your plan.",
+    "teaserWithDate": "{{count}} day until your {{level}} exam. Your Betreuer has prepared your plan.",
+    "teaserWithDate_one": "{{count}} day until your {{level}} exam. Your Betreuer has prepared your plan.",
+    "teaserWithDate_other": "{{count}} days until your {{level}} exam. Your Betreuer has prepared your plan.",
+    "teaserWithDateNoLevel": "{{count}} day until your exam. Your Betreuer has prepared your plan.",
+    "teaserWithDateNoLevel_one": "{{count}} day until your exam. Your Betreuer has prepared your plan.",
+    "teaserWithDateNoLevel_other": "{{count}} days until your exam. Your Betreuer has prepared your plan.",
+    "examDayTeaser": "It's the day. Your Betreuer is with you."
+  },
+  "examDatePicker": {
+    "label": "Set your exam date",
+    "openA11y": "Pick exam date",
+    "closeA11y": "Close calendar"
+  },
+  "status": {
+    "inflight": "Correcting your work… ⏱ ~1 min",
+    "inflightSlow": "Still correcting — taking a bit longer than usual. You can close, we'll let you know.",
+    "ready": "✓ Your result is ready. View →",
+    "failed": "We couldn't grade this one. Retry →",
+    "a11y": {
+      "inflight": "Correcting your work, about one minute.",
+      "inflightSlow": "Still correcting — taking a bit longer than usual. You can close the app, we'll notify you.",
+      "ready": "Your result is ready. Tap to view.",
+      "failed": "Grading failed. Tap to retry."
+    }
+  },
+  "dailyDrill": {
+    "priorityLabel": "Recommended",
+    "skill": "Grammar",
+    "title": "Your exercises for today",
+    "subtitle_one": "{{count}} point to strengthen",
+    "subtitle_other": "{{count}} points to strengthen",
+    "body": "Based on your recent exercises, your Betreuer has focused on what you can strengthen.",
+    "ctaLabel": "Start",
+    "duration": "≈ 5 min",
+    "loadingA11y": "Loading your exercises for today",
+    "empty": {
+      "title": "Nothing to review yet",
+      "body": "Finish an exercise and your Betreuer will prepare targeted revision for you.",
+      "ctaLabel": "Soon"
+    }
+  },
+  "miniCalendar": {
+    "title": "Pick your exam date",
+    "toastSuccess": "Exam date updated",
+    "toastError": "Couldn't save the date — please try again.",
+    "prevMonthA11y": "Previous month",
+    "nextMonthA11y": "Next month",
+    "openA11y": "Pick exam date",
+    "closeA11y": "Close calendar",
+    "dayA11y": "{{date}}",
+    "daysShort": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "monthsLong": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ]
+  },
+  "performanceHistory": {
+    "title": "Performance history",
+    "header": {
+      "backA11y": "Back to home"
+    },
+    "pinned": {
+      "header": "YOUR LEVEL",
+      "subtitle": "Diagnostic on {{date}}",
+      "subtitleNoDate": "Latest diagnostic",
+      "refaire": "Retake →",
+      "emptyBody": "You haven't taken a diagnostic yet.",
+      "emptyCta": "Start your diagnostic →"
+    },
+    "feed": {
+      "header": "YOUR EXERCISES",
+      "emptyBody": "You haven't completed any exercises yet.",
+      "emptyCta": "Start with a Sprachbausteine drill",
+      "emptyCtaPill": "Bientôt"
+    },
+    "kind": {
+      "schreiben": "Schreiben",
+      "sprechen": "Sprechen"
+    },
+    "row": {
+      "scoreLabel": "Score {{score}}/{{scoreMax}}",
+      "openA11y": "Open detail — {{kind}}, {{date}}, score {{score}} out of {{scoreMax}}"
+    },
+    "rejected": {
+      "pill": "Not assessed",
+      "subtitle": {
+        "languageNotGerman": "Recording not in German",
+        "tooShort": "Recording too short",
+        "generic": "No assessment"
+      },
+      "openA11y": "Open detail — {{kind}}, {{date}}, not assessed"
+    },
+    "error": {
+      "title": "Couldn't load your history",
+      "description": "Check your connection and try again.",
+      "retry": "Try again"
+    }
+  },
+  "randomSuggestion": {
+    "eyebrow": "TODAY'S SUGGESTION",
+    "title": "A card to review",
+    "cta": "Review this word",
+    "emptyTitle": "No suggestion yet",
+    "emptyBody": "Finish your diagnostic or run a few exercises to unlock personalised suggestions.",
+    "a11yPrefix": "Study suggestion"
+  },
+  "wip": "WIP — D10 design pass pending",
+  "wipA11y": "Placeholder screen. The final design lands with task D10.",
+  "comingSoon": "Bientôt disponible"
+}

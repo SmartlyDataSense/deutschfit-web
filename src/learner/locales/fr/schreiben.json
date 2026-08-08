@@ -1,0 +1,117 @@
+{
+  "editor": {
+    "skill": "Schreiben",
+    "overline": "{{skill}} · {{level}} · TEIL {{teil}}",
+    "overlineFallback": "SCHREIBEN",
+    "fallbackTitle": "Rédaction",
+    "taskOverline": "Aufgabe",
+    "wordPill": "{{count}} / {{min}}–{{max}} mots",
+    "wordPillNoMax": "{{count}} mots",
+    "draftA11y": "Zone de rédaction — tape ton texte en allemand.",
+    "previewA11y": "Aperçu annoté — touche un soulignement pour voir la correction.",
+    "submit": "Soumettre pour notation complète"
+  },
+  "bubble": {
+    "close": "Fermer"
+  },
+  "live": {
+    "overline": "Betreuer · En direct",
+    "structure": "Structure",
+    "connectors": "Connecteurs {{count}}/{{target}}",
+    "perfektMissing": "Perfekt manquant",
+    "repetition": "Répétition ×{{count}}",
+    "fallbackBanner": "Correction de secours · le Betreuer est momentanément indisponible."
+  },
+  "signal": {
+    "connector": "✓ Connecteur B2 ×{{count}}"
+  },
+  "editorCta": {
+    "type": "Tippen",
+    "paper": "Sur papier"
+  },
+  "handwritten": {
+    "permission": {
+      "title": "Accès à la caméra",
+      "body": "Pour photographier ta copie manuscrite, autorise DeutschFit à utiliser la caméra.",
+      "retry": "Demander l'accès",
+      "cancel": "Annuler"
+    },
+    "intro": {
+      "title": "Avant de photographier ta copie",
+      "tips": {
+        "frame": "Cadre toute la feuille dans l'image, sans bord coupé.",
+        "light": "Place-toi dans un endroit bien éclairé, sans ombre portée.",
+        "legible": "Vérifie que ton écriture est nette et bien lisible."
+      },
+      "cta": "Prendre la photo"
+    },
+    "caption": {
+      "ready": "Place ta feuille dans le cadre",
+      "captured": "Vérifie que le texte est bien lisible",
+      "uploading": "Envoi en cours…",
+      "error": "Quelque chose s'est mal passé"
+    },
+    "actions": {
+      "shutter": "Prendre la photo",
+      "retake": "Reprendre",
+      "use": "Utiliser cette photo",
+      "uploading": "Envoi…",
+      "cancel": "Annuler",
+      "retry": "Réessayer"
+    },
+    "errors": {
+      "notDeployed": "La notation des copies manuscrites arrive bientôt — la photo a été prise mais ne sera pas analysée pour l'instant.",
+      "uploadFailed": "L'envoi a échoué. Vérifie ta connexion et réessaie.",
+      "imageNotUploaded": "Ta photo n'a pas pu être transmise au serveur. Reprends la photo et réessaie.",
+      "idempotencyConflict": "Une demande de notation est déjà en cours pour cette copie. Patiente quelques secondes puis réessaie.",
+      "rateLimited": "Trop d'envois en peu de temps. Patiente un moment puis réessaie.",
+      "graderError": "La correction automatique est momentanément indisponible. Réessaie dans quelques minutes.",
+      "graderTimeout": "La correction a pris trop de temps. Réessaie.",
+      "regradeLimitExceeded": "Tu as déjà repris cette copie trois fois. Reviens à tes résultats ou démarre un nouvel exercice.",
+      "generic": "Une erreur est survenue. Réessaie."
+    },
+    "review": {
+      "loading": "Lecture de ton écriture…",
+      "caption": "Voici ce que nous avons lu sur ta feuille",
+      "previewA11y": "Touche pour zoomer sur ta photo",
+      "previewMissing": "L'aperçu photo n'est pas disponible. Ta transcription reste lisible ci-dessous.",
+      "transcriptionA11y": "Transcription de ta copie — lecture seule.",
+      "wordPill": "{{count}} / {{min}}–{{max}} mots",
+      "actions": {
+        "retake": "Reprendre une photo",
+        "retry": "Réessayer",
+        "confirm": "Confirmer et voir ma correction"
+      },
+      "errors": {
+        "fetchTitle": "Transcription indisponible",
+        "fetchBody": "La transcription n'a pas pu être chargée. Vérifie ta connexion et réessaie.",
+        "notDeployed": "La relecture automatique arrive bientôt. Patiente puis reviens consulter ta correction.",
+        "generic": "Une erreur est survenue. Réessaie."
+      },
+      "unreadable": {
+        "title": "Ta photo n'a pas pu être lue",
+        "body": "On n'a pas reconnu de texte allemand manuscrit sur ta photo. Vérifie que la feuille est bien éclairée, nette, et que tu photographies bien ton écriture à la main — pas un écran ni un texte tapé.",
+        "retake": "Reprendre une photo"
+      },
+      "failed": {
+        "title": "On n'a pas pu corriger ta copie",
+        "body": "Un souci côté correction nous empêche de noter ta copie pour l'instant. Tu peux reprendre une photo ou réessayer dans quelques minutes.",
+        "retake": "Reprendre une photo"
+      },
+      "offTopic": {
+        "title": "Réponse hors-sujet — on a quand même corrigé ton texte.",
+        "body": "Ta copie ne traite pas la consigne, mais ton allemand reste utile : voici ce que tu as écrit, tes notes par dimension et les corrections. Reprends quand tu veux pour t'entraîner sur le bon format."
+      },
+      "rubric": {
+        "heading": "Notes par dimension",
+        "erfuellung": "Erfüllung",
+        "kohaerenz": "Kohärenz",
+        "strukturen": "Strukturen",
+        "wortschatz": "Wortschatz"
+      },
+      "corrections": {
+        "heading": "Corrections"
+      }
+    }
+  }
+}

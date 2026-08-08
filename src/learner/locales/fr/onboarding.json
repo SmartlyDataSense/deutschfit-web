@@ -1,0 +1,136 @@
+{
+  "progress": "Étape {{current}} sur {{total}}",
+  "skip": "Ignorer",
+  "continue": "Continuer",
+  "saveWarning": "Tes réponses n'ont pas été enregistrées. Tu pourras les ajuster dans les Paramètres.",
+  "welcome": {
+    "brand": "DeutschFit",
+    "eyebrow": "BIENVENUE",
+    "titleLead": "L'allemand, ",
+    "titleItalic": "mit Plan.",
+    "body": "DeutschFit te prépare à ton examen d'allemand, du A1 au C2. Un test rapide, un plan, du progrès chaque jour.",
+    "teaserEyebrow": "BETREUER · PLAN B2",
+    "teaserTitle": "63 jours · 25 min / jour",
+    "teaserProgress": "20%",
+    "teaserGoal": "Objectif 80",
+    "cta": "Démarrer mon diagnostic →",
+    "ctaCaption": "4 min · adaptatif · gratuit"
+  },
+  "diagnostic": {
+    "eyebrow": "QUESTION {{current}} / {{total}} · {{timer}}",
+    "title": "Diagnostic adaptatif",
+    "category": "B1 · Grammar",
+    "questionLead": "Welcher Satz ist ",
+    "questionItalic": "korrekt",
+    "questionTrail": "?",
+    "options": {
+      "a": "Ich weiß, dass er kommt morgen.",
+      "b": "Ich weiß, dass er morgen kommt.",
+      "c": "Ich weiß, dass er kommt morgen nicht.",
+      "d": "Ich weiß, er morgen dass kommt."
+    },
+    "section": {
+      "lesen": "Lesen",
+      "sprachbausteine": "Sprachbausteine",
+      "wortschatz": "Wortschatz"
+    },
+    "loading": "Préparation du diagnostic…",
+    "loadError": "Impossible de charger le diagnostic. Vérifie ta connexion.",
+    "note": "› La difficulté s'adapte · sans chrono caché",
+    "cta": "Valider ma réponse →",
+    "submitError": "Échec de l'envoi — vérifie ta connexion puis réessaie.",
+    "retryCta": "Réessayer l'envoi",
+    "skipCta": "Terminer plus tard"
+  },
+  "diagnosticResult": {
+    "levelEyebrow": "Niveau geschätzt",
+    "tierSuffix": {
+      "fast-b2": "fast B2",
+      "solide": "solide {{level}}",
+      "debutant": "débutant {{level}}"
+    },
+    "cefrCopy": {
+      "b1_0": "Tu démarres ton B1. Les bases sont là, on muscle la régularité.",
+      "b1_1": "Tu lis et comprends l'allemand quotidien. Le B1 te tend les bras.",
+      "b1_2": "Tu maîtrises le B1 et tu pousses vers le B2 — on accélère sur la production.",
+      "b2_0": "Tu débutes le B2. La compréhension est solide, on travaille la nuance.",
+      "b2_1": "Tu es solide en B2. On peaufine pour viser le 80/100.",
+      "b2_2": "Tu frôles le C1. On polit les détails fins.",
+      "b1": "Tu lis et comprends l'allemand quotidien. Le B1 te tend les bras.",
+      "b2": "Tu es à l'aise en B2 — on prépare un score solide à l'examen.",
+      "fallback": "Voici ton niveau estimé."
+    },
+    "bySection": "Par section",
+    "total": "{{score}} / {{outOf}} · {{clock}}",
+    "clock": "{{minutes}} min {{seconds}} s",
+    "weaknesses": "Où tu perds des points",
+    "weaknessCount_one": "{{count}} erreur sur {{outOf}}",
+    "weaknessCount_other": "{{count}} erreurs sur {{outOf}}",
+    "tagLabel": {
+      "wortstellung": "Word-order in subordinate clauses",
+      "präposition": "Choix de prépositions",
+      "konjugation": "Conjugaison & temps verbaux",
+      "kollokation": "Faux-amis & collocations",
+      "wortschatz": "Vocabulaire ciblé",
+      "leseverstehen": "Compréhension écrite"
+    },
+    "howWeWillHelp": "Comment DeutschFit va te faire passer B2",
+    "cta": {
+      "soon": "Bientôt",
+      "drillSprachbausteine": {
+        "title": "Drill Sprachbausteine",
+        "subtitle": "120 questions ciblées — exercices courts, feedback immédiat."
+      },
+      "lesenTeil4": {
+        "title": "Module Lesen Teil 4",
+        "subtitle": "Méthode pas-à-pas pour la partie la plus piégeuse du Lesen."
+      },
+      "schreibenApercu": {
+        "title": "Aperçu Schreiben + Betreuer",
+        "subtitle": "Rédige une lettre type · feedback personnalisé en moins d'une minute."
+      }
+    },
+    "review": {
+      "toggle": "Revoir mes 15 réponses",
+      "questionLabel": "Question {{index}}",
+      "yourAnswer": "Ta réponse : {{option}}",
+      "correctAnswer": "Bonne réponse : {{option}}",
+      "noAnswer": "—"
+    },
+    "footer": "Ce diagnostic couvre Lesen, Sprachbausteine et Wortschatz. Hören et Schreiben arrivent en v0.1.",
+    "empty": "Aucun résultat à afficher. Lance un diagnostic pour voir ton niveau."
+  },
+  "exam": {
+    "title": "Quel examen prépares-tu ?",
+    "subtitle": "Nous adapterons les exercices et l'accompagnement à ton parcours.",
+    "boardLabel": "Examen",
+    "levelLabel": "Niveau CECR",
+    "boardPlaceholder": "Choisis un examen",
+    "levelPlaceholder": "Choisis un niveau",
+    "saveError": "Échec de l'enregistrement — vérifie ta connexion puis réessaie."
+  },
+  "motivation": {
+    "title": "Pourquoi apprends-tu l'allemand ?",
+    "options": {
+      "travel": "Voyage",
+      "work": "Travail",
+      "studies": "Études",
+      "immigration": "Immigration",
+      "other": "Autre"
+    }
+  },
+  "schedule": {
+    "title": "Combien de minutes par jour ?",
+    "options": {
+      "5": "5 min",
+      "10": "10 min",
+      "20": "20 min",
+      "30": "30 min",
+      "45": "45 min",
+      "60": "60 min"
+    },
+    "caveat": {
+      "intensif": "Rythme intensif — réserve-le si tu as un examen proche."
+    }
+  }
+}

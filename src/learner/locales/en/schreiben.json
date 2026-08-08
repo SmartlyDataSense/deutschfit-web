@@ -1,0 +1,117 @@
+{
+  "editor": {
+    "skill": "Schreiben",
+    "overline": "{{skill}} · {{level}} · TEIL {{teil}}",
+    "overlineFallback": "SCHREIBEN",
+    "fallbackTitle": "Writing",
+    "taskOverline": "Aufgabe",
+    "wordPill": "{{count}} / {{min}}–{{max}} words",
+    "wordPillNoMax": "{{count}} words",
+    "draftA11y": "Writing area — type your text in German.",
+    "previewA11y": "Annotated preview — tap an underline to see the correction.",
+    "submit": "Submit for full grading"
+  },
+  "bubble": {
+    "close": "Close"
+  },
+  "live": {
+    "overline": "Betreuer · Live",
+    "structure": "Structure",
+    "connectors": "Connectors {{count}}/{{target}}",
+    "perfektMissing": "Perfekt missing",
+    "repetition": "Repetition ×{{count}}",
+    "fallbackBanner": "Fallback corrections · the Betreuer is temporarily unavailable."
+  },
+  "signal": {
+    "connector": "✓ B2 connector ×{{count}}"
+  },
+  "editorCta": {
+    "type": "Type",
+    "paper": "Write on paper"
+  },
+  "handwritten": {
+    "permission": {
+      "title": "Camera access",
+      "body": "To photograph your handwritten answer, let DeutschFit use the camera.",
+      "retry": "Request access",
+      "cancel": "Cancel"
+    },
+    "intro": {
+      "title": "Before you photograph your sheet",
+      "tips": {
+        "frame": "Fit the whole sheet in frame, with no edge cut off.",
+        "light": "Find a well-lit spot with no shadow across the page.",
+        "legible": "Check that your handwriting is sharp and easy to read."
+      },
+      "cta": "Take photo"
+    },
+    "caption": {
+      "ready": "Fit your sheet inside the frame",
+      "captured": "Check that the text is sharp",
+      "uploading": "Uploading…",
+      "error": "Something went wrong"
+    },
+    "actions": {
+      "shutter": "Take photo",
+      "retake": "Retake",
+      "use": "Use photo",
+      "uploading": "Uploading…",
+      "cancel": "Cancel",
+      "retry": "Try again"
+    },
+    "errors": {
+      "notDeployed": "Handwritten grading is coming soon — your photo was captured but won't be analysed for now.",
+      "uploadFailed": "Upload failed. Check your connection and try again.",
+      "imageNotUploaded": "Your photo couldn't be sent to the server. Retake the photo and try again.",
+      "idempotencyConflict": "A grading request is already in flight for this submission. Wait a few seconds and try again.",
+      "rateLimited": "Too many submissions in a short period. Wait a moment and try again.",
+      "graderError": "Automatic grading is temporarily unavailable. Try again in a few minutes.",
+      "graderTimeout": "Grading took too long. Try again.",
+      "regradeLimitExceeded": "You've already retried this submission three times. Head back to your results or start a new exercise.",
+      "generic": "Something went wrong. Try again."
+    },
+    "review": {
+      "loading": "Reading your handwriting…",
+      "caption": "Here's what we read on your sheet",
+      "previewA11y": "Tap to zoom your captured photo",
+      "previewMissing": "Photo preview is unavailable. Your transcription is still readable below.",
+      "transcriptionA11y": "Transcription of your sheet — read-only.",
+      "wordPill": "{{count}} / {{min}}–{{max}} words",
+      "actions": {
+        "retake": "Retake photo",
+        "retry": "Try again",
+        "confirm": "Confirm and see my correction"
+      },
+      "errors": {
+        "fetchTitle": "Transcription unavailable",
+        "fetchBody": "We couldn't load the transcription. Check your connection and try again.",
+        "notDeployed": "Automatic re-reading is coming soon. Hang tight and check back for your correction.",
+        "generic": "Something went wrong. Try again."
+      },
+      "unreadable": {
+        "title": "We couldn't read your photo",
+        "body": "We didn't find any handwritten German on your photo. Make sure the sheet is well lit and sharp, and that you're photographing your handwriting — not a screen or typed text.",
+        "retake": "Retake photo"
+      },
+      "failed": {
+        "title": "We couldn't grade your submission",
+        "body": "Something went wrong on the grading side. You can retake a photo or try again in a few minutes.",
+        "retake": "Retake photo"
+      },
+      "offTopic": {
+        "title": "Off-topic answer — we still graded your text.",
+        "body": "Your draft doesn't address the prompt, but your German is still useful: here's what you wrote, your dimension scores and corrections. Retry whenever you want to practise on the right format."
+      },
+      "rubric": {
+        "heading": "Dimension scores",
+        "erfuellung": "Erfüllung",
+        "kohaerenz": "Kohärenz",
+        "strukturen": "Strukturen",
+        "wortschatz": "Wortschatz"
+      },
+      "corrections": {
+        "heading": "Corrections"
+      }
+    }
+  }
+}

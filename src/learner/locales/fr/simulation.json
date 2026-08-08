@@ -1,0 +1,29 @@
+{
+  "topBar": {
+    "back": "Retour"
+  },
+  "question": {
+    "overline": "Question {{current}} / {{total}}",
+    "stemFallback": "(Énoncé à venir dans une prochaine version du corpus.)"
+  },
+  "stimulus": {
+    "fallback": "(Texte à venir dans une prochaine version du corpus.)"
+  },
+  "footer": {
+    "mark": "Marquer",
+    "unmark": "Marqué",
+    "next": "Question suivante",
+    "submit": "Abgeben"
+  },
+  "empty": "Aucune question dans cette simulation.",
+  "offline": {
+    "banner": "Hors ligne — la soumission de l'examen reprendra dès que la connexion sera rétablie."
+  },
+  "submit": {
+    "error": "Impossible d'envoyer l'examen. Vérifie ta connexion et réessaie."
+  },
+  "unsupportedDrill": {
+    "title": "Bientôt disponible",
+    "body": "Ce mode arrive bientôt pour ce module."
+  }
+}

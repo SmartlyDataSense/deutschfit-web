@@ -1,0 +1,29 @@
+{
+  "media": {
+    "loading": "Loading image…",
+    "unavailable": {
+      "title": "Image not available",
+      "subtitle": "This item is used in text-only mode."
+    },
+    "error": {
+      "title": "Image unavailable",
+      "subtitle": "Could not load the image. You can still answer without it."
+    },
+    "caption": {
+      "default": "Exercise illustration",
+      "promptsPage": "Situations 13–19 (prompts page)",
+      "adsPage": "Ads A–J (ads page)",
+      "t1Plan": "Teil 1 — Plan together (task box)",
+      "slides12": "Slide 1 + Slide 2",
+      "folie3": "Slide 3",
+      "folie4": "Slide 4",
+      "folie5": "Slide 5"
+    },
+    "a11y": {
+      "label": "Exercise image: {{caption}} (reference: {{slug}})",
+      "loading": "Loading image",
+      "error": "Failed to load image {{slug}}",
+      "unavailable": "Image {{slug}} is not available at the moment"
+    }
+  }
+}

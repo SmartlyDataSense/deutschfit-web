@@ -1,0 +1,140 @@
+{
+  "greeting": {
+    "hi": "Bonjour, {{name}}",
+    "fallback": "toi"
+  },
+  "dailyGoal": {
+    "title": "Objectif du jour",
+    "progress": "{{done}} / {{goal}} min"
+  },
+  "continue": {
+    "title": "Reprends là où tu t'étais arrêté·e",
+    "cta": "Continuer"
+  },
+  "exam": {
+    "noDateSet": "Aucune date d'examen",
+    "countdownTapA11y": "Voir l'historique de mes performances"
+  },
+  "today": "AUJOURD'HUI",
+  "hero": {
+    "teaserNoDate": "Fixe ta date d'examen pour caler ton plan.",
+    "teaserWithDate": "Plus que {{count}} jour avant ton examen {{level}}. Ton Betreuer a préparé ton plan.",
+    "teaserWithDate_one": "Plus que {{count}} jour avant ton examen {{level}}. Ton Betreuer a préparé ton plan.",
+    "teaserWithDate_other": "Plus que {{count}} jours avant ton examen {{level}}. Ton Betreuer a préparé ton plan.",
+    "teaserWithDateNoLevel": "Plus que {{count}} jour avant ton examen. Ton Betreuer a préparé ton plan.",
+    "teaserWithDateNoLevel_one": "Plus que {{count}} jour avant ton examen. Ton Betreuer a préparé ton plan.",
+    "teaserWithDateNoLevel_other": "Plus que {{count}} jours avant ton examen. Ton Betreuer a préparé ton plan.",
+    "examDayTeaser": "C'est le jour J. Ton Betreuer est avec toi."
+  },
+  "examDatePicker": {
+    "label": "Fixe ta date d'examen",
+    "openA11y": "Choisir la date de l'examen",
+    "closeA11y": "Fermer le calendrier"
+  },
+  "status": {
+    "inflight": "On corrige ton expression… ⏱ ~1 min",
+    "inflightSlow": "On corrige ton expression — prend un peu plus de temps que d'habitude. Tu peux fermer, on te prévient.",
+    "ready": "✓ Ton résultat est prêt. Voir →",
+    "failed": "On n'a pas pu corriger cette fois. Réessayer →",
+    "a11y": {
+      "inflight": "Correction en cours, environ une minute.",
+      "inflightSlow": "Correction en cours, prend un peu plus de temps que d'habitude. Tu peux fermer l'application, on te prévient.",
+      "ready": "Ton résultat est prêt. Appuie pour le voir.",
+      "failed": "La correction a échoué. Appuie pour réessayer."
+    }
+  },
+  "dailyDrill": {
+    "priorityLabel": "Recommandé",
+    "skill": "Grammaire",
+    "title": "Tes exercices du jour",
+    "subtitle_one": "{{count}} point à renforcer",
+    "subtitle_other": "{{count}} points à renforcer",
+    "body": "D'après tes derniers exercices, ton Betreuer a ciblé ce que tu peux renforcer.",
+    "ctaLabel": "Commencer",
+    "duration": "≈ 5 min",
+    "loadingA11y": "Chargement de tes exercices du jour",
+    "empty": {
+      "title": "Rien à réviser pour l'instant",
+      "body": "Termine un exercice et ton Betreuer te préparera des révisions ciblées.",
+      "ctaLabel": "Bientôt"
+    }
+  },
+  "miniCalendar": {
+    "title": "Choisis la date de ton examen",
+    "toastSuccess": "Date d'examen enregistrée",
+    "toastError": "Impossible d'enregistrer la date — réessaie.",
+    "prevMonthA11y": "Mois précédent",
+    "nextMonthA11y": "Mois suivant",
+    "openA11y": "Choisir la date de l'examen",
+    "closeA11y": "Fermer le calendrier",
+    "dayA11y": "{{date}}",
+    "daysShort": ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"],
+    "monthsLong": [
+      "janvier",
+      "février",
+      "mars",
+      "avril",
+      "mai",
+      "juin",
+      "juillet",
+      "août",
+      "septembre",
+      "octobre",
+      "novembre",
+      "décembre"
+    ]
+  },
+  "performanceHistory": {
+    "title": "Mon historique",
+    "header": {
+      "backA11y": "Retour à l'accueil"
+    },
+    "pinned": {
+      "header": "TON NIVEAU",
+      "subtitle": "Diagnostic du {{date}}",
+      "subtitleNoDate": "Dernier diagnostic",
+      "refaire": "Refaire →",
+      "emptyBody": "Tu n'as pas encore fait de diagnostic.",
+      "emptyCta": "Démarre ton diagnostic →"
+    },
+    "feed": {
+      "header": "TES EXERCICES",
+      "emptyBody": "Tu n'as encore fait aucun exercice.",
+      "emptyCta": "Commence par un drill Sprachbausteine",
+      "emptyCtaPill": "Bientôt"
+    },
+    "kind": {
+      "schreiben": "Schreiben",
+      "sprechen": "Sprechen"
+    },
+    "row": {
+      "scoreLabel": "Score {{score}}/{{scoreMax}}",
+      "openA11y": "Ouvrir le détail — {{kind}}, {{date}}, score {{score}} sur {{scoreMax}}"
+    },
+    "rejected": {
+      "pill": "Non évaluée",
+      "subtitle": {
+        "languageNotGerman": "Enregistrement non allemand",
+        "tooShort": "Enregistrement trop court",
+        "generic": "Aucune évaluation"
+      },
+      "openA11y": "Ouvrir le détail — {{kind}}, {{date}}, non évaluée"
+    },
+    "error": {
+      "title": "Impossible de charger l'historique",
+      "description": "Vérifie ta connexion et réessaie.",
+      "retry": "Réessayer"
+    }
+  },
+  "randomSuggestion": {
+    "eyebrow": "SUGGESTION DU JOUR",
+    "title": "Une carte à réviser",
+    "cta": "Réviser ce mot",
+    "emptyTitle": "Pas encore de suggestion",
+    "emptyBody": "Termine ton diagnostic ou enchaîne quelques exercices pour débloquer des suggestions personnalisées.",
+    "a11yPrefix": "Suggestion d'étude"
+  },
+  "wip": "WIP — design pass D10 à venir",
+  "wipA11y": "Écran provisoire. Le design final arrive avec la tâche D10.",
+  "comingSoon": "Bientôt disponible"
+}

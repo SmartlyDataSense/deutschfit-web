@@ -1,0 +1,16 @@
+{
+  "skillProfile": {
+    "eyebrow": "My skills",
+    "title": "Where you stand",
+    "intro": "Your skills sorted by how well you've mastered them.",
+    "bucket": {
+      "not_assessed": "Not assessed yet",
+      "renforcer": "Needs work",
+      "progres": "In progress",
+      "maitrise": "Mastered"
+    },
+    "cta": "Start a session",
+    "empty": "Do a first session to see your skills here.",
+    "error": "Couldn't load your skills right now."
+  }
+}

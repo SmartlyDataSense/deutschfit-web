@@ -1,0 +1,29 @@
+{
+  "media": {
+    "loading": "Chargement de l'image…",
+    "unavailable": {
+      "title": "Image non disponible",
+      "subtitle": "Cet item s'utilise en version texte uniquement."
+    },
+    "error": {
+      "title": "Image indisponible",
+      "subtitle": "Impossible de charger l'image. Vous pouvez répondre sans."
+    },
+    "caption": {
+      "default": "Illustration de l'exercice",
+      "promptsPage": "Situations 13–19 (page des consignes)",
+      "adsPage": "Annonces A–J (page des annonces)",
+      "t1Plan": "Teil 1 — Planifier ensemble (encadré)",
+      "slides12": "Folie 1 + Folie 2",
+      "folie3": "Folie 3",
+      "folie4": "Folie 4",
+      "folie5": "Folie 5"
+    },
+    "a11y": {
+      "label": "Image de l'exercice : {{caption}} (référence : {{slug}})",
+      "loading": "Chargement de l'image en cours",
+      "error": "Échec du chargement de l'image {{slug}}",
+      "unavailable": "Image {{slug}} non disponible pour le moment"
+    }
+  }
+}

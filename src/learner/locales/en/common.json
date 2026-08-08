@@ -1,0 +1,98 @@
+{
+  "actions": {
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip",
+    "save": "Save",
+    "retry": "Try again",
+    "submit": "Submit",
+    "close": "Close",
+    "done": "Done"
+  },
+  "status": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "offline": "Offline",
+    "saved": "Saved"
+  },
+  "languages": {
+    "fr": "French",
+    "en": "English"
+  },
+  "tabs": {
+    "accueil": "Home",
+    "apprendre": "Practice",
+    "examen": "Exam",
+    "coach": "Betreuer",
+    "profil": "Profile"
+  },
+  "tabsA11y": {
+    "accueil": "Home tab",
+    "apprendre": "Practice tab",
+    "examen": "Exam tab",
+    "coach": "Betreuer tab",
+    "profil": "Profile tab"
+  },
+  "offline": {
+    "banner": "Offline — some features unavailable"
+  },
+  "empty": {
+    "genericTitle": "Nothing here yet",
+    "genericBody": "Come back soon — we're still loading this section."
+  },
+  "error": {
+    "genericTitle": "Something went wrong",
+    "genericBody": "Check your connection and try again."
+  },
+  "examBoards": {
+    "goethe": "Goethe",
+    "telc": "telc",
+    "oesd": "ÖSD",
+    "testdaf": "TestDaF",
+    "ecl": "ECL",
+    "pflege": "Pflege (healthcare)",
+    "beruf_tourismus": "Vocational / Tourism"
+  },
+  "examLevels": {
+    "a1": "A1",
+    "a2": "A2",
+    "b1": "B1",
+    "b2": "B2",
+    "c1": "C1",
+    "c2": "C2"
+  },
+  "alignment": {
+    "official": "Official rubric",
+    "partial": "Partial alignment",
+    "approx": "CEFR approximation"
+  },
+  "passStatus": {
+    "pass": "Passed",
+    "fail": "Needs review"
+  },
+  "corrections": {
+    "title": "Corrections"
+  },
+  "coach": {
+    "title": "Betreuer feedback"
+  },
+  "focus": {
+    "label": "Focus areas"
+  },
+  "personalizedModel": {
+    "title": "Model answer",
+    "subtitle": "AI-generated based on your response"
+  },
+  "moduleResult": {
+    "competencesTitle": "SKILL BREAKDOWN",
+    "transcriptTitle": "YOUR TRANSCRIPT",
+    "verdictTitle": "✦ BETREUER'S VERDICT"
+  },
+  "disclaimer": {
+    "full": "DeutschFit is an exam preparation tool. Scores are AI-generated estimates and do not constitute official results from any examining body.",
+    "short": "AI estimates — not official results."
+  }
+}

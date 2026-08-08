@@ -1,0 +1,198 @@
+{
+  "home": {
+    "title": "Betreuer",
+    "subtitle": "Pose une question à ton Betreuer, demande un exercice ou un retour.",
+    "startTitle": "Nouvelle conversation",
+    "startMeta": "Lance un échange avec ton Betreuer.",
+    "startA11y": "Démarrer une nouvelle conversation avec le Betreuer"
+  },
+  "hub": {
+    "eyebrow": "Betreuer",
+    "titleLead": "Que veux-tu",
+    "titleAccent": "travailler",
+    "titleTrail": "aujourd'hui ?",
+    "subtitle": "Choisis un mode. Chacun reprend tes points faibles repérés dans tes expressions.",
+    "available": "Disponible",
+    "comingSoon": "À venir",
+    "tiles": {
+      "discuter": {
+        "title": "Discuter",
+        "description": "Pose une question, échange librement"
+      },
+      "exercices": {
+        "title": "Exercices ciblés",
+        "description": "Tes points à renforcer, en court"
+      },
+      "correction": {
+        "title": "Comprendre une correction",
+        "description": "Reprends une copie, ligne par ligne"
+      },
+      "oral": {
+        "title": "Entraînement à l'oral guidé",
+        "description": "Conversation guidée, à ton rythme"
+      }
+    }
+  },
+  "correction": {
+    "picker": {
+      "title": "Comprendre une correction",
+      "subtitle": "Reprends une copie corrigée, ligne par ligne.",
+      "backA11y": "Retour",
+      "empty": {
+        "title": "Aucune copie corrigée",
+        "body": "Termine une expression écrite ou orale — sa correction apparaîtra ici."
+      },
+      "error": {
+        "title": "Chargement impossible",
+        "body": "Vérifie ta connexion, puis réessaie."
+      },
+      "retryCta": "Réessayer",
+      "loadMoreCta": "Voir plus",
+      "rowA11y": "Ouvrir la correction du {{date}}"
+    },
+    "walkthrough": {
+      "backA11y": "Retour",
+      "title": "Comprendre une correction",
+      "scoreLabel": "Note globale",
+      "bands": {
+        "solide": "Solide",
+        "proche_du_seuil": "Proche du seuil",
+        "a_retravailler": "À retravailler"
+      },
+      "dimensionScoreLabel": "{{score}} / 100",
+      "examinerLabel": "Examinateur · DE",
+      "betreuerLabel": "✦ Betreuer · FR",
+      "transcriptHint": "Touche un passage souligné pour voir la note.",
+      "diffLegend": {
+        "removed": "À corriger",
+        "added": "Proposition"
+      },
+      "drillCta": "Travailler ce point",
+      "drillCtaA11y": "Lancer un drill sur {{dimension}}",
+      "error": {
+        "title": "Correction indisponible",
+        "body": "Cette copie n'a pas pu être chargée. Réessaie plus tard."
+      }
+    },
+    "dimensions": {
+      "aufgabe": {
+        "name": "Tâche",
+        "blurb": "Ce que l'examinateur attend du contenu."
+      },
+      "kohaerenz": {
+        "name": "Cohérence",
+        "blurb": "L'enchaînement clair des idées."
+      },
+      "wortschatz": {
+        "name": "Vocabulaire",
+        "blurb": "La richesse et la justesse des mots."
+      },
+      "grammatik": {
+        "name": "Grammaire",
+        "blurb": "La correction des structures."
+      },
+      "aussprache": { "name": "Prononciation", "blurb": "La clarté à l'oral." },
+      "erfuellung": {
+        "name": "Réalisation",
+        "blurb": "La couverture de la consigne."
+      },
+      "strukturen": {
+        "name": "Structures",
+        "blurb": "La maîtrise des constructions écrites."
+      }
+    }
+  },
+  "chat": {
+    "title": "Betreuer",
+    "subtitle": "Pose ta question.",
+    "subtitleSending": "Le Betreuer réfléchit…",
+    "backA11y": "Retour",
+    "overflowA11y": "Options de la conversation",
+    "header": {
+      "title": "Betreuer",
+      "subtitle": "Calibré sur votre B2 · 63j",
+      "avatarInitials": "IA"
+    },
+    "scripted": {
+      "coachOpener": "Bonjour ! Je suis ton Betreuer. Pose-moi tes questions ou demande un exercice ciblé sur tes points faibles.",
+      "observation": {
+        "overline": "Observation IA",
+        "body": "Vous utilisez 'und' 11 fois en 3 min. En B2, les correcteurs attendent de la variété :",
+        "connectors": ["außerdem", "trotzdem", "deshalb", "obwohl"]
+      }
+    },
+    "empty": {
+      "title": "Commence une conversation",
+      "body": "Écris ta première question — le Betreuer te répondra en quelques secondes."
+    },
+    "composer": {
+      "placeholder": "Écris au Betreuer…",
+      "sendA11y": "Envoyer le message",
+      "inputA11y": "Message pour le Betreuer"
+    },
+    "errors": {
+      "coach_empty_request": "Écris un message avant d'envoyer.",
+      "coach_send_failed": "Envoi impossible. Réessaie.",
+      "coach_empty_response": "Réponse vide du Betreuer. Réessaie.",
+      "coach_malformed_response": "Réponse vide du Betreuer. Réessaie.",
+      "coach_transport_failed": "Betreuer injoignable. Vérifie ta connexion.",
+      "coach_service_unavailable": "Le Betreuer est indisponible pour l'instant. Réessaie dans un instant.",
+      "coach_server_error": "Une erreur est survenue. Réessaie.",
+      "coach_rate_limited": "Trop de messages d'affilée. Réessaie dans {{seconds}} s.",
+      "coach_offline": "Tu es hors ligne. Reconnecte-toi pour discuter avec le Betreuer.",
+      "coach_unauthorized": "Ta session a expiré — reconnecte-toi.",
+      "coach_forbidden": "Accès au Betreuer indisponible pour le moment.",
+      "coach_profile_incomplete": "Complète ton profil (niveau + examen) pour discuter avec le Betreuer."
+    },
+    "fallbackBanner": "Connecte-toi pour l'analyse · retour scripté en attendant."
+  },
+  "drills": {
+    "startCta": {
+      "title": "Mini-drill · 4 min",
+      "subtitle": "Enchaîne 4 phrases avec le bon connecteur.",
+      "buttonLabel": "Démarrer le drill"
+    },
+    "header": {
+      "title": "Betreuer",
+      "subtitle": "Drill ciblé · connecteurs",
+      "avatarInitials": "IA",
+      "backA11y": "Retour",
+      "closeA11y": "Quitter le drill"
+    },
+    "progressLabel": "Drill",
+    "card": {
+      "overline": "Drill · connecteur",
+      "explanationLabel": "Pourquoi",
+      "optionA11yPrefix": "Choisir"
+    },
+    "feedback": {
+      "correct": "Richtig ! Bon connecteur.",
+      "wrong": "Pas tout à fait — la bonne réponse est {{answer}}."
+    },
+    "tally": "{{correct}} / {{total}} corrects",
+    "continueCta": "Continuer",
+    "submitCta": "Choisis une option",
+    "finishCta": "Terminer",
+    "fallback": "Drill terminé.",
+    "summary": {
+      "overline": "Terminé",
+      "tally": "{{correct}} / {{total}} korrekt",
+      "signoffPerfect": "Parfait — tu maîtrises ces connecteurs. On passe à la suite ?",
+      "signoffGood": "Super progrès ! On garde le rythme demain ?",
+      "signoffPractice": "On reprendra ces connecteurs demain — à bientôt !",
+      "returnCta": "Retour au Betreuer"
+    }
+  },
+  "sideMenu": {
+    "title": "Conversations",
+    "empty": "Pas encore de conversation",
+    "closeA11y": "Fermer les conversations",
+    "newConversation": "Nouvelle conversation",
+    "newConversationA11y": "Démarrer une nouvelle conversation"
+  },
+  "threadHeader": {
+    "menuA11y": "Voir les conversations",
+    "online": "En ligne",
+    "offline": "Hors ligne"
+  }
+}

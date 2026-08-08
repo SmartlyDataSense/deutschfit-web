@@ -52,6 +52,20 @@ const ibmPlexMono = localFont({
   display: "swap",
 });
 
+// Source Serif 4 — learner surface only. Registered app-wide (so the CSS
+// variable is always available), but nothing outside `(learner)/app/` may
+// consume `--font-source-serif` / `--font-serif-learner`. Marketing pages
+// keep using `--font-playfair` (`--font-display`) — do not touch that.
+const sourceSerif = localFont({
+  src: [
+    { path: "../../../public/fonts/SourceSerif4-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../../../public/fonts/SourceSerif4-Semibold.ttf", weight: "600", style: "normal" },
+    { path: "../../../public/fonts/SourceSerif4-Bold.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-source-serif",
+  display: "swap",
+});
+
 // Used to resolve relative paths in `openGraph.images`, `twitter.images`,
 // and `alternates.canonical` to absolute URLs. Falls back to the deployed
 // origin in CI/preview where `NEXT_PUBLIC_SITE_URL` may not be set.
@@ -113,7 +127,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${playfair.variable} ${ibmPlexMono.variable}`}
+      className={`${inter.variable} ${playfair.variable} ${ibmPlexMono.variable} ${sourceSerif.variable}`}
     >
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>

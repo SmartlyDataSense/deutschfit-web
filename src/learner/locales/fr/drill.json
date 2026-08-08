@@ -1,0 +1,16 @@
+{
+  "skillProfile": {
+    "eyebrow": "Mes points",
+    "title": "Où tu en es",
+    "intro": "Tes compétences classées par niveau de maîtrise.",
+    "bucket": {
+      "not_assessed": "Pas encore évalué",
+      "renforcer": "À renforcer",
+      "progres": "En progrès",
+      "maitrise": "Maîtrisé"
+    },
+    "cta": "Commencer une séance",
+    "empty": "Fais une première séance pour voir tes points ici.",
+    "error": "Impossible de charger tes points pour le moment."
+  }
+}

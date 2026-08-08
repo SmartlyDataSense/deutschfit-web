@@ -24,6 +24,15 @@
   --color-warning-red: #c2492e;
   --color-success-green: #2e8b64;
   --color-priority-amber: #d99b3c;
+  --color-coach-subtle: #e4f1ee;
+
+  /* subtle-surface + text pairs (mirrors tokens.theme.{success,warning,error}{Subtle,Text}) */
+  --color-success-subtle: #ebf5f0;
+  --color-success-text: #1a6b45;
+  --color-warning-subtle: #fef8ec;
+  --color-warning-text: #8b5e1a;
+  --color-error-subtle: #fef0ee;
+  --color-error-text: #8b2518;
 
   /* text */
   --color-text-primary: #1a1714;
@@ -38,9 +47,16 @@
   --color-bg-hero: #f2e9d8;
   --color-bg-content: #eadfc8;
   --color-bg-card: #ffffff;
+  --color-bg-subtle: #f7f3ec;
   --color-bg-premium: #0f1012;
+  /* text-on-premium-surface (mirrors tokens.theme.onPremium) */
+  --color-on-premium: #f4ead3;
+  /* active nav indicator (mirrors tokens.theme.navActive — same value as --color-cta) */
+  --color-nav-active: #d56e3a;
 
-  /* radius (mirrors tokens.radius — px) */
+  /* radius (mirrors tokens.radius — px). Not registered under @theme (would
+   * collide with Tailwind's built-in rounded-sm/md/lg/full scale used
+   * elsewhere in the app); consume via rounded-[var(--radius-*)]. */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -62,6 +78,7 @@
   --color-warning-red: var(--color-warning-red);
   --color-success-green: var(--color-success-green);
   --color-priority-amber: var(--color-priority-amber);
+  --color-coach-subtle: var(--color-coach-subtle);
 
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -73,11 +90,47 @@
   --color-bg-hero: var(--color-bg-hero);
   --color-bg-content: var(--color-bg-content);
   --color-bg-card: var(--color-bg-card);
+  --color-bg-subtle: var(--color-bg-subtle);
   --color-bg-premium: var(--color-bg-premium);
+  --color-on-premium: var(--color-on-premium);
+  --color-nav-active: var(--color-nav-active);
+
+  --color-success-subtle: var(--color-success-subtle);
+  --color-success-text: var(--color-success-text);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-warning-text: var(--color-warning-text);
+  --color-error-subtle: var(--color-error-subtle);
+  --color-error-text: var(--color-error-text);
 
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-ibm-mono), ui-monospace, SFMono-Regular, monospace;
+  /* Learner surface only — see src/app/[locale]/layout.tsx for scoping note. */
+  --font-serif-learner: var(--font-source-serif), Georgia, serif;
+
+  /*
+   * Learner type scale (mirrors tokens.typography.size* / lineHeight*).
+   * New names only (caption/small/body/body-lg/h3/h2/h1/display) — none
+   * collide with Tailwind's built-in text-xs..text-9xl scale, so this is
+   * additive: `text-h1`, `text-display`, etc. become available everywhere
+   * without touching the default scale other pages already rely on.
+   */
+  --text-caption: 12px;
+  --text-caption--line-height: 1.5;
+  --text-small: 14px;
+  --text-small--line-height: 1.5;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-h3: 22px;
+  --text-h3--line-height: 1.15;
+  --text-h2: 28px;
+  --text-h2--line-height: 1.15;
+  --text-h1: 34px;
+  --text-h1--line-height: 1.15;
+  --text-display: 42px;
+  --text-display--line-height: 1.15;
 }
 
 body {
@@ -86,4 +139,21 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/*
+ * `GlassSurface` primitive (src/learner/ui/primitives/GlassSurface.tsx).
+ * Frosted-glass surface: translucent premium-black wash + backdrop blur.
+ * Falls back to an opaque premium-black surface when `backdrop-filter`
+ * isn't supported — still legible, just without the blur.
+ */
+.learner-glass-surface {
+  background-color: color-mix(in srgb, var(--color-bg-premium) 72%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .learner-glass-surface {
+    background-color: var(--color-bg-premium);
+  }
 }

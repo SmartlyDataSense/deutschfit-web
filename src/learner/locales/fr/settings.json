@@ -1,0 +1,89 @@
+{
+  "title": "Paramètres",
+  "sections": {
+    "appearance": "Apparence",
+    "language": "Langue",
+    "exam": "Parcours d'examen",
+    "objectives": "Objectifs",
+    "analytics": "Analytique",
+    "account": "Compte",
+    "about": "À propos"
+  },
+  "analytics": {
+    "optOutLabel": "Désactiver les statistiques d'usage",
+    "optOutHint": "Aucun événement n'est envoyé lorsque ceci est activé.",
+    "comingSoon": "Bientôt disponible"
+  },
+  "appearance": {
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "exam": {
+    "title": "Parcours d'examen",
+    "subtitle": "Choisis l'examen et le niveau CECR que tu prépares.",
+    "betaSubtitle": "Beta : choisis ton niveau CECR. L'examen reste celui défini à l'inscription.",
+    "boardLabel": "Examen",
+    "levelLabel": "Niveau CECR",
+    "rowLabel": "Parcours d'examen",
+    "openHint": "Ouvrir le sélecteur d'examen",
+    "changedHint": "modifié dans les Paramètres",
+    "retakeTitle": "Refaire le diagnostic",
+    "retakeSubtitle": "15 questions · ~12 min · met à jour ton niveau de référence",
+    "saveError": "Échec de l'enregistrement — vérifie ta connexion puis réessaie.",
+    "levelComingSoon": "Bientôt disponible"
+  },
+  "objectives": {
+    "title": "Objectifs",
+    "subtitle": "Ajuste ta motivation et ton rythme quotidien.",
+    "rowLabel": "Motivation et rythme",
+    "rowMeta": "Motivation, minutes par jour",
+    "openHint": "Ouvrir l'éditeur d'objectifs",
+    "motivationLabel": "Motivation",
+    "scheduleLabel": "Minutes par jour",
+    "loadError": "Impossible de charger tes objectifs.",
+    "saveError": "Échec de l'enregistrement — vérifie ta connexion puis réessaie."
+  },
+  "examSelector": {
+    "title": "Examen et niveau",
+    "subtitle": "Choisis l'examen et le niveau CECR que tu prépares.",
+    "rowLabel": "Changer d'examen ou de niveau",
+    "rowMeta": "Choisir un autre examen ou un autre niveau CECR",
+    "openHint": "Ouvrir le sélecteur complet"
+  },
+  "account": {
+    "signOut": "Se déconnecter",
+    "signOutConfirmTitle": "Se déconnecter ?",
+    "signOutConfirmMessage": "Tu devras te reconnecter ensuite.",
+    "delete": "Supprimer le compte",
+    "deleteTitle": "Supprimer ton compte DeutschFit",
+    "deleteBody1": "Cela supprime définitivement ton profil, ton historique d'examens, tes brouillons, tes exercices et toutes les autres données liées à ce compte.",
+    "deleteBody2": "Après la suppression tu seras déconnecté(e) sur tous tes appareils. Tu peux recréer un compte à tout moment.",
+    "deleteIrreversible": "Cette action est irréversible.",
+    "deleteSubsHint": "Si tu as un abonnement actif, gère-le ou annule-le dans le magasin d'applications de ton appareil avant de supprimer ton compte.",
+    "deleteConfirmPlaceholder": "Tape DELETE pour confirmer",
+    "deleteConfirmCta": "Supprimer mon compte",
+    "deleteFailedTitle": "Suppression impossible",
+    "deleteFailedBody": "Une erreur est survenue lors de la suppression de ton compte. Vérifie ta connexion et réessaie, ou contacte le support si le problème persiste.",
+    "deleteFailedRetry": "Réessayer"
+  },
+  "about": {
+    "version": "Version {{version}}",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfService": "Conditions d'utilisation",
+    "linkAccessibilityHint": "Ouvre dans ton navigateur",
+    "environment": "Environnement : {{env}}",
+    "backendRef": "Serveur : {{ref}}",
+    "envDev": "Dev",
+    "envPreprod": "Préprod",
+    "envProd": "Prod",
+    "envUnknown": "Inconnu"
+  },
+  "developer": {
+    "comingSoon": "Bientôt disponible"
+  }
+}
