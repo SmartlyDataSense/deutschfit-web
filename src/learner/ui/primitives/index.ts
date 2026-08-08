@@ -52,3 +52,6 @@ export type { WaveformProps, WaveformTone } from "./Waveform";
 
 export { GlassSurface } from "./GlassSurface";
 export type { GlassSurfaceProps } from "./GlassSurface";
+
+export { EmptyState } from "./EmptyState";
+export type { EmptyStateProps } from "./EmptyState";
