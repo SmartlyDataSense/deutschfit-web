@@ -25,8 +25,20 @@
  *      and skip the reset-password screen.
  *   4. `bootstrapLearnerSession()` is idempotent: the `onAuthStateChange`
  *      subscription is cached at module scope and torn down before
- *      re-subscribing, so repeated calls (e.g. React StrictMode double-
- *      invoke, Fast Refresh) never leak listeners.
+ *      re-subscribing, so repeated *sequential* calls (e.g. Fast Refresh,
+ *      or a genuine remount after unmount) never leak listeners.
+ *   5. `bootstrapLearnerSession()` is also safe under *concurrent*
+ *      invocation via a module-level in-flight promise guard. React
+ *      StrictMode's dev double-invoke fires the mount effect (and thus
+ *      `void bootstrapLearnerSession()`) twice back-to-back with no await
+ *      in between — without the guard, both calls would read
+ *      `currentSubscription !== null` as `false` before either had a
+ *      chance to set it, so neither would unsubscribe, both would call
+ *      `onAuthStateChange`, and the second write would silently clobber
+ *      the first subscription reference (a real listener leak, and every
+ *      future auth event double-firing `setSession`). Concurrent callers
+ *      now share the same in-flight `Promise` instead of each starting
+ *      their own run.
  */
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
@@ -79,12 +91,32 @@ type AuthSubscription = ReturnType<
 let currentSubscription: AuthSubscription | null = null;
 
 /**
+ * In-flight guard (module docstring point 5). `null` when no bootstrap
+ * run is currently executing; otherwise the `Promise` every concurrent
+ * caller awaits instead of starting a second, racing run. Cleared once
+ * the run settles so a later, genuinely separate call still does a full
+ * teardown-and-resubscribe (module docstring point 4).
+ */
+let inFlightBootstrap: Promise<void> | null = null;
+
+/**
  * Called once on mount (from `LearnerProviders`). Hydrates the store from
  * whatever the browser client has cached, then subscribes to
  * `onAuthStateChange` so in-tab sign-ins / sign-outs keep the store in
- * sync. Safe to call more than once — see module docstring point 4.
+ * sync. Safe to call more than once, whether sequentially or concurrently
+ * — see module docstring points 4 and 5.
  */
-export async function bootstrapLearnerSession(): Promise<void> {
+export function bootstrapLearnerSession(): Promise<void> {
+  if (inFlightBootstrap !== null) {
+    return inFlightBootstrap;
+  }
+  inFlightBootstrap = runBootstrap().finally(() => {
+    inFlightBootstrap = null;
+  });
+  return inFlightBootstrap;
+}
+
+async function runBootstrap(): Promise<void> {
   useLearnerSession.getState().setStatus("loading");
   const supabase = getBrowserClient();
 

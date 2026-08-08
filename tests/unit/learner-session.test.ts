@@ -176,6 +176,27 @@ describe("useLearnerSession + bootstrapLearnerSession", () => {
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
+  it("concurrent (un-awaited) bootstrap calls share one in-flight run instead of racing", async () => {
+    // Reproduces React StrictMode's dev double-invoke of the mount effect:
+    // `LearnerProviders` fires `void bootstrapLearnerSession()` twice
+    // back-to-back with no await between them. Both calls previously read
+    // `currentSubscription !== null` as `false` before either had a chance
+    // to set it, so neither unsubscribed, both called `onAuthStateChange`,
+    // and the second write silently clobbered the first subscription
+    // reference — a real listener leak. A module-level in-flight promise
+    // guard must make the second call reuse the first call's run instead
+    // of starting a second one.
+    getSession.mockResolvedValue({ data: { session: null } });
+
+    const first = bootstrapLearnerSession();
+    const second = bootstrapLearnerSession();
+
+    await Promise.all([first, second]);
+
+    expect(onAuthStateChange).toHaveBeenCalledTimes(1);
+    expect(unsubscribe).not.toHaveBeenCalled();
+  });
+
   it("signOut clears the store and calls supabase signOut with local scope", async () => {
     useLearnerSession.setState({ session: fakeSession(), status: "authenticated" });
 
