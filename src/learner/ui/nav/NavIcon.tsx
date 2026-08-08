@@ -24,6 +24,13 @@ export interface NavIconProps {
  * (`ionicons.tsx`), not components — JSX requires a capitalized reference
  * to treat them as such rather than as a literal DOM tag, hence the
  * `as SparklesOutline` import aliases.
+ *
+ * Deferred (review fix-round-1, minor, S0.4 gap): Coach/Examen never swap
+ * to a filled glyph on active — the ported ionicons set is outline-only
+ * (`sparklesOutline`/`documentTextOutline`), unlike mobile's
+ * `focused ? "sparkles" : "sparkles-outline"` toggle. Active state still
+ * reads via the pill background + tint color; revisit once filled
+ * variants are ported.
  */
 export function NavIcon({ icon, size, color }: NavIconProps) {
   if (icon.kind === "sprite") {

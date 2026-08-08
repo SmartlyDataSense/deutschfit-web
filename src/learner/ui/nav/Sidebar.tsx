@@ -31,6 +31,12 @@ export interface SidebarProps {
  * the history entry with `/{locale}/app/login` (matches `LoginForm`'s
  * `router.replace` pattern — no stale authenticated shell reachable via
  * the back button after signing out).
+ *
+ * Deferred (review fix-round-1, minor): `handleSignOut` explicitly
+ * `router.replace`s to `/login` on top of `LearnerGuard`'s own reactive
+ * redirect (session flips to `"unauthenticated"` → guard redirects
+ * anyway) — a harmless double-navigation, not a correctness bug. Revisit
+ * if it ever causes a visible flash or a race.
  */
 export function Sidebar({ locale, activeTabId }: SidebarProps) {
   const router = useRouter();

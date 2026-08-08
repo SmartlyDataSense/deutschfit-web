@@ -81,6 +81,16 @@
   --nav-sidebar-width: 240px;
   /* mirrors tokens.zIndex.header — floating nav chrome sits above page content. */
   --z-header: 20;
+
+  /*
+   * `EmptyState` sizing (src/learner/ui/primitives/EmptyState.tsx) —
+   * byte-identical to mobile's `ui/blocks/EmptyState.tsx` StyleSheet
+   * (`body: { maxWidth: 320 }`, `cta: { minWidth: 180 }`). CSS-var-backed
+   * so the primitive never carries a raw `max-w-[320px]` / `min-w-[180px]`
+   * pixel literal (S0.8's "no spacing literals in src/learner/**" rule).
+   */
+  --empty-state-max-width: 320px;
+  --empty-state-action-min-width: 180px;
 }
 
 @theme inline {

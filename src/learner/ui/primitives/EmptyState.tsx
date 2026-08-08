@@ -65,7 +65,12 @@ export function EmptyState({
       </AppText>
 
       {description ? (
-        <AppText tone="secondary" size="body" align="center" className="max-w-[320px]">
+        <AppText
+          tone="secondary"
+          size="body"
+          align="center"
+          className="max-w-[var(--empty-state-max-width)]"
+        >
           {description}
         </AppText>
       ) : null}
@@ -76,7 +81,7 @@ export function EmptyState({
           label={actionLabel}
           onClick={onAction}
           aria-label={actionAccessibilityLabel ?? actionLabel}
-          className="mt-4 min-w-[180px]"
+          className="mt-4 min-w-[var(--empty-state-action-min-width)]"
         />
       ) : null}
     </div>
