@@ -81,6 +81,13 @@
   --nav-sidebar-width: 240px;
   /* mirrors tokens.zIndex.header — floating nav chrome sits above page content. */
   --z-header: 20;
+  /*
+   * `OfflineBanner` (Task 1.4) — mirrors mobile's OfflineBanner
+   * `zIndex: 9999` intent (sit above absolutely everything, including nav
+   * chrome) without copying the literal RN value; picked the next step up
+   * from `--z-header` in this app's own scale instead.
+   */
+  --z-banner: 30;
 
   /*
    * `EmptyState` sizing (src/learner/ui/primitives/EmptyState.tsx) —
