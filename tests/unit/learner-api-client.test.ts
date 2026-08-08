@@ -97,6 +97,31 @@ describe("learner API client", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(refreshSession).toHaveBeenCalledTimes(1);
     expect(signOut).toHaveBeenCalledTimes(1);
+    // Local scope only — must not revoke the user's other sessions
+    // (e.g. mobile), mirroring mobile's issue #332 rationale.
+    expect(signOut).toHaveBeenCalledWith({ scope: "local" });
+  });
+
+  it("skips the retry and signs out (local scope) when refreshSession resolves { error }", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(jsonResponse(401, { error: "unauthorized" }));
+    // supabase-js resolves `{ error }` for an expired/invalid refresh
+    // token — it does not throw. The client must treat this the same
+    // as a thrown error: no retry fetch, straight to local sign-out.
+    refreshSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: "Invalid Refresh Token", status: 401 },
+    });
+
+    await expect(invokeFn("submissions-get")).rejects.toMatchObject({
+      code: "session_expired",
+      status: 401,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith({ scope: "local" });
   });
 
   it("throws ApiError instances (with status) for the session_expired case", async () => {

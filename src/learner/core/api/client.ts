@@ -114,16 +114,29 @@ async function request<T>(url: string, opts: RequestOptions): Promise<T> {
 
   if (res.status === 401) {
     const supabase = getBrowserClient();
+    // `refreshSession()` normally *resolves* `{ error }` for an expired/
+    // invalid refresh token rather than throwing — but a hard network
+    // failure can still reject the promise, so both shapes are treated
+    // as "refresh failed" and short-circuit straight to sign-out without
+    // spending the retry on a request that's guaranteed to 401 again.
+    let refreshFailed = false;
     try {
-      await supabase.auth.refreshSession();
+      const { error } = await supabase.auth.refreshSession();
+      refreshFailed = error !== null;
     } catch {
-      await supabase.auth.signOut();
+      refreshFailed = true;
+    }
+    if (refreshFailed) {
+      // Local scope only: revoking just this device's session, not the
+      // user's other sessions (e.g. the mobile app) — mirrors mobile's
+      // `{ scope: "local" }` rationale (issue #332).
+      await supabase.auth.signOut({ scope: "local" });
       throw new ApiError(401, "session_expired");
     }
 
     res = await performFetch(url, opts);
     if (res.status === 401) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "local" });
       throw new ApiError(401, "session_expired");
     }
   }
