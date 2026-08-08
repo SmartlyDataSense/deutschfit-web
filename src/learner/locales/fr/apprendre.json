@@ -1,0 +1,93 @@
+{
+  "title": "Pratique",
+  "subtitle": "Choisis une compétence.",
+  "cards": {
+    "schreiben": {
+      "title": "Schreiben",
+      "description": "Écris un e-mail en allemand et reçois un retour détaillé."
+    },
+    "lesen": {
+      "title": "Lesen",
+      "description": "Exercices de compréhension écrite."
+    },
+    "sprachbausteine": {
+      "title": "Sprachbausteine",
+      "description": "La grammaire et le vocabulaire de l'examen, en contexte."
+    },
+    "hoeren": {
+      "title": "Hören",
+      "description": "Exercices de compréhension orale."
+    },
+    "sprechen": {
+      "title": "Sprechen",
+      "description": "Entraîne ta prononciation."
+    },
+    "coach": {
+      "title": "Betreuer",
+      "description": "Pose tes questions au Betreuer en allemand."
+    },
+    "srs": {
+      "title": "Révision",
+      "description": "Révise tes cartes de grammaire et de vocabulaire dues aujourd'hui."
+    }
+  },
+  "practice": {
+    "hubTitle": "Übungen",
+    "hubSubtitle": "Entraîne-toi module par module, sans chrono.",
+    "rows": {
+      "lesen": "Lesen",
+      "sprachbausteine": "Sprachbausteine",
+      "hoeren": "Hören",
+      "schreiben": "Schreiben"
+    },
+    "chips": {
+      "done": "✓ Terminé",
+      "inProgress": "En cours {{locked}}/{{total}}",
+      "todo": "À faire"
+    },
+    "emptyTitle": "Pas encore d'exercices ici",
+    "emptyDescription": "Les exercices pour ton examen arrivent bientôt. Reviens vite !",
+    "unsupported": "Disponible pour les niveaux B1 et B2 pour l'instant.",
+    "picker": {
+      "subtitle": "Choisis ton Übungstest.",
+      "setLabel": "Übungstest {{n}}",
+      "errorTitle": "Impossible de charger les Übungstests"
+    },
+    "session": {
+      "teilChip": "Teil {{number}}",
+      "progress": "{{locked}}/{{total}}",
+      "restart": "Recommencer",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "recapTitle": "Récapitulatif",
+      "recapScore": "{{correct}}/{{total}} bonnes réponses",
+      "backToHub": "Retour aux exercices",
+      "pickerTitle": "Choisis la bonne réponse",
+      "errorTitle": "Impossible de charger l'exercice",
+      "retry": "Réessayer",
+      "loading": "Chargement de l'exercice…",
+      "missingStem": "(Question à venir dans une prochaine version du contenu.)"
+    },
+    "results": {
+      "empty": "Aucun résultat disponible.",
+      "eyebrow": "Résultats · {{module}}",
+      "headline": "{{correct}} bonnes réponses sur {{total}}",
+      "percentCorrect": "{{pct}} % de bonnes réponses",
+      "answered": "Répondues",
+      "unanswered": "Sans réponse",
+      "correct": "Bonnes réponses",
+      "correctHelper": "sur {{total}}",
+      "accuracy": "Précision",
+      "accuracyHelper": "de l'épreuve",
+      "submission": "Soumission",
+      "perTeil": "Par Teil",
+      "viewCorrections": "Voir les corrections",
+      "back": "Retour aux exercices"
+    }
+  },
+  "comingSoon": "Bientôt disponible",
+  "retake": {
+    "title": "Refais ton diagnostic",
+    "subtitle": "15 MCQ · ~12 min · met à jour ton niveau"
+  }
+}

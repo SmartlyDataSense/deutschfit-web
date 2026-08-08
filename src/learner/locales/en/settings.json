@@ -1,0 +1,89 @@
+{
+  "title": "Settings",
+  "sections": {
+    "appearance": "Appearance",
+    "language": "Language",
+    "exam": "Exam track",
+    "objectives": "Objectives",
+    "analytics": "Analytics",
+    "account": "Account",
+    "about": "About"
+  },
+  "analytics": {
+    "optOutLabel": "Disable usage analytics",
+    "optOutHint": "No events are sent while this is on.",
+    "comingSoon": "Bientôt disponible"
+  },
+  "appearance": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "exam": {
+    "title": "Exam track",
+    "subtitle": "Choose the exam and CEFR level you're preparing for.",
+    "betaSubtitle": "Beta: pick your CEFR level. The exam stays the one you set at sign-up.",
+    "boardLabel": "Exam",
+    "levelLabel": "CEFR level",
+    "rowLabel": "Exam track",
+    "openHint": "Open the exam picker",
+    "changedHint": "changed in Settings",
+    "retakeTitle": "Retake the diagnostic",
+    "retakeSubtitle": "15 questions · ~12 min · updates your baseline level",
+    "saveError": "Couldn't save your choice — check your connection and try again.",
+    "levelComingSoon": "Bientôt disponible"
+  },
+  "objectives": {
+    "title": "Objectives",
+    "subtitle": "Adjust your motivation and daily pace.",
+    "rowLabel": "Motivation & pace",
+    "rowMeta": "Motivation, minutes per day",
+    "openHint": "Open the objectives editor",
+    "motivationLabel": "Motivation",
+    "scheduleLabel": "Minutes per day",
+    "loadError": "Couldn't load your objectives.",
+    "saveError": "Couldn't save — check your connection and try again."
+  },
+  "examSelector": {
+    "title": "Exam & level",
+    "subtitle": "Choose the exam and CEFR level you're preparing for.",
+    "rowLabel": "Change exam or level",
+    "rowMeta": "Pick a different exam or CEFR level",
+    "openHint": "Open the full picker"
+  },
+  "account": {
+    "signOut": "Sign out",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmMessage": "You'll need to sign in again.",
+    "delete": "Delete account",
+    "deleteTitle": "Delete your DeutschFit account",
+    "deleteBody1": "This permanently removes your profile, exam history, drafts, drills, and any other data tied to this account.",
+    "deleteBody2": "After deletion you'll be signed out on every device. You can create a new account at any time.",
+    "deleteIrreversible": "This action cannot be undone.",
+    "deleteSubsHint": "If you have an active subscription, manage or cancel it in your device's app store before deleting your account.",
+    "deleteConfirmPlaceholder": "Type DELETE to confirm",
+    "deleteConfirmCta": "Delete my account",
+    "deleteFailedTitle": "Couldn't delete your account",
+    "deleteFailedBody": "Something went wrong while deleting your account. Check your connection and try again, or contact support if the problem persists.",
+    "deleteFailedRetry": "Try again"
+  },
+  "about": {
+    "version": "Version {{version}}",
+    "privacyPolicy": "Privacy policy",
+    "termsOfService": "Terms of service",
+    "linkAccessibilityHint": "Opens in your browser",
+    "environment": "Environment: {{env}}",
+    "backendRef": "Server: {{ref}}",
+    "envDev": "Dev",
+    "envPreprod": "Preprod",
+    "envProd": "Prod",
+    "envUnknown": "Unknown"
+  },
+  "developer": {
+    "comingSoon": "Bientôt disponible"
+  }
+}

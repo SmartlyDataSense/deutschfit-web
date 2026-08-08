@@ -1,0 +1,64 @@
+{
+  "title": "Profile",
+  "header": {
+    "backA11y": "Back",
+    "settingsA11y": "Open settings"
+  },
+  "identity": {
+    "locationA11y": "{{location}}, languages {{languages}}"
+  },
+  "fullPrep": {
+    "overline": "Go Full Prep",
+    "title": "Unlimited simulations + Voice Betreuer",
+    "subtitle": "From XXX FCFA/month · 1, 2 or 3 months"
+  },
+  "settings": {
+    "changeExam": "Change exam",
+    "changeExamDate": "Change exam date",
+    "changeExamDateA11y": "Edit your exam date",
+    "notifications": "Result notifications",
+    "notificationsA11y": "Open system notification settings"
+  },
+  "changeExamDate": {
+    "title": "Exam date",
+    "intro": "Pick a new date for your exam. Your plan rebalances automatically."
+  },
+  "history": {
+    "row": "Performance history",
+    "rowA11y": "Open your performance history"
+  },
+  "account": {
+    "sectionTitle": "Account",
+    "privacy": "Privacy",
+    "privacyA11y": "Open the privacy policy",
+    "signOut": "Sign out",
+    "signOutA11y": "Sign out of DeutschFit",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmMessage": "You'll need to sign in again.",
+    "signOutCancel": "Cancel",
+    "deleteAccount": "Delete account",
+    "deleteAccountA11y": "Permanently delete your account"
+  },
+  "confirmExamChange": {
+    "transition": "You're switching from {{fromLevel}} to {{toLevel}}.",
+    "confirm": "Confirm change",
+    "cancel": "Cancel",
+    "board": {
+      "title": "Change exam?"
+    },
+    "level": {
+      "title": "Adjust your level?"
+    },
+    "consequences": {
+      "board": {
+        "contentReset": "Your lessons will be reorganised for this new exam.",
+        "diagnosticArchive": "Your current diagnostic will be archived.",
+        "rePrompt": "A fresh diagnostic will be offered."
+      },
+      "level": {
+        "subsliceShift": "Content will be adjusted to your new level.",
+        "keepsHistory": "Diagnostic and progress are kept."
+      }
+    }
+  }
+}

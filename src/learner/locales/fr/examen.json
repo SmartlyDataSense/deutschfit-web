@@ -1,0 +1,64 @@
+{
+  "title": "Examen",
+  "subtitle": "Choisis une simulation pour t'entraîner dans les conditions de l'épreuve.",
+  "wip": "WIP — design pass D9 à venir",
+  "wipA11y": "Écran provisoire. Le design final arrive avec la tâche D9.",
+  "home": {
+    "title": "Examen",
+    "subtitle": "Le module Examen arrive bientôt. En attendant, continue à progresser sur Sprechen, Schreiben et avec ton Betreuer.",
+    "hero": {
+      "title": "Examen — bientôt disponible",
+      "description": "La simulation complète et la préparation par module ouvriront ici. Pour l'instant, tu peux te préparer côté Sprechen, Schreiben et Betreuer.",
+      "badge": "Bientôt disponible",
+      "a11y": "Examen — bientôt disponible. Carte non interactive."
+    }
+  },
+  "cards": {
+    "lesen": {
+      "title": "Lesen",
+      "description": "Compréhension écrite — Teile 1 à 5."
+    },
+    "hoeren": {
+      "title": "Hören",
+      "description": "Compréhension orale — Teile 1 à 4."
+    },
+    "simulation": {
+      "title": "Simulation complète",
+      "description": "Playbook B1 — timing réel, MCQ + stimulus."
+    }
+  },
+  "modelltests": {
+    "title": "Modelltests",
+    "subtitle": "Choisis un modelltest publié pour lancer la simulation complète.",
+    "moduleHeader": {
+      "lesen": {
+        "title": "Lesen · Entraînement par module",
+        "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur la compréhension écrite."
+      },
+      "hoeren": {
+        "title": "Hören · Entraînement par module",
+        "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur la compréhension orale."
+      },
+      "schreiben": {
+        "title": "Schreiben · Entraînement par module",
+        "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur l'expression écrite."
+      },
+      "sprechen": {
+        "title": "Sprechen · Entraînement par module",
+        "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur l'expression orale."
+      }
+    },
+    "emptyTitle": "Keine Prüfungen verfügbar",
+    "emptyBody": "Aucun modelltest publié pour l'instant. Tire vers le bas pour actualiser ou reviens plus tard.",
+    "emptyCta": "Actualiser",
+    "errorTitle": "Impossible de charger les modelltests",
+    "errorBody": "Vérifie ta connexion puis réessaie.",
+    "errorRetry": "Réessayer"
+  },
+  "resume": {
+    "title": "Reprendre l'examen blanc",
+    "body": "Tu as un examen blanc en cours. Reprends là où tu t'es arrêté.",
+    "cta": "Continuer",
+    "a11y": "Reprendre l'examen blanc en cours"
+  }
+}

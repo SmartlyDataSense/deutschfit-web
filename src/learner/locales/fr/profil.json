@@ -1,0 +1,64 @@
+{
+  "title": "Profil",
+  "header": {
+    "backA11y": "Retour",
+    "settingsA11y": "Ouvrir les paramètres"
+  },
+  "identity": {
+    "locationA11y": "{{location}}, langues {{languages}}"
+  },
+  "fullPrep": {
+    "overline": "Passez Full Prep",
+    "title": "Simulations illimitées + Betreuer vocal",
+    "subtitle": "À partir de XXX FCFA/mois · 1, 2 ou 3 mois"
+  },
+  "settings": {
+    "changeExam": "Changer d'examen",
+    "changeExamDate": "Changer la date d'examen",
+    "changeExamDateA11y": "Modifier la date de ton examen",
+    "notifications": "Notifications de résultat",
+    "notificationsA11y": "Ouvrir les réglages de notifications du système"
+  },
+  "changeExamDate": {
+    "title": "Date d'examen",
+    "intro": "Choisis une nouvelle date pour ton examen. Ton plan se réajuste automatiquement."
+  },
+  "history": {
+    "row": "Historique de performance",
+    "rowA11y": "Ouvrir ton historique de performance"
+  },
+  "account": {
+    "sectionTitle": "Compte",
+    "privacy": "Confidentialité",
+    "privacyA11y": "Ouvrir la politique de confidentialité",
+    "signOut": "Se déconnecter",
+    "signOutA11y": "Se déconnecter de DeutschFit",
+    "signOutConfirmTitle": "Se déconnecter ?",
+    "signOutConfirmMessage": "Tu devras te reconnecter ensuite.",
+    "signOutCancel": "Annuler",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountA11y": "Supprimer définitivement ton compte"
+  },
+  "confirmExamChange": {
+    "transition": "Tu passes de {{fromLevel}} à {{toLevel}}.",
+    "confirm": "Confirmer le changement",
+    "cancel": "Annuler",
+    "board": {
+      "title": "Changer d'examen ?"
+    },
+    "level": {
+      "title": "Ajuster ton niveau ?"
+    },
+    "consequences": {
+      "board": {
+        "contentReset": "Tes leçons seront réorganisées pour ce nouvel examen.",
+        "diagnosticArchive": "Ton diagnostic actuel sera archivé.",
+        "rePrompt": "Un nouveau diagnostic te sera proposé."
+      },
+      "level": {
+        "subsliceShift": "Contenus ajustés à ton nouveau niveau.",
+        "keepsHistory": "Diagnostic et progression intacts."
+      }
+    }
+  }
+}

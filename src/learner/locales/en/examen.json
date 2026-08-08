@@ -1,0 +1,64 @@
+{
+  "title": "Exam",
+  "subtitle": "Pick a simulation to practice under real exam conditions.",
+  "wip": "WIP — D9 design pass pending",
+  "wipA11y": "Placeholder screen. The final design lands with task D9.",
+  "home": {
+    "title": "Exam",
+    "subtitle": "The Exam module is on the way. In the meantime, keep building momentum on Sprechen, Schreiben, and with your Betreuer.",
+    "hero": {
+      "title": "Exam — coming soon",
+      "description": "The full simulation and per-module drills will open here. For now you can prep on the Sprechen, Schreiben, and Betreuer surfaces.",
+      "badge": "Coming soon",
+      "a11y": "Exam — coming soon. Non-interactive card."
+    }
+  },
+  "cards": {
+    "lesen": {
+      "title": "Lesen",
+      "description": "Reading comprehension — Teile 1 to 5."
+    },
+    "hoeren": {
+      "title": "Hören",
+      "description": "Listening comprehension — Teile 1 to 4."
+    },
+    "simulation": {
+      "title": "Full simulation",
+      "description": "B1 playbook — real timing, MCQ with stimulus."
+    }
+  },
+  "modelltests": {
+    "title": "Modelltests",
+    "subtitle": "Pick a published modelltest to run the full simulation.",
+    "moduleHeader": {
+      "lesen": {
+        "title": "Lesen · Module drill",
+        "subtitle": "Pick a modelltest to drill only the reading module."
+      },
+      "hoeren": {
+        "title": "Hören · Module drill",
+        "subtitle": "Pick a modelltest to drill only the listening module."
+      },
+      "schreiben": {
+        "title": "Schreiben · Module drill",
+        "subtitle": "Pick a modelltest to drill only the writing module."
+      },
+      "sprechen": {
+        "title": "Sprechen · Module drill",
+        "subtitle": "Pick a modelltest to drill only the speaking module."
+      }
+    },
+    "emptyTitle": "Keine Prüfungen verfügbar",
+    "emptyBody": "No published modelltests are available yet. Pull to refresh or check back soon.",
+    "emptyCta": "Refresh",
+    "errorTitle": "Couldn't load modelltests",
+    "errorBody": "Check your connection and try again.",
+    "errorRetry": "Retry"
+  },
+  "resume": {
+    "title": "Resume mock exam",
+    "body": "You have an unfinished mock exam. Pick up where you left off.",
+    "cta": "Continue",
+    "a11y": "Resume your unfinished mock exam"
+  }
+}

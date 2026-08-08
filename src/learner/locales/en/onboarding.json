@@ -1,0 +1,136 @@
+{
+  "progress": "Step {{current}} of {{total}}",
+  "skip": "Skip",
+  "continue": "Continue",
+  "saveWarning": "Your answers couldn't be saved. You can adjust them in Settings.",
+  "welcome": {
+    "brand": "DeutschFit",
+    "eyebrow": "WELCOME",
+    "titleLead": "Deutsch, ",
+    "titleItalic": "mit Plan.",
+    "body": "DeutschFit prepares you for your Deutsch exam from A1 to C2. A short test, a plan, daily progress.",
+    "teaserEyebrow": "BETREUER · PLAN B2",
+    "teaserTitle": "63 days · 25 min / day",
+    "teaserProgress": "20%",
+    "teaserGoal": "Goal 80",
+    "cta": "Start my diagnostic →",
+    "ctaCaption": "4 min · adaptive · free"
+  },
+  "diagnostic": {
+    "eyebrow": "QUESTION {{current}} / {{total}} · {{timer}}",
+    "title": "Adaptive diagnostic",
+    "category": "B1 · Grammar",
+    "questionLead": "Welcher Satz ist ",
+    "questionItalic": "korrekt",
+    "questionTrail": "?",
+    "options": {
+      "a": "Ich weiß, dass er kommt morgen.",
+      "b": "Ich weiß, dass er morgen kommt.",
+      "c": "Ich weiß, dass er kommt morgen nicht.",
+      "d": "Ich weiß, er morgen dass kommt."
+    },
+    "section": {
+      "lesen": "Lesen",
+      "sprachbausteine": "Sprachbausteine",
+      "wortschatz": "Wortschatz"
+    },
+    "loading": "Loading the diagnostic…",
+    "loadError": "Couldn't load the diagnostic. Check your connection.",
+    "note": "› Difficulty adapts · no hidden clock",
+    "cta": "Submit my answer →",
+    "submitError": "Submission failed — check your connection and try again.",
+    "retryCta": "Retry submission",
+    "skipCta": "Finish later"
+  },
+  "diagnosticResult": {
+    "levelEyebrow": "Estimated level",
+    "tierSuffix": {
+      "fast-b2": "fast B2",
+      "solide": "solid {{level}}",
+      "debutant": "starter {{level}}"
+    },
+    "cefrCopy": {
+      "b1_0": "You're starting B1. The basics are there — let's build consistency.",
+      "b1_1": "You read and understand everyday German. B1 is within reach.",
+      "b1_2": "You've nailed B1 and are pushing into B2 — let's accelerate production skills.",
+      "b2_0": "You're starting B2. Comprehension is solid — let's work on nuance.",
+      "b2_1": "You're solid at B2. Let's polish toward an 80/100 exam score.",
+      "b2_2": "You're brushing C1. Time to refine the fine details.",
+      "b1": "You read and understand everyday German. B1 is within reach.",
+      "b2": "You're comfortable at B2 — let's prepare a strong exam score.",
+      "fallback": "Here's your estimated level."
+    },
+    "bySection": "By section",
+    "total": "{{score}} / {{outOf}} · {{clock}}",
+    "clock": "{{minutes}} min {{seconds}} s",
+    "weaknesses": "Where you lose points",
+    "weaknessCount_one": "{{count}} error out of {{outOf}}",
+    "weaknessCount_other": "{{count}} errors out of {{outOf}}",
+    "tagLabel": {
+      "wortstellung": "Word-order in subordinate clauses",
+      "präposition": "Preposition choice",
+      "konjugation": "Verb conjugation & tenses",
+      "kollokation": "False friends & collocations",
+      "wortschatz": "Targeted vocabulary",
+      "leseverstehen": "Reading comprehension"
+    },
+    "howWeWillHelp": "How DeutschFit will get you to B2",
+    "cta": {
+      "soon": "Soon",
+      "drillSprachbausteine": {
+        "title": "Sprachbausteine drill",
+        "subtitle": "120 targeted questions — short reps, instant feedback."
+      },
+      "lesenTeil4": {
+        "title": "Lesen Teil 4 module",
+        "subtitle": "Step-by-step method for Lesen's trickiest part."
+      },
+      "schreibenApercu": {
+        "title": "Schreiben + Betreuer preview",
+        "subtitle": "Write a sample letter · personalized feedback in under a minute."
+      }
+    },
+    "review": {
+      "toggle": "Review my 15 answers",
+      "questionLabel": "Question {{index}}",
+      "yourAnswer": "Your answer: {{option}}",
+      "correctAnswer": "Correct answer: {{option}}",
+      "noAnswer": "—"
+    },
+    "footer": "This diagnostic covers Lesen, Sprachbausteine and Wortschatz. Hören and Schreiben land in v0.1.",
+    "empty": "No result to display. Run a diagnostic to see your level."
+  },
+  "exam": {
+    "title": "Which exam are you preparing for?",
+    "subtitle": "We'll tailor exercises and support to your track.",
+    "boardLabel": "Exam",
+    "levelLabel": "CEFR level",
+    "boardPlaceholder": "Pick an exam",
+    "levelPlaceholder": "Pick a level",
+    "saveError": "Couldn't save your choice — check your connection and try again."
+  },
+  "motivation": {
+    "title": "Why are you learning German?",
+    "options": {
+      "travel": "Travel",
+      "work": "Work",
+      "studies": "Studies",
+      "immigration": "Immigration",
+      "other": "Other"
+    }
+  },
+  "schedule": {
+    "title": "How many minutes per day?",
+    "options": {
+      "5": "5 min",
+      "10": "10 min",
+      "20": "20 min",
+      "30": "30 min",
+      "45": "45 min",
+      "60": "60 min"
+    },
+    "caveat": {
+      "intensif": "Intensive pace — keep this for an exam coming up soon."
+    }
+  }
+}

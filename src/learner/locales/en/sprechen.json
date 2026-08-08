@@ -1,0 +1,302 @@
+{
+  "steps": {
+    "prep": "01 Prep",
+    "record": "02 Speak",
+    "feedback": "03 Feedback"
+  },
+  "dialogueEntry": {
+    "title": "Paired speaking",
+    "subtitle": "Prepare for the paired dialogue exercise."
+  },
+  "dialogueSession": {
+    "speaker": {
+      "student": "You",
+      "partner": "Partner"
+    },
+    "record": {
+      "start": "Speak",
+      "stop": "Stop"
+    },
+    "finish": "End the exchange",
+    "timeRemaining": "Time left: {{time}}",
+    "status": {
+      "starting": "Preparing the exchange…",
+      "uploading": "Uploading…",
+      "partnerResponding": "Your partner is responding…",
+      "finalizing": "Grading…",
+      "graded": "Result ready."
+    },
+    "error": {
+      "start_failed": "The exchange could not start. Try again.",
+      "turn_failed": "Your turn could not be sent. Try again.",
+      "finalize_failed": "Grading failed. Try again.",
+      "no_active_session": "Session not found. Start over.",
+      "permission_denied": "Microphone access is off. Allow it to speak.",
+      "recorder_unavailable": "Audio recording is not available in this version.",
+      "partner_timeout_20s": "Your partner took too long to respond. Try again.",
+      "generic": "Something went wrong. Try again."
+    },
+    "startError": {
+      "title": "The exchange could not start",
+      "retry": "Retry"
+    }
+  },
+  "dialoguePicker": {
+    "title": "Paired speaking",
+    "subtitle": "Choose a dialogue exercise to practise.",
+    "themeLabel": "Topic: {{title}}",
+    "error": {
+      "title": "Couldn't load",
+      "body": "The exercises couldn't be loaded. Check your connection and try again.",
+      "retry": "Retry"
+    },
+    "empty": {
+      "title": "No exercises available",
+      "body": "No dialogue exercise is offered for this level yet."
+    },
+    "taskType": {
+      "kontaktaufnahme": "Get to know your partner and open the conversation.",
+      "gespraech": "Talk with your partner about an everyday topic.",
+      "bild_grafik": "Present and comment on an image or a chart.",
+      "loesung_finden": "Plan something together and reach an agreement.",
+      "diskussion": "Defend your point of view in an argued discussion.",
+      "planen": "Organise a joint project and make decisions together."
+    }
+  },
+  "picker": {
+    "title": "Choose your topic",
+    "subtitle": "Curated monologue catalogue. Filter by level and subgenre.",
+    "levelSheetTitle": "Level",
+    "levelSheetClose": "Close",
+    "subgenreSheetTitle": "Category",
+    "bientot": "Bientôt",
+    "searchPlaceholder": "Search a topic (German)…",
+    "scopeMy": "My track",
+    "scopeAll": "All topics",
+    "subgenres": {
+      "praesentation": "Präsentation",
+      "vortrag": "Vortrag",
+      "referat": "Referat"
+    },
+    "error": {
+      "title": "Couldn't load topics",
+      "body": "Check your connection. Topics will appear as soon as the list is available.",
+      "retry": "Retry"
+    },
+    "empty": {
+      "title": "No topics",
+      "body": "No topic matches this level and subgenre. Change a filter or come back later."
+    },
+    "addTheme": "+ Suggest a topic"
+  },
+  "customTopic": {
+    "title": "New topic",
+    "subtitle": "Create your own monologue topic — it will be offered to the whole community.",
+    "cancel": "Cancel",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. My favourite festival back home",
+    "boardLabel": "Exam",
+    "levelLabel": "Level",
+    "taskHint": "{{level}} → {{task}}",
+    "tasks": {
+      "praesentation": "Präsentation",
+      "vortrag": "kurzer Vortrag",
+      "referat": "Referat"
+    },
+    "descriptionLabel": "Description / brief",
+    "descriptionPlaceholder": "Describe the theme, the context and the key points to cover…",
+    "durationLabel": "Duration (seconds)",
+    "minDuration": "Minimum",
+    "maxDuration": "Maximum",
+    "submit": "Create topic",
+    "shareNote": "Your topic will be visible to other learners.",
+    "errors": {
+      "invalid_payload": "Check the title, description and duration.",
+      "invalid_json": "Check the title, description and duration.",
+      "grader_unavailable_for_pair": "This exam is not available for this level. Pick another combination.",
+      "db_write_failed": "Could not save. Try again in a moment.",
+      "generic": "Could not create. Check your connection and try again."
+    }
+  },
+  "prep": {
+    "cta": "I'm ready · start",
+    "advice": {
+      "title": "Before you start",
+      "body": "Find a quiet spot, free of background noise. Speak clearly, 20–30 cm from the microphone."
+    },
+    "gliederung": {
+      "overline": "Points to cover",
+      "intro": "Cover each of these points during your presentation — they count toward your grade."
+    },
+    "micCheck": {
+      "title": "Test mic and speaker",
+      "intro": "5 seconds of recording, then playback to make sure everything works.",
+      "start": "Test (5 s)",
+      "recording": "Recording… {{remaining}} s",
+      "playing": "Playing back…",
+      "done": "Mic and speaker OK",
+      "retry": "Run the test again",
+      "skip": "Skip the test",
+      "errors": {
+        "permission_denied": "Microphone access is off. Allow it in your settings.",
+        "recorder_unavailable": "Audio isn't available in this build yet.",
+        "record_failed": "Recording failed. Try again.",
+        "playback_failed": "Playback failed. Check your speaker volume."
+      }
+    }
+  },
+  "record": {
+    "actions": {
+      "stop": "Stop"
+    },
+    "transcript": {
+      "listening": "Betreuer listening",
+      "processing": "Analysing",
+      "empty": "Your monologue is being recorded — the Betreuer analyses it once you stop."
+    },
+    "listening": "Betreuer is listening · speak clearly, take your time.",
+    "offlineNote": "No data leaves your device until you submit.",
+    "submitting": "Uploading…",
+    "timeUp": "Time is up — recording stopped.",
+    "errors": {
+      "permission_denied": "Microphone access is off. Allow it to record.",
+      "recorder_unavailable": "Audio recording isn't available in this build yet."
+    },
+    "lengthWarning": {
+      "title": "Your recording is short",
+      "body": "For a {{subgenre}} {{level}}, aim for about {{targetSec}} s. You recorded {{actualSec}} s — the AI may grade strictly.",
+      "retry": "Try again",
+      "submitAnyway": "Submit anyway",
+      "subgenres": {
+        "praesentation": "Präsentation",
+        "vortrag": "Vortrag",
+        "bildbeschreibung": "Bildbeschreibung",
+        "erzaehlung": "Erzählung"
+      }
+    }
+  },
+  "review": {
+    "intro": "Replay your recording before sending it. Nothing has left your device yet.",
+    "retake": "Record again",
+    "submit": "Submit"
+  },
+  "feedback": {
+    "replayCta": "Replay the lesson",
+    "fallbackBanner": "Fallback feedback · the AI grader is temporarily unavailable."
+  },
+  "session": {
+    "awaitingInline": "The Betreuer is grading your recording…",
+    "submittedToast": "Received · your feedback arrives in ~3 min",
+    "failedToast": "This module isn't graded yet. None of your effort is lost — try another topic in the meantime.",
+    "failedToastLanguageNotGerman": "Your recording isn't in German. Try again — we only grade German responses.",
+    "failedToastGeneric": "Something hiccuped on our side. None of your effort is lost — try again in a moment.",
+    "ctaAcknowledge": "Done",
+    "submitError": "Upload",
+    "languageNotGermanBanner": "Your recording isn't in German — speak German to receive your grade.",
+    "gradedNoInline": {
+      "title": "Your feedback is ready",
+      "body": "Your score is available. Open the detailed feedback to see the Betreuer's notes.",
+      "action": "View my feedback"
+    },
+    "notGradedYet": {
+      "title": "This topic isn't graded yet",
+      "body": "The Betreuer is working on grading for this module. Try another B1 topic in the meantime.",
+      "action": "Back to home"
+    }
+  },
+  "feedbackScreen": {
+    "betreuer": {
+      "title": "From the Betreuer",
+      "nextStepsTitle": "Next steps"
+    },
+    "examiner": {
+      "title": "From the Prüfer's perspective",
+      "dimensionNote": "Per-dimension assessment",
+      "weightsTitle": "Score weighting"
+    },
+    "audioReplay": {
+      "play": "Listen to my recording",
+      "pause": "Pause",
+      "resume": "Resume",
+      "replay": "Play again",
+      "loading": "Loading audio…",
+      "error": "Playback unavailable. Try again.",
+      "unavailable": "Audio playback isn't available in this version."
+    },
+    "monologueType": {
+      "monologue_personal": "Persönliche Erzählung",
+      "picture_description_simple": "Bildbeschreibung",
+      "picture_description_collage_thematic": "Bildvergleich",
+      "structured_response_4bullets": "Strukturierte Aufgabe",
+      "presentation_with_outline": "Präsentation",
+      "vortrag_argumentation": "Vortrag",
+      "partner_summary_followup": "Zusammenfassung",
+      "topic_discussion": "Themendiskussion"
+    },
+    "band": {
+      "solide": "Solid range",
+      "proche_du_seuil": "Close to the threshold",
+      "a_retravailler": "Needs more work"
+    },
+    "blockedReason": {
+      "transcript_too_short": "The passage is too short to assess.",
+      "duration_too_short": "The recording is too short.",
+      "partner_utterance_missing": "An examiner turn is missing from the recording.",
+      "transcript_unreliable": "The transcript isn't reliable enough.",
+      "invalid_cert_code": "The exam code isn't recognised.",
+      "invalid_level_code": "The CEFR level isn't recognised.",
+      "invalid_monologue_type": "The monologue type isn't recognised.",
+      "prompt_brief_incomplete": "The brief is incomplete.",
+      "grader_internal_error": "The feedback couldn't be produced. Redo the exercise."
+    },
+    "legacy": {
+      "title": "Feedback from an earlier version",
+      "body": "This submission was graded with an earlier version of the Betreuer. Redo the exercise to get the full feedback."
+    },
+    "asr": {
+      "unreliableNote": "Some passages of the transcript are uncertain — the assessment relies on the clear ones.",
+      "notAssessable": "The audio wasn't analysed. This dimension stays pending. Redo the exercise to unlock it."
+    },
+    "pending": "Feedback in progress.",
+    "inFlightFallback": {
+      "title": "Grading in progress",
+      "body": "Heading you back to home. A small strip there will let you know the moment your feedback is ready."
+    },
+    "poll_exhausted": {
+      "title": "We'll let you know when it's ready",
+      "body": "Grading is taking a bit longer than expected. You can close the app — we'll send you a notification when it's done.",
+      "cta": "Close"
+    },
+    "failed": {
+      "title": "The feedback couldn't be produced.",
+      "body": "Redo the exercise — nothing is lost.",
+      "retry": "Try again"
+    },
+    "rejected": {
+      "languageNotGerman": {
+        "title": "Please record in German.",
+        "body": "We only grade recordings in German. Redo the exercise speaking German to receive your grade.",
+        "primaryCta": "Try again",
+        "secondaryCta": "Back"
+      },
+      "tooShort": {
+        "title": "Bitte nimm eine längere Aufnahme auf.",
+        "body": "We only assess recordings long enough to give reliable feedback. Try again with a longer take (at least 10 seconds of speech).",
+        "primaryCta": "Try again",
+        "secondaryCta": "Back to overview"
+      },
+      "generic": {
+        "title": "This recording couldn't be assessed.",
+        "body": "We couldn't produce feedback for this recording. Redo the exercise — none of your effort is lost.",
+        "primaryCta": "Try again",
+        "secondaryCta": "Back"
+      }
+    },
+    "retake": "Redo the exercise",
+    "backToHome": "Done",
+    "dialogue": {
+      "heading": "Practice result (unofficial)",
+      "practiceScore": "Practice score: {{score}} / 100"
+    }
+  }
+}

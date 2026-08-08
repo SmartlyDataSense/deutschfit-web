@@ -1,0 +1,302 @@
+{
+  "steps": {
+    "prep": "01 Préparer",
+    "record": "02 Parler",
+    "feedback": "03 Feedback"
+  },
+  "dialogueEntry": {
+    "title": "Expression orale en binôme",
+    "subtitle": "Prépare l'épreuve de dialogue en binôme."
+  },
+  "dialogueSession": {
+    "speaker": {
+      "student": "Vous",
+      "partner": "Partenaire"
+    },
+    "record": {
+      "start": "Parler",
+      "stop": "Arrêter"
+    },
+    "finish": "Terminer l'échange",
+    "timeRemaining": "Temps restant : {{time}}",
+    "status": {
+      "starting": "Préparation de l'échange…",
+      "uploading": "Envoi en cours…",
+      "partnerResponding": "Votre partenaire répond…",
+      "finalizing": "Évaluation en cours…",
+      "graded": "Résultat prêt."
+    },
+    "error": {
+      "start_failed": "L'échange n'a pas pu démarrer. Réessaie.",
+      "turn_failed": "Ton tour n'a pas pu être envoyé. Réessaie.",
+      "finalize_failed": "L'évaluation a échoué. Réessaie.",
+      "no_active_session": "La session est introuvable. Recommence depuis le début.",
+      "permission_denied": "Le micro est désactivé. Autorise l'accès pour parler.",
+      "recorder_unavailable": "L'enregistrement audio n'est pas disponible dans cette version.",
+      "partner_timeout_20s": "Ton partenaire a mis trop de temps à répondre. Réessaie.",
+      "generic": "Une erreur est survenue. Réessaie."
+    },
+    "startError": {
+      "title": "L'échange n'a pas pu démarrer",
+      "retry": "Réessayer"
+    }
+  },
+  "dialoguePicker": {
+    "title": "Expression orale en binôme",
+    "subtitle": "Choisis un exercice de dialogue à préparer.",
+    "themeLabel": "Thème : {{title}}",
+    "error": {
+      "title": "Chargement impossible",
+      "body": "Les exercices n'ont pas pu être chargés. Vérifie ta connexion et réessaie.",
+      "retry": "Réessayer"
+    },
+    "empty": {
+      "title": "Aucun exercice disponible",
+      "body": "Aucun exercice de dialogue n'est encore proposé pour ce niveau."
+    },
+    "taskType": {
+      "kontaktaufnahme": "Fais connaissance avec ton partenaire et engage la conversation.",
+      "gespraech": "Échange avec ton partenaire sur un sujet du quotidien.",
+      "bild_grafik": "Présente et commente une image ou un graphique.",
+      "loesung_finden": "Planifiez quelque chose ensemble et mettez-vous d'accord.",
+      "diskussion": "Défends ton point de vue dans une discussion argumentée.",
+      "planen": "Organisez un projet commun et prenez vos décisions ensemble."
+    }
+  },
+  "picker": {
+    "title": "Choisis ton thème",
+    "subtitle": "Catalogue de monologues curés. Filtre par niveau et par sous-genre.",
+    "levelSheetTitle": "Niveau",
+    "levelSheetClose": "Fermer",
+    "subgenreSheetTitle": "Catégorie",
+    "bientot": "Bientôt",
+    "searchPlaceholder": "Chercher un thème (allemand)…",
+    "scopeMy": "Mon parcours",
+    "scopeAll": "Tous les thèmes",
+    "subgenres": {
+      "praesentation": "Präsentation",
+      "vortrag": "Vortrag",
+      "referat": "Referat"
+    },
+    "error": {
+      "title": "Impossible de charger les thèmes",
+      "body": "Vérifie ta connexion. Tes thèmes apparaîtront dès que la liste sera disponible.",
+      "retry": "Réessayer"
+    },
+    "empty": {
+      "title": "Aucun thème",
+      "body": "Aucun thème ne correspond à ce niveau et ce sous-genre. Change de filtre ou reviens plus tard."
+    },
+    "addTheme": "+ Proposer un thème"
+  },
+  "customTopic": {
+    "title": "Nouveau thème",
+    "subtitle": "Crée ton propre sujet de monologue — il sera proposé à toute la communauté.",
+    "cancel": "Annuler",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Ex. : Ma fête préférée dans mon pays",
+    "boardLabel": "Examen",
+    "levelLabel": "Niveau",
+    "taskHint": "{{level}} → {{task}}",
+    "tasks": {
+      "praesentation": "Präsentation",
+      "vortrag": "kurzer Vortrag",
+      "referat": "Referat"
+    },
+    "descriptionLabel": "Description / consigne",
+    "descriptionPlaceholder": "Décris le thème, le contexte et les points à aborder…",
+    "durationLabel": "Durée (secondes)",
+    "minDuration": "Minimum",
+    "maxDuration": "Maximum",
+    "submit": "Créer le thème",
+    "shareNote": "Ton thème sera visible par les autres apprenants.",
+    "errors": {
+      "invalid_payload": "Vérifie le titre, la description et la durée.",
+      "invalid_json": "Vérifie le titre, la description et la durée.",
+      "grader_unavailable_for_pair": "Cet examen n'est pas disponible pour ce niveau. Choisis une autre combinaison.",
+      "db_write_failed": "Enregistrement impossible. Réessaie dans un instant.",
+      "generic": "Création impossible. Vérifie ta connexion et réessaie."
+    }
+  },
+  "prep": {
+    "cta": "Je suis prêt · démarrer",
+    "advice": {
+      "title": "Avant de commencer",
+      "body": "Installe-toi dans un endroit calme, sans bruit de fond. Parle clairement à 20–30 cm du micro."
+    },
+    "gliederung": {
+      "overline": "Points à aborder",
+      "intro": "Aborde chacun de ces points pendant ta présentation : ils comptent dans la note."
+    },
+    "micCheck": {
+      "title": "Tester micro et haut-parleur",
+      "intro": "5 secondes d'enregistrement, puis lecture pour vérifier que tout fonctionne.",
+      "start": "Tester (5 s)",
+      "recording": "Enregistrement… {{remaining}} s",
+      "playing": "Lecture en cours…",
+      "done": "Micro et haut-parleur OK",
+      "retry": "Refaire le test",
+      "skip": "Passer le test",
+      "errors": {
+        "permission_denied": "Le micro est désactivé. Autorise l'accès dans les réglages.",
+        "recorder_unavailable": "L'audio n'est pas disponible dans cette version.",
+        "record_failed": "L'enregistrement a échoué. Réessaie.",
+        "playback_failed": "La lecture a échoué. Vérifie le volume du haut-parleur."
+      }
+    }
+  },
+  "record": {
+    "actions": {
+      "stop": "Arrêter"
+    },
+    "transcript": {
+      "listening": "Betreuer à l'écoute",
+      "processing": "Analyse",
+      "empty": "Ton monologue est enregistré — le Betreuer l'analyse après l'arrêt."
+    },
+    "listening": "Betreuer à l'écoute · parle clairement, sans te presser.",
+    "offlineNote": "Aucune donnée ne quitte l'appareil avant votre validation.",
+    "submitting": "Envoi en cours…",
+    "timeUp": "Temps écoulé — enregistrement arrêté.",
+    "errors": {
+      "permission_denied": "Le micro est désactivé. Autorise l'accès pour enregistrer.",
+      "recorder_unavailable": "L'enregistrement audio n'est pas encore disponible dans cette version."
+    },
+    "lengthWarning": {
+      "title": "Ton enregistrement est court",
+      "body": "Pour un {{subgenre}} {{level}}, vise environ {{targetSec}} s. Tu as enregistré {{actualSec}} s — l'IA risque de noter sévèrement.",
+      "retry": "Réessayer",
+      "submitAnyway": "Soumettre quand même",
+      "subgenres": {
+        "praesentation": "Präsentation",
+        "vortrag": "Vortrag",
+        "bildbeschreibung": "Bildbeschreibung",
+        "erzaehlung": "Erzählung"
+      }
+    }
+  },
+  "review": {
+    "intro": "Réécoute ton enregistrement avant de l'envoyer. Rien n'a encore quitté l'appareil.",
+    "retake": "Réenregistrer",
+    "submit": "Soumettre"
+  },
+  "feedback": {
+    "replayCta": "Rejouer la leçon",
+    "fallbackBanner": "Retour de secours · la correction IA est momentanément indisponible."
+  },
+  "session": {
+    "awaitingInline": "Le Betreuer corrige ton enregistrement…",
+    "submittedToast": "Reçu · ta correction arrive dans ~3 min",
+    "failedToast": "Ce module n'est pas encore noté. Aucun de tes efforts n'est perdu — essaie un autre sujet en attendant.",
+    "failedToastLanguageNotGerman": "Ton enregistrement n'est pas en allemand. Réessaie — on ne note que les réponses en allemand.",
+    "failedToastGeneric": "Quelque chose a coincé de notre côté. Aucun de tes efforts n'est perdu — réessaie dans un instant.",
+    "ctaAcknowledge": "Terminer",
+    "submitError": "Envoi",
+    "languageNotGermanBanner": "Ton enregistrement n'est pas en allemand — parle en allemand pour recevoir ta note.",
+    "gradedNoInline": {
+      "title": "Ton bilan est prêt",
+      "body": "Ta note est disponible. Ouvre le bilan détaillé pour voir le retour du Betreuer.",
+      "action": "Voir mon bilan"
+    },
+    "notGradedYet": {
+      "title": "Ce sujet n'est pas encore noté",
+      "body": "Le Betreuer travaille sur la notation pour ce module. Essaie un autre sujet B1 en attendant.",
+      "action": "Retour à l'accueil"
+    }
+  },
+  "feedbackScreen": {
+    "betreuer": {
+      "title": "Côté Betreuer",
+      "nextStepsTitle": "Prochaines étapes"
+    },
+    "examiner": {
+      "title": "Vu par le Prüfer",
+      "dimensionNote": "Évaluation par dimension",
+      "weightsTitle": "Pondération du score"
+    },
+    "audioReplay": {
+      "play": "Écouter mon enregistrement",
+      "pause": "Mettre en pause",
+      "resume": "Reprendre",
+      "replay": "Réécouter",
+      "loading": "Chargement de l'audio…",
+      "error": "Lecture indisponible. Réessaie.",
+      "unavailable": "La lecture audio n'est pas disponible dans cette version."
+    },
+    "monologueType": {
+      "monologue_personal": "Persönliche Erzählung",
+      "picture_description_simple": "Bildbeschreibung",
+      "picture_description_collage_thematic": "Bildvergleich",
+      "structured_response_4bullets": "Strukturierte Aufgabe",
+      "presentation_with_outline": "Präsentation",
+      "vortrag_argumentation": "Vortrag",
+      "partner_summary_followup": "Zusammenfassung",
+      "topic_discussion": "Themendiskussion"
+    },
+    "band": {
+      "solide": "Zone solide",
+      "proche_du_seuil": "Proche du seuil",
+      "a_retravailler": "À retravailler"
+    },
+    "blockedReason": {
+      "transcript_too_short": "Le passage est trop court pour être évalué.",
+      "duration_too_short": "L'enregistrement est trop court.",
+      "partner_utterance_missing": "Une intervention de l'examinateur manque dans l'enregistrement.",
+      "transcript_unreliable": "La transcription n'est pas assez fiable.",
+      "invalid_cert_code": "Le code d'examen n'est pas reconnu.",
+      "invalid_level_code": "Le niveau CECR n'est pas reconnu.",
+      "invalid_monologue_type": "Le type de monologue n'est pas reconnu.",
+      "prompt_brief_incomplete": "La consigne est incomplète.",
+      "grader_internal_error": "Le bilan n'a pas pu être produit. Refais l'exercice."
+    },
+    "legacy": {
+      "title": "Bilan d'une version antérieure",
+      "body": "Cette soumission a été évaluée avec une version antérieure du Betreuer. Refais l'exercice pour obtenir le bilan complet."
+    },
+    "asr": {
+      "unreliableNote": "Certains passages de la transcription sont incertains — l'évaluation s'appuie sur les passages clairs.",
+      "notAssessable": "L'audio n'a pas été analysé. Cette dimension reste en attente. Refais l'exercice pour la débloquer."
+    },
+    "pending": "Bilan en cours.",
+    "inFlightFallback": {
+      "title": "En cours de correction",
+      "body": "On te ramène à l'accueil. Tu y verras une bande discrète qui t'avertira dès que ton bilan est prêt."
+    },
+    "poll_exhausted": {
+      "title": "On vous prévient dès que c'est prêt",
+      "body": "La correction prend un peu plus de temps que prévu. Vous pouvez fermer l'app — on vous envoie une notification quand c'est terminé.",
+      "cta": "Fermer"
+    },
+    "failed": {
+      "title": "Le bilan n'a pas pu être produit.",
+      "body": "Refais l'exercice — tu ne perds rien.",
+      "retry": "Réessayer"
+    },
+    "rejected": {
+      "languageNotGerman": {
+        "title": "Bitte sprich auf Deutsch.",
+        "body": "On évalue uniquement les enregistrements en allemand. Refais l'exercice en parlant allemand pour recevoir ta note.",
+        "primaryCta": "Refaire l'exercice",
+        "secondaryCta": "Retour à l'aperçu"
+      },
+      "tooShort": {
+        "title": "Bitte nimm eine längere Aufnahme auf.",
+        "body": "On évalue uniquement les enregistrements assez longs pour donner un retour fiable. Refais l'exercice avec une prise plus longue (au moins 10 secondes de parole).",
+        "primaryCta": "Refaire l'exercice",
+        "secondaryCta": "Retour à l'aperçu"
+      },
+      "generic": {
+        "title": "Diese Aufnahme konnte nicht ausgewertet werden.",
+        "body": "On n'a pas pu produire de bilan pour cet enregistrement. Refais l'exercice — aucun de tes efforts n'est perdu.",
+        "primaryCta": "Refaire l'exercice",
+        "secondaryCta": "Retour à l'aperçu"
+      }
+    },
+    "retake": "Refaire l'exercice",
+    "backToHome": "Terminer",
+    "dialogue": {
+      "heading": "Résultat de préparation (non officiel)",
+      "practiceScore": "Score de préparation : {{score}} / 100"
+    }
+  }
+}

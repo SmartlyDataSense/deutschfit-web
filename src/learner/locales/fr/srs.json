@@ -1,0 +1,41 @@
+{
+  "revision": {
+    "title": "Révision",
+    "subtitle": "Révise tes cartes dues aujourd'hui.",
+    "instructionCloze": "Complétez",
+    "instructionVocab": "Traduisez",
+    "revealLabel": "Révéler la réponse",
+    "revealA11y": "Révéler la réponse à cette carte",
+    "backA11y": "Retour",
+    "emptyTitle": "Aucune carte à réviser",
+    "emptyBody": "Tu es à jour. Reviens demain ou entraîne une autre compétence.",
+    "errorTitle": "Erreur",
+    "errorBody": "Impossible de charger les cartes. Réessaie.",
+    "remainingLabel": "restantes"
+  },
+  "reveal": {
+    "title": "Réponse",
+    "explanationOverline": "Pourquoi ?",
+    "missingTitle": "Carte introuvable",
+    "missingBody": "Cette carte n'est plus disponible. Retour à la révision."
+  },
+  "difficulty": {
+    "again": "À revoir",
+    "hard": "Difficile",
+    "good": "Bien",
+    "easy": "Facile",
+    "againDuration": "< 1 min",
+    "hardDuration": "< 6 min",
+    "goodDuration": "< 10 min",
+    "easyDuration": "4 j",
+    "againIcon": "↺",
+    "hardIcon": "↓",
+    "goodIcon": "✓",
+    "easyIcon": "↑"
+  },
+  "due": {
+    "overdueDays_one": "Dû depuis {{count}}j",
+    "overdueDays_other": "Dû depuis {{count}}j",
+    "dueToday": "Dû aujourd'hui"
+  }
+}

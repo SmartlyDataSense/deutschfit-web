@@ -1,0 +1,29 @@
+{
+  "topBar": {
+    "back": "Back"
+  },
+  "question": {
+    "overline": "Question {{current}} / {{total}}",
+    "stemFallback": "(Question copy will be published in an upcoming corpus release.)"
+  },
+  "stimulus": {
+    "fallback": "(Reading / transcript will be published in an upcoming corpus release.)"
+  },
+  "footer": {
+    "mark": "Mark",
+    "unmark": "Marked",
+    "next": "Next question",
+    "submit": "Abgeben"
+  },
+  "empty": "No questions in this simulation.",
+  "offline": {
+    "banner": "Offline — exam submission will resume once you're back online."
+  },
+  "submit": {
+    "error": "Couldn't submit the exam. Check your connection and try again."
+  },
+  "unsupportedDrill": {
+    "title": "Bientôt disponible",
+    "body": "Ce mode arrive bientôt pour ce module."
+  }
+}

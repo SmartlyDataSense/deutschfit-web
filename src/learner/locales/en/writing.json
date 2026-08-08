@@ -1,0 +1,131 @@
+{
+  "promptList": {
+    "title": "Schreiben",
+    "subtitle": "Pick a situation and write your text.",
+    "wordRange": "{{min}}–{{max}} words",
+    "searchPlaceholder": "Search prompts…",
+    "filterAll": "All levels",
+    "teilSection": "Teil {{teil}}",
+    "noResultsTitle": "No results",
+    "noResultsBody": "No prompt matches your search.",
+    "empty": "No prompts available yet.",
+    "emptyTitle": "No prompts yet",
+    "emptyBody": "Check back after your content is ready — we're adding prompts every week.",
+    "emptyCta": "Refresh",
+    "errorTitle": "Couldn't load prompts",
+    "errorBody": "Check your connection and try again.",
+    "errorRetry": "Try again",
+    "addPrompt": "+ Suggest a prompt",
+    "communityBadge": "Community",
+    "actions": {
+      "keyboard": "Type",
+      "camera": "Photo"
+    }
+  },
+  "customPrompt": {
+    "title": "New prompt",
+    "subtitle": "Create your own writing situation — it will be offered to the whole community.",
+    "cancel": "Cancel",
+    "themeLabel": "Theme",
+    "themePlaceholder": "e.g. An invitation to a birthday party",
+    "boardLabel": "Exam",
+    "levelLabel": "Level",
+    "teilLabel": "Teil",
+    "teilOption": "Teil {{teil}}",
+    "teilHint": "Teil {{teil}} is recommended for level {{level}}.",
+    "wordsLabel": "Word count",
+    "minWords": "Minimum",
+    "maxWords": "Maximum",
+    "submit": "Create prompt",
+    "shareNote": "Your prompt will be visible to other learners.",
+    "errors": {
+      "invalid_payload": "Check the theme and the word count.",
+      "invalid_json": "Check the theme and the word count.",
+      "db_write_failed": "Couldn't save. Try again in a moment.",
+      "generic": "Couldn't create the prompt. Check your connection and try again."
+    }
+  },
+  "composer": {
+    "title": "Writing",
+    "placeholder": "Write your email in German here…",
+    "wordCount": "{{count}} words",
+    "range": "{{min}}–{{max}} words",
+    "wordHint": {
+      "tooShort": "Too short — {{count}} words to go.",
+      "tooLong": "Too long — trim {{count}} words."
+    },
+    "submit": "Submit",
+    "draftSaved": "Draft saved",
+    "confirmSubmit": {
+      "title": "Send your draft?",
+      "body": "Your text goes to the Betreuer. Grading takes about 3 minutes — you can keep using the app while it runs.",
+      "cancel": "Keep writing",
+      "confirm": "Send"
+    },
+    "submittedToast": "Got it · your correction arrives in ~3 min",
+    "submitError": "Couldn't send. Check your connection.",
+    "errors": {
+      "offline": "Couldn't connect. Draft saved — please try again.",
+      "tooShort": "Too short — at least {{min}} words required.",
+      "tooLong": "Too long — max {{max}} words.",
+      "rateLimited": "You already submitted one piece today. Try again tomorrow.",
+      "network": {
+        "message": "Couldn't connect. Draft saved — please try again.",
+        "cta": "Try again"
+      },
+      "body_language_not_german": {
+        "message": "Write your text in German so I can grade it. Your draft is saved.",
+        "cta": "Open draft"
+      },
+      "rate_limit_exceeded": {
+        "message": "You've submitted a lot of exercises. Try again in {{minutes}} min.",
+        "messageFallback": "You've submitted a lot of exercises. Try again a bit later."
+      },
+      "idempotency_replay": {
+        "message": "This submission was already saved — no duplicate.",
+        "cta": "View correction"
+      },
+      "validation_failed": {
+        "message": "Your submission couldn't be validated. Check the content and try again.",
+        "cta": "Try again"
+      },
+      "server": {
+        "message": "The server has a temporary issue. Try again in a moment.",
+        "cta": "Try again"
+      },
+      "unknown": {
+        "message": "Couldn't send. Draft saved — please try again.",
+        "cta": "Try again"
+      }
+    }
+  },
+  "feedback": {
+    "pending": "Our grader is reviewing your submission…",
+    "grading": "Grading in progress…",
+    "poll_exhausted": {
+      "title": "We'll let you know when it's ready",
+      "body": "Grading is taking a bit longer than expected. You can close the app — we'll send you a notification when it's done.",
+      "cta": "Close"
+    },
+    "failed": {
+      "title": "Grading failed",
+      "message": "We couldn't grade your submission. Please try again.",
+      "retry": "Try again"
+    },
+    "teilLabel": "Schreiben Teil {{teil}}",
+    "textTitle": "Your text",
+    "promptHeader": "Prompt",
+    "prueferTitle": "What the Prüfer would have written",
+    "betreuerTitle": "What the Betreuer says",
+    "scorecard": {
+      "totalLabel": "Total",
+      "moduleLabel": "Schreiben",
+      "unitLabel": "points",
+      "objectiveLabel": "Objective"
+    },
+    "scoreOutOf100": "{{score}} / 100",
+    "legacyFormatNote": "This correction is in the old format.",
+    "retake": "Try again",
+    "backToHome": "Back to home"
+  }
+}
