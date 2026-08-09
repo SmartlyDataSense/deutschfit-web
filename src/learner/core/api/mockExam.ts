@@ -49,7 +49,14 @@
  *
  * `normaliseReport` turns the server's `per_competence_report` jsonb into
  * the 4-bar `CompetenceSkills` shape the Results screen consumes.
+ *
+ * `getMockAttempt` (S8 · Task 8.1) is the one export in this file that is
+ * NOT an edge-function call — it reads `mock_exam_attempts` directly via
+ * PostgREST under RLS, same client `client.ts` uses. See its own doc
+ * comment below.
  */
+import { getBrowserClient } from "@/lib/supabase/browser";
+
 import type { PracticeLevel } from "../exam/engine/practiceLevel";
 import { ApiError, invokeFn, rawGet } from "./client";
 
@@ -814,5 +821,88 @@ export function normaliseReport(report: unknown): CompetenceSkills {
     hoeren: normaliseModule(r.hoeren),
     schreiben: normaliseModule(r.schreiben),
     sprechen: normaliseModule(r.sprechen),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Mock-attempt PostgREST reader (S8 · Task 8.1).
+// ---------------------------------------------------------------------------
+
+/**
+ * Web delta (P5): no mobile analog. Reads mock_exam_attempts directly
+ * under the user JWT via RLS mea_read_own (deutschfit-backend
+ * 0018_mock_exam_attempts.sql:53–55); S7 listDialogueTeile PostgREST
+ * precedent. Uses the SAME shared supabase browser client client.ts
+ * uses — never a second client.
+ */
+export type MockAttemptRow = {
+  id: string;
+  examSlug: string;
+  status: MockExamStatus;
+  lesenAttemptId: string | null;
+  hoerenAttemptId: string | null;
+  /** Always null today (backend#416) — kept for shape truth. */
+  schreibenSubmissionId: string | null;
+  /** Always null today — same class as schreibenSubmissionId above. */
+  sprechenSubmissionId: string | null;
+  /**
+   * jsonb passthrough — there is NO PerCompetenceReport type on web;
+   * consumers shape-check via the shipped `normaliseReport` (above),
+   * exactly like `FinalizeMockExamResult.perCompetenceReport: unknown`.
+   */
+  perCompetenceReport: unknown;
+  startedAt: string;
+  finalizedAt: string | null;
+};
+
+/** Raw PostgREST row from `mock_exam_attempts`. Internal DB→app mapping input for `getMockAttempt`. */
+interface RawMockAttemptRow {
+  readonly id: string;
+  readonly exam_slug: string;
+  readonly status: string;
+  readonly lesen_attempt_id: string | null;
+  readonly hoeren_attempt_id: string | null;
+  readonly schreiben_submission_id: string | null;
+  readonly sprechen_submission_id: string | null;
+  readonly per_competence_report: unknown;
+  readonly started_at: string;
+  readonly finalized_at: string | null;
+}
+
+/**
+ * Read a single `mock_exam_attempts` row by id — the child attempt ids
+ * (for resume) and the finalized `per_competence_report` (for a re-read of
+ * an already-finalized attempt), neither of which the start-409 body
+ * carries. Missing row → `null` (not an error — the caller decides what a
+ * cold/foreign id means). A PostgREST query error throws
+ * `Error("mock_attempt_read_failed")`.
+ */
+export async function getMockAttempt(mockAttemptId: string): Promise<MockAttemptRow | null> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("mock_exam_attempts")
+    .select(
+      "id, exam_slug, status, lesen_attempt_id, hoeren_attempt_id, schreiben_submission_id, sprechen_submission_id, per_competence_report, started_at, finalized_at"
+    )
+    .eq("id", mockAttemptId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("mock_attempt_read_failed");
+  }
+  if (!data) return null;
+
+  const row = data as RawMockAttemptRow;
+  return {
+    id: row.id,
+    examSlug: row.exam_slug,
+    status: row.status as MockExamStatus,
+    lesenAttemptId: row.lesen_attempt_id,
+    hoerenAttemptId: row.hoeren_attempt_id,
+    schreibenSubmissionId: row.schreiben_submission_id,
+    sprechenSubmissionId: row.sprechen_submission_id,
+    perCompetenceReport: row.per_competence_report,
+    startedAt: row.started_at,
+    finalizedAt: row.finalized_at,
   };
 }

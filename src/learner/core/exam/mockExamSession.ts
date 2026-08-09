@@ -19,6 +19,8 @@
  * reducer (`useExamPlayer`) and only get flushed to the server on
  * advance/finalize, per the "no offline submission queue" rule.
  */
+import { nextModuleForStatus } from "@/learner/core/api/examApi";
+
 import {
   advanceMockExam,
   fetchLesenSession,
@@ -304,29 +306,5 @@ function statusForFinishedModule(m: MockExamModule): MockExamStatus {
       return "schreiben_done";
     case "SPRECHEN":
       return "sprechen_done";
-  }
-}
-
-/**
- * Inverse of the above: given a cached status, the module the candidate
- * should land on when they resume. `in_progress` means LESEN hasn't been
- * finished yet — land on LESEN. Terminal statuses (`finalized`,
- * `abandoned`) map to `null` so the screen can bounce to the results /
- * hub screen.
- */
-function nextModuleForStatus(s: MockExamStatus): MockExamModule | null {
-  switch (s) {
-    case "in_progress":
-      return "LESEN";
-    case "lesen_done":
-      return "HOEREN";
-    case "hoeren_done":
-      return "SCHREIBEN";
-    case "schreiben_done":
-      return "SPRECHEN";
-    case "sprechen_done":
-    case "finalized":
-    case "abandoned":
-      return null;
   }
 }

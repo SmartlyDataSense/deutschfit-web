@@ -12,6 +12,7 @@
 import { ApiError, invokeFn } from "./client";
 import type { AnswerMap } from "../exam/engine/scoring";
 import {
+  getMockAttempt as mockExamGetMockAttempt,
   MockExamInProgressError,
   normaliseReport,
   advanceMockExam as mockExamAdvanceMockExam,
@@ -38,6 +39,7 @@ import {
   type LesenReadingText,
   type LesenSessionPayload,
   type ListModelltestsArgs,
+  type MockAttemptRow,
   type MockExamModule,
   type MockExamStatus,
   type ModelltestRow,
@@ -75,6 +77,7 @@ export {
   type LesenReadingText,
   type LesenSessionPayload,
   type ListModelltestsArgs,
+  type MockAttemptRow,
   type MockExamModule,
   type MockExamStatus,
   type ModelltestRow,
@@ -188,6 +191,7 @@ export const listModelltests = mockExamListModelltests;
 export const startMockExam = mockExamStartMockExam;
 export const advanceMockExam = mockExamAdvanceMockExam;
 export const finalizeMockExam = mockExamFinalizeMockExam;
+export const getMockAttempt = mockExamGetMockAttempt;
 
 /**
  * Resume an existing mock attempt. Thin convenience around `startMockExam` —
@@ -219,11 +223,14 @@ export async function resumeMockExam(args: StartMockExamArgs): Promise<StartMock
 }
 
 /**
- * Duplicated (not imported) from `mockExam.ts`, exactly as mobile
- * duplicates its own private `nextModuleForStatus` in `examApi.ts` — kept
- * private to this file.
+ * S8 · Task 8.1: exported — this is now the ONE `nextModuleForStatus`
+ * switch. It used to be duplicated verbatim in
+ * `@/learner/core/exam/mockExamSession` (mirroring mobile's own duplicate
+ * private copy in its `examApi.ts`); that copy is deleted and
+ * `mockExamSession.ts` imports this export instead (core-internal import,
+ * no cycle — `mockExamSession.ts` already imports from `./mockExam`).
  */
-function nextModuleForStatus(s: MockExamStatus): MockExamModule | null {
+export function nextModuleForStatus(s: MockExamStatus): MockExamModule | null {
   switch (s) {
     case "in_progress":
       return "LESEN";

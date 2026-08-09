@@ -36,9 +36,18 @@ vi.mock("@/learner/core/api/mockExam", async (importOriginal) => {
     fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
   };
 });
-vi.mock("@/learner/core/api/examApi", () => ({
-  submitLesen: (...args: unknown[]) => submitLesenMock(...args),
-}));
+// Partial mock (S8 · Task 8.1 facade-hygiene): `LesenSessionScreen` now
+// imports `normaliseReport` from the `examApi` facade too (not `mockExam`
+// directly) — keep the real `normaliseReport` (pure — no reason to fake
+// it, same rationale as the `mockExam` partial mock above) and stub only
+// `submitLesen`.
+vi.mock("@/learner/core/api/examApi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/core/api/examApi")>();
+  return {
+    ...actual,
+    submitLesen: (...args: unknown[]) => submitLesenMock(...args),
+  };
+});
 vi.mock("@/learner/core/exam/mockExamSession", () => ({
   advanceSession: (...args: unknown[]) => advanceSessionMock(...args),
   finalizeSession: (...args: unknown[]) => finalizeSessionMock(...args),

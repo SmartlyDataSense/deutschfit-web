@@ -31,8 +31,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import clsx from "clsx";
 
-import { submitLesen } from "@/learner/core/api/examApi";
-import { normaliseReport } from "@/learner/core/api/mockExam";
+import { normaliseReport, submitLesen } from "@/learner/core/api/examApi";
 import { trackEvent } from "@/learner/core/analytics/posthog";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import type { MockExamModule } from "@/learner/core/exam/mockExamSession";
