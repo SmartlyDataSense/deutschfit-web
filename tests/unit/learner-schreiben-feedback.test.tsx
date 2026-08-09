@@ -8,14 +8,8 @@
  * `examApi` facade, not the lower-level `./writing` module) resolves the
  * prompt used for the exam badge / prompt card / retake route.
  */
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render as rtlRender,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -294,8 +288,28 @@ describe("FeedbackScreen — graded, new format (telc points profile)", () => {
     });
   });
 
-  it("acknowledgeReadiness fires exactly once across re-renders (guard-removal-verified via clearedRef)", () => {
-    const { rerender } = render();
+  // A plain `render()` + same-props `rerender()` does NOT exercise the
+  // `clearedRef` guard: `pollingState` is a `vi.hoisted` mutable object, not
+  // React state, so `status`/`submissionId` are byte-identical across
+  // passes and the effect's `[status, submissionId]` deps never change —
+  // React would not re-invoke the effect body a second time even with the
+  // guard deleted. The guard's real protective value is against React 18
+  // StrictMode's dev-only mount → cleanup → remount double-invocation of
+  // effects on initial mount (`reactStrictMode: true` in `next.config.ts`):
+  // the first pass sets `acknowledgeReadiness` and flips `clearedRef.current`
+  // to `true`; the synthetic cleanup is a no-op (no cleanup fn returned);
+  // the second pass sees the guard already tripped and skips the call.
+  // Without the guard, both passes would fire, so this genuinely proves the
+  // guard — verified by temporarily deleting it and confirming this test
+  // fails with 2 calls (see task-6.9-report.md).
+  it("acknowledgeReadiness fires exactly once under React 18 StrictMode's dev double-invoke of mount effects", () => {
+    rtlRender(
+      <StrictMode>
+        <LearnerI18nProvider lng="fr">
+          <FeedbackScreen submissionId="sub-1" />
+        </LearnerI18nProvider>
+      </StrictMode>
+    );
     expect(acknowledgeReadinessMock).toHaveBeenCalledTimes(1);
     expect(acknowledgeReadinessMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -304,26 +318,6 @@ describe("FeedbackScreen — graded, new format (telc points profile)", () => {
         acknowledgedAt: expect.any(Number),
       })
     );
-
-    // Re-render the SAME graded snapshot twice more — removing the
-    // `clearedRef` guard would call `acknowledgeReadiness` again on each
-    // pass since the effect's `[status, submissionId]` deps are unchanged
-    // but React still re-runs the component body.
-    act(() =>
-      rerender(
-        <LearnerI18nProvider lng="fr">
-          <FeedbackScreen submissionId="sub-1" />
-        </LearnerI18nProvider>
-      )
-    );
-    act(() =>
-      rerender(
-        <LearnerI18nProvider lng="fr">
-          <FeedbackScreen submissionId="sub-1" />
-        </LearnerI18nProvider>
-      )
-    );
-    expect(acknowledgeReadinessMock).toHaveBeenCalledTimes(1);
   });
 });
 
