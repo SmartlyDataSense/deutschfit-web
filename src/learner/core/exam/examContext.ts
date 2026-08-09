@@ -157,7 +157,7 @@ function currentUserId(): string | null {
 }
 
 async function fetchServerProfile(
-  userId: string,
+  userId: string
 ): Promise<Pick<UserProfileRow, "exam_board" | "exam_level"> | null> {
   try {
     const { data, error } = await getBrowserClient()
@@ -197,14 +197,11 @@ async function fetchServerProfile(
 async function upsertServerProfile(
   userId: string,
   board: ExamBoard,
-  level: ExamLevel,
+  level: ExamLevel
 ): Promise<void> {
   const { error } = await getBrowserClient()
     .from("user_profiles")
-    .upsert(
-      { user_id: userId, exam_board: board, exam_level: level },
-      { onConflict: "user_id" },
-    );
+    .upsert({ user_id: userId, exam_board: board, exam_level: level }, { onConflict: "user_id" });
   if (error) {
     if (process.env.NODE_ENV !== "production") {
       console.warn("[examContext] upsert profile failed:", error.message);
@@ -226,9 +223,7 @@ const subscribers = new Set<ExamContextSubscriber>();
  * caches data keyed on (board, level) and needs to invalidate when the user
  * rotates. Returns an unsubscribe function.
  */
-export function subscribeExamContext(
-  listener: ExamContextSubscriber,
-): () => void {
+export function subscribeExamContext(listener: ExamContextSubscriber): () => void {
   subscribers.add(listener);
   return () => {
     subscribers.delete(listener);
@@ -274,9 +269,7 @@ export const useExamContextStore = create<ExamContextStore>((set, get) => ({
       const server = await fetchServerProfile(userId);
       if (server) {
         const state = get();
-        const drift =
-          server.exam_board !== state.board ||
-          server.exam_level !== state.level;
+        const drift = server.exam_board !== state.board || server.exam_level !== state.level;
         if (drift) {
           set({ board: server.exam_board, level: server.exam_level });
           writeStored({
@@ -297,8 +290,7 @@ export const useExamContextStore = create<ExamContextStore>((set, get) => ({
     const server = await fetchServerProfile(userId);
     if (!server) return;
     const state = get();
-    const drift =
-      server.exam_board !== state.board || server.exam_level !== state.level;
+    const drift = server.exam_board !== state.board || server.exam_level !== state.level;
     if (drift) {
       set({ board: server.exam_board, level: server.exam_level });
       writeStored({
@@ -316,10 +308,7 @@ export const useExamContextStore = create<ExamContextStore>((set, get) => ({
 
   setExamContext: async ({ board, level, source }) => {
     // Clamp to a valid combo (e.g. goethe c2 → testdaf falls back to b2).
-    const { board: normBoard, level: normLevel } = normaliseExamSelection(
-      board,
-      level,
-    );
+    const { board: normBoard, level: normLevel } = normaliseExamSelection(board, level);
     const nextSource: ExamContextSource = source ?? get().source;
 
     // 1. Optimistic store update.
@@ -348,5 +337,4 @@ export const useExamContextStore = create<ExamContextStore>((set, get) => ({
 }));
 
 /** Convenience wrapper for calling hydration from a non-hook context (e.g. a mount effect). */
-export const hydrateExamContext = (): Promise<void> =>
-  useExamContextStore.getState().hydrate();
+export const hydrateExamContext = (): Promise<void> => useExamContextStore.getState().hydrate();

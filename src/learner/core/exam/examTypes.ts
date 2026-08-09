@@ -55,9 +55,7 @@ export const DEFAULT_EXAM_SOURCE: ExamContextSource = "onboarding";
  * Mirrors the §6.1 matrix in the ship plan. A board omitted from this map
  * would fall back to every level.
  */
-export const LEVELS_BY_BOARD: Readonly<
-  Record<ExamBoard, readonly ExamLevel[]>
-> = {
+export const LEVELS_BY_BOARD: Readonly<Record<ExamBoard, readonly ExamLevel[]>> = {
   goethe: ["a1", "a2", "b1", "b2", "c1", "c2"],
   telc: ["a1", "a2", "b1", "b2", "c1", "c2"],
   oesd: ["a1", "a2", "b1", "b2", "c1", "c2"],
@@ -77,9 +75,7 @@ export const LEVELS_BY_BOARD: Readonly<
  * modelltests run under the joint ÖSD / Goethe standard and should surface to
  * users on either board.
  */
-export const CERT_CODES_BY_BOARD: Readonly<
-  Record<ExamBoard, readonly string[]>
-> = {
+export const CERT_CODES_BY_BOARD: Readonly<Record<ExamBoard, readonly string[]>> = {
   goethe: ["GOETHE", "GOETHE_OESD"],
   oesd: ["OESD", "GOETHE_OESD"],
   telc: ["TELC"],
@@ -90,22 +86,14 @@ export const CERT_CODES_BY_BOARD: Readonly<
 };
 
 export function isExamBoard(value: unknown): value is ExamBoard {
-  return (
-    typeof value === "string" &&
-    (EXAM_BOARDS as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (EXAM_BOARDS as readonly string[]).includes(value);
 }
 
 export function isExamLevel(value: unknown): value is ExamLevel {
-  return (
-    typeof value === "string" &&
-    (EXAM_LEVELS as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (EXAM_LEVELS as readonly string[]).includes(value);
 }
 
-export function isExamContextSource(
-  value: unknown,
-): value is ExamContextSource {
+export function isExamContextSource(value: unknown): value is ExamContextSource {
   return value === "onboarding" || value === "settings";
 }
 
@@ -118,7 +106,7 @@ export function isExamContextSource(
  */
 export function normaliseExamSelection(
   board: ExamBoard,
-  level: ExamLevel,
+  level: ExamLevel
 ): { board: ExamBoard; level: ExamLevel } {
   const shipped = LEVELS_BY_BOARD[board];
   if (shipped.includes(level)) {
@@ -136,10 +124,7 @@ export function normaliseExamSelection(
  * the signature so callers can opt into a future debranded variant without a
  * second refactor, but the rendered output is level-only (e.g. `"B1"`).
  */
-export function formatExamTrackLabel(
-  _board: ExamBoard,
-  level: ExamLevel,
-): string {
+export function formatExamTrackLabel(_board: ExamBoard, level: ExamLevel): string {
   return level.toUpperCase();
 }
 
@@ -160,9 +145,7 @@ export interface ExamChange {
  *
  * Drives the `ConfirmExamChangeModal` variant + which bullet copy to show.
  */
-export function classifyExamChange(
-  change: ExamChange,
-): "board" | "level" | "none" {
+export function classifyExamChange(change: ExamChange): "board" | "level" | "none" {
   if (change.from.board !== change.to.board) return "board";
   if (change.from.level !== change.to.level) return "level";
   return "none";
