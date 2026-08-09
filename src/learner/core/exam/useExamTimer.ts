@@ -1,14 +1,19 @@
 "use client";
 
 /**
- * `useExamTimer` — countdown state for the graded Lesen session (Task 4.9).
- * Port of `deutschfit-mobile/src/core/exam/useExamTimer.ts` +
- * `deutschfit-mobile/src/core/exam/timer.ts` (the pure `computeTimerState`/
+ * `useExamTimer` — countdown state for graded exam sessions (Task 4.9,
+ * relocated Task 5.6). Port of `deutschfit-mobile/src/core/exam/useExamTimer.ts`
+ * + `deutschfit-mobile/src/core/exam/timer.ts` (the pure `computeTimerState`/
  * `minutesToMs` helpers), merged into one file — mobile's split exists so
- * `timer.ts` can be imported from multiple exam components; this slice has
- * exactly one consumer (`LesenSessionScreen`), so the >30-line threshold
- * that justifies a standalone hook file doesn't also justify a second
- * standalone pure-logic file.
+ * `timer.ts` can be imported from multiple exam components; web kept the
+ * merge when this slice had exactly one consumer (`LesenSessionScreen`), so
+ * the >30-line threshold that justifies a standalone hook file didn't also
+ * justify a second standalone pure-logic file.
+ *
+ * Originally lived at `learner/lesen/hooks/useExamTimer.ts`. Second
+ * consumer arrived — relocated to mobile's canonical `core/exam` home
+ * (Task 5.6, Hören's session screen) so both Lesen and Hören import the
+ * same countdown, no behaviour change.
  *
  * `onExpire` is captured in a ref so a parent passing a fresh `useCallback`
  * identity every render does not cause the interval effect to
