@@ -22,11 +22,33 @@
  * Level outside B1/B2 → `unsupported`, no network. A `fetchPracticeSetsList`
  * rejection surfaces as `{status:"error", message}`; `reload()` bumps an
  * internal key to re-run the effect.
+ *
+ * Hydration guard (fix round 1, post-review): `/apprendre/practice/
+ * [modality]` is deep-linkable and sits under `(protected)`, whose layout
+ * chain (`LearnerGuard` → `OnboardingGate` → `LearnerProviders`) never
+ * calls `hydrateExamContext()` — only individual *screens* do that
+ * (`AccueilScreen`, `ExamTypeScreen`, the onboarding-diagnostic route),
+ * each in its own mount effect, each gating on `isLoaded` before trusting
+ * `board`/`level`. `usePracticeHub` (Task 4.5) has neither: it reads
+ * `board`/`level` straight off the store with no hydrate call and no
+ * `isLoaded` gate, which is latent-safe there only because it's a local
+ * IndexedDB read with no network call and no navigation side effect — a
+ * stale-default read just shows a wrong chip for one tick until something
+ * else (if anything) hydrates the store. This hook has neither excuse: a
+ * direct deep-link/refresh lands with the store still at
+ * `DEFAULT_EXAM_BOARD`/`DEFAULT_EXAM_LEVEL` (`isLoaded: false`), and
+ * `toPracticeLevel("b1")` is truthy — so without a gate this hook would
+ * fetch against the *wrong* (board, level) and, on exactly one matching
+ * set, silently `router.replace` the learner into the wrong exam track's
+ * session. So this hook self-hydrates (mirrors the screen-level idiom
+ * above, applied at the hook that owns the fetch) and gates the fetch
+ * effect on `isLoaded` — no fetch, no chip decoration, no auto-forward
+ * until the store's real value has landed.
  */
 import { useCallback, useEffect, useState } from "react";
 
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
-import { useExamContextStore } from "@/learner/core/exam/examContext";
+import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { toPracticeLevel } from "@/learner/core/exam/engine/practiceLevel";
 import { fetchPracticeSetsList } from "@/learner/core/api/mockExam";
 import type { PracticeSetInfo } from "@/learner/core/api/mockExam";
@@ -88,11 +110,26 @@ export function usePracticeSets(modality: PracticeModality): {
 } {
   const board = useExamContextStore((s) => s.board);
   const rawLevel = useExamContextStore((s) => s.level);
+  const isExamContextLoaded = useExamContextStore((s) => s.isLoaded);
   const level = toPracticeLevel(rawLevel);
   const [state, setState] = useState<PracticeSetsState>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
+  // This route has no ancestor that hydrates the exam-context store (see
+  // doc comment) — trigger it here, same idiom as `AccueilScreen`'s own
+  // mount effect. `hydrate()` is idempotent/cheap to call again if some
+  // other screen already did.
   useEffect(() => {
+    void hydrateExamContext();
+  }, []);
+
+  useEffect(() => {
+    if (!isExamContextLoaded) {
+      // Still resolving the learner's real (board, level) — do not fetch
+      // against the store's not-yet-hydrated default values.
+      setState({ status: "loading" });
+      return;
+    }
     if (!level) {
       setState({ status: "unsupported" });
       return;
@@ -127,7 +164,7 @@ export function usePracticeSets(modality: PracticeModality): {
     return () => {
       cancelled = true;
     };
-  }, [board, level, modality, reloadKey]);
+  }, [board, isExamContextLoaded, level, modality, reloadKey]);
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 

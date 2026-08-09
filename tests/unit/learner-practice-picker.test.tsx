@@ -1,10 +1,15 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchSetsMock, loadProgressMock, replaceMock } = vi.hoisted(() => ({
+// `hydrateMock` is built via `vi.hoisted` (not a plain top-level `const`)
+// because `vi.mock` factories are hoisted above the rest of the module —
+// see `tests/unit/learner-onboarding-exam-type.test.tsx`'s header comment
+// for the TDZ rationale.
+const { fetchSetsMock, loadProgressMock, replaceMock, hydrateMock } = vi.hoisted(() => ({
   fetchSetsMock: vi.fn(),
   loadProgressMock: vi.fn(),
   replaceMock: vi.fn(),
+  hydrateMock: vi.fn(),
 }));
 
 vi.mock("@/learner/core/api/mockExam", () => ({
@@ -17,6 +22,15 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
 }));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
+// Partial mock: keep the real `useExamContextStore` (tests drive it
+// directly via `setState`, same as `learner-practice-hub.test.tsx`) but
+// stub `hydrateExamContext` so the hook's self-hydrate effect (fix round
+// 1) doesn't hit real localStorage/Supabase in jsdom — tests control
+// `isLoaded` transitions explicitly instead.
+vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/core/exam/examContext")>();
+  return { ...actual, hydrateExamContext: hydrateMock };
+});
 
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { useExamContextStore } from "@/learner/core/exam/examContext";
@@ -28,6 +42,7 @@ describe("PracticeSetPickerScreen — set enumeration + single-set auto-forward"
     fetchSetsMock.mockReset();
     loadProgressMock.mockReset();
     replaceMock.mockReset();
+    hydrateMock.mockReset();
     loadProgressMock.mockResolvedValue(null);
     useLearnerSession.setState({
       status: "authenticated",
@@ -91,6 +106,45 @@ describe("PracticeSetPickerScreen — set enumeration + single-set auto-forward"
     await waitFor(() => expect(fetchSetsMock).toHaveBeenCalledTimes(2));
     await waitFor(() =>
       expect(screen.queryByTestId("practice-set-picker-error")).not.toBeInTheDocument()
+    );
+  });
+
+  it("fix round 1 — waits for exam-context hydration before fetching or auto-forwarding, then uses the hydrated board/level", async () => {
+    fetchSetsMock.mockResolvedValue([
+      { slug: "only-one", title: "Übungstest 01", shortLabel: null },
+    ]);
+    // Reproduces a hard refresh / deep-link straight onto this route: the
+    // store still holds the un-hydrated defaults (`goethe`/`b1`), not the
+    // learner's real track. `toPracticeLevel("b1")` is truthy, so before
+    // this fix the hook would fetch (and could auto-forward) against this
+    // wrong combo.
+    useExamContextStore.setState({ board: "goethe", level: "b1", isLoaded: false } as never);
+
+    renderWithI18n(<PracticeSetPickerScreen modality="lesen" />);
+
+    await waitFor(() => expect(hydrateMock).toHaveBeenCalledTimes(1));
+    // Give any (incorrect) fetch a chance to fire before asserting its
+    // absence — `waitFor` above already flushed one microtask queue.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fetchSetsMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId("practice-set-picker-loading")).toBeInTheDocument();
+
+    // Hydration lands with the learner's REAL (different) track.
+    act(() => {
+      useExamContextStore.setState({ board: "telc", level: "b2", isLoaded: true } as never);
+    });
+
+    await waitFor(() => expect(fetchSetsMock).toHaveBeenCalledWith("B2", "LESEN"));
+    await waitFor(() =>
+      expect(loadProgressMock).toHaveBeenCalledWith(
+        expect.objectContaining({ board: "telc", level: "B2", quizSlug: "only-one" })
+      )
+    );
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith(
+        "/fr/app/apprendre/practice/lesen/session?slug=only-one"
+      )
     );
   });
 });
