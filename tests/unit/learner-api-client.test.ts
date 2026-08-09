@@ -198,6 +198,19 @@ describe("learner API client", () => {
     expect(result).toEqual({ hello: "world" });
   });
 
+  it("carries the parsed error body through as ApiError.bodyJson (S4 — mock-exam 409)", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(409, { error: "mock_in_progress", mock_attempt_id: "m1", status: "in_progress" })
+    );
+
+    await expect(invokeFn("mock-exam-start", { method: "POST" })).rejects.toMatchObject({
+      status: 409,
+      code: "mock_in_progress",
+      bodyJson: { error: "mock_in_progress", mock_attempt_id: "m1", status: "in_progress" },
+    });
+  });
+
   it("falls back to statusText when the error body isn't valid JSON", async () => {
     const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValueOnce(
