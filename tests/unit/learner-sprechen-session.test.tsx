@@ -416,6 +416,61 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
     expect(fakeRecorder.stopRecordingMock).toHaveBeenCalledTimes(1);
   });
 
+  it("auto-stop calls the native stop exactly once even when an unrelated re-render lands mid-await (#380 double-fire regression)", async () => {
+    useTopicHandoff.setState({ topic: sampleTopic() });
+    // `stopRecording` resolves only when the test calls `resolveStop` below —
+    // this keeps `recorder.status` at "recording" (STOP_SUCCESS hasn't
+    // dispatched) for as long as the test needs, isolating the exact
+    // "mid-`await native.stopRecording()`" window the review flagged.
+    let resolveStop: (value: { uri: string; durationMs: number }) => void = () => {};
+    const stopPromise = new Promise<{ uri: string; durationMs: number }>((resolve) => {
+      resolveStop = resolve;
+    });
+    const stopRecordingMock = vi.fn().mockReturnValue(stopPromise);
+    const fakeRecorder = makeFakeRecorder({
+      pollStatus: vi.fn().mockReturnValue({ durationMs: 999_000, metering: -10 }),
+      stopRecording: stopRecordingMock,
+    });
+
+    renderScreen({ recorderFactory: () => fakeRecorder });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-mic-check")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-mic-check-skip"));
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+
+    // Fake timers ONLY around the recorder's 100ms poll interval — `waitFor`
+    // relies on real timers throughout the rest of this test.
+    vi.useFakeTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    vi.useRealTimers();
+
+    // Auto-stop has fired and `handleStop` is now suspended mid-`await
+    // stop()`. Force a genuine unrelated re-render of the screen during
+    // this exact window — a board change mid-recording (e.g. a late
+    // exam-context hydration landing) that `sessionLevel`/`cap`/`recorder`/
+    // `session.reviewRecording` don't depend on (the topic's own `cert`
+    // wins over the board-derived one, and `cap` is keyed off the topic's
+    // `level`, not the exam-context board/level) — a pre-fix `handleStop`
+    // depending on the whole `recorder`/`session` objects would still pick
+    // up a fresh identity here purely because the screen re-rendered.
+    await act(async () => {
+      useExamContextStore.setState({ board: "telc" } as never);
+    });
+
+    expect(stopRecordingMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveStop({ uri: "blob:recorded-uri", durationMs: 999_000 });
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-card")).toBeInTheDocument()
+    );
+    expect(stopRecordingMock).toHaveBeenCalledTimes(1);
+  });
+
   it("stop lands the review phase with the stop()-returned uri and duration, not the last polled values (#373 / F-028)", async () => {
     useTopicHandoff.setState({ topic: sampleTopic() });
     const fakeRecorder = makeFakeRecorder();

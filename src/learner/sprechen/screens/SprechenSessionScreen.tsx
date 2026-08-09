@@ -301,12 +301,35 @@ export function SprechenSessionScreen({
   // is threaded straight into `reviewRecording`; `recorder.uri` read in the
   // same tick would still be the pre-stop `null` (React state from
   // `STOP_SUCCESS` isn't visible until the next render).
+  // Fix-round delta: `recorder` and `session` are freshly-constructed
+  // objects every render (`useRecorder`/`useSprechenSession` both return
+  // `{...state, ...methods}` literals), so depending on the whole object
+  // churns `handleStop`'s identity on every unrelated re-render — not just
+  // when something it actually reads changes. Narrowed to the specific
+  // primitives + the two methods, both of which ARE referentially stable
+  // across renders (`recorder.stop` deps on `[dispatch, native, stopTick]`,
+  // all stable; `session.reviewRecording` deps on `[teil, topicId]`, both
+  // fixed for the session's lifetime) — so `handleStop`'s identity now only
+  // changes when one of these primitives actually changes, matching the
+  // auto-stop effect's own dependency intent below.
   const handleStop = useCallback((): void => {
+    // Destructured to plain locals so the calls below (`stop()` /
+    // `reviewRecording(...)`) are identifier calls, not `recorder.stop()` /
+    // `session.reviewRecording(...)` member-expression calls — the latter
+    // trips eslint-plugin-react-hooks' conservative "implicit `this`" rule,
+    // which then demands the *whole* `recorder`/`session` object in the
+    // deps array and would reintroduce the every-render identity churn
+    // this fix is removing.
+    const recorderStatus = recorder.status;
+    const recorderUri = recorder.uri;
+    const recorderDurationMs = recorder.durationMs;
+    const stop = recorder.stop;
+    const reviewRecording = session.reviewRecording;
     void (async () => {
       const result =
-        recorder.status === "recording"
-          ? await recorder.stop()
-          : { uri: recorder.uri ?? "", durationMs: recorder.durationMs };
+        recorderStatus === "recording"
+          ? await stop()
+          : { uri: recorderUri ?? "", durationMs: recorderDurationMs };
       const actualSec = Math.floor(result.durationMs / 1000);
       if (actualSec < SHORT_RECORDING_RATIO * targetSec) {
         trackEvent("length_warning_shown", {
@@ -316,12 +339,21 @@ export function SprechenSessionScreen({
           target_sec: targetSec,
         });
       }
-      session.reviewRecording({
+      reviewRecording({
         recordingUri: result.uri || null,
         durationMs: result.durationMs,
       });
     })();
-  }, [recorder, session, sessionLevel, sessionSubgenre, targetSec]);
+  }, [
+    recorder.durationMs,
+    recorder.status,
+    recorder.stop,
+    recorder.uri,
+    session.reviewRecording,
+    sessionLevel,
+    sessionSubgenre,
+    targetSec,
+  ]);
 
   // #380 — auto-stop once the recording reaches `cap`. Single fire per
   // recording via `autoStopFiredRef`.
