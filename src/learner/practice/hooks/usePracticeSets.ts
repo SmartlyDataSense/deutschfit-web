@@ -23,6 +23,16 @@
  * rejection surfaces as `{status:"error", message}`; `reload()` bumps an
  * internal key to re-run the effect.
  *
+ * Unlike `usePracticeSession`, this hook stays typed over the full
+ * `PracticeModality` union (Task 5.5 adds `hoeren`, not narrowed to
+ * `TextPracticeModality`) — `PracticeSetPickerScreen` calls it for all
+ * three modalities to enumerate rows before it branches on where a tap
+ * routes to. Calling `loadPracticeProgress` with `moduleCode: "HOEREN"`
+ * is a harmless no-op read: no Hören surface ever writes a
+ * `practice_progress` row (P13), so every Hören set's chip resolves to
+ * «À faire» via the existing not-found → `{state:"todo"}` fallback —
+ * no behavior change needed here.
+ *
  * Hydration guard (fix round 1, post-review): `/apprendre/practice/
  * [modality]` is deep-linkable and sits under `(protected)`, whose layout
  * chain (`LearnerGuard` → `OnboardingGate` → `LearnerProviders`) never
@@ -78,7 +88,7 @@ async function chipForSet(
     userId: string | null;
     board: string;
     level: string;
-    moduleCode: "LESEN" | "SPRACHBAUSTEINE";
+    moduleCode: "LESEN" | "SPRACHBAUSTEINE" | "HOEREN";
   }
 ): Promise<PracticeChip> {
   if (!key.userId) return { state: "todo" };

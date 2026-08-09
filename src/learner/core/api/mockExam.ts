@@ -15,9 +15,17 @@
  *
  * Contract (server-authoritative), verbatim from mobile:
  *   - `modelltests-list`   (GET)  → `{ modelltests: ModelltestRow[] }`
- *   - `mock-exam-start`    (POST `{ exam_slug }`)
- *       → 201 `{ mock_attempt_id, exam_slug, next_module, lesen_attempt_id }` (no `status` key)
+ *   - `mock-exam-start`    (POST `{ exam_slug, module? }`)
+ *       → 201 `{ mock_attempt_id, exam_slug, next_module, lesen_attempt_id, hoeren_attempt_id }` (no `status` key)
  *       → 409 `{ error: 'mock_in_progress', mock_attempt_id, status }`
+ *
+ * `module` (S5 · Task 5.1, first client of backend #59) selects a
+ * single-module drill instead of the full mock — omitted entirely from
+ * the request body when not provided (deployed back-compat). The 201
+ * response carries no `status` key regardless of `module`; the client
+ * fills in the per-module starting status via `defaultStatusForModule`
+ * (LESEN → `in_progress`, HOEREN → `lesen_done`, mirroring the backend's
+ * `STATUS_AT_START` table in `_shared/mock_exam.ts`).
  *   - `mock-exam-advance`  (POST `{ mock_attempt_id, finished_module }`)
  *       → 200 `{ mock_attempt_id, exam_slug, next_module, <next>_attempt_id? }`
  *       → 409 `{ error: 'state_race' }`
@@ -78,6 +86,8 @@ export interface ListModelltestsArgs {
 
 export interface StartMockExamArgs {
   readonly examSlug: string;
+  /** Single-module drill selector (S5 · Task 5.1). Omit for a full mock. */
+  readonly module?: MockExamModule;
 }
 
 export interface StartMockExamResult {
@@ -85,6 +95,8 @@ export interface StartMockExamResult {
   readonly examSlug: string;
   readonly nextModule: MockExamModule | null;
   readonly lesenAttemptId: string | null;
+  /** `null` when absent — including on the resume (409) path. */
+  readonly hoerenAttemptId: string | null;
   /** `true` when the 201 path ran; `false` when we resumed via 409. */
   readonly created: boolean;
   readonly status: MockExamStatus;
@@ -140,8 +152,23 @@ interface RawStartResponse {
   readonly exam_slug?: string;
   readonly next_module?: MockExamModule | null;
   readonly lesen_attempt_id?: string | null;
+  readonly hoeren_attempt_id?: string | null;
   readonly status?: MockExamStatus;
   readonly error?: string;
+}
+
+/**
+ * Per-module starting status for the 201 path, which never carries a
+ * `status` key. Mirrors the backend's `STATUS_AT_START` table
+ * (`_shared/mock_exam.ts:71–76`): a full mock (`module` omitted) always
+ * begins `in_progress` (Lesen active); a Hören drill begins `lesen_done`
+ * (Lesen sits in its default `missing` state, Hören is the active
+ * module). Mobile's blanket `"in_progress"` default is a bug for the
+ * HOEREN case — this client must not inherit it, since resume/finalize
+ * logic keys off status.
+ */
+function defaultStatusForModule(module: MockExamModule | undefined): MockExamStatus {
+  return module === "HOEREN" ? "lesen_done" : "in_progress";
 }
 
 interface RawAdvanceResponse {
@@ -241,6 +268,75 @@ interface RawLesenSessionResponse {
   readonly error?: string;
 }
 
+/**
+ * Hören-side mirror of the Lesen envelope (S5 · Task 5.1). Shapes verified
+ * against mobile `deutschfit-mobile/src/core/api/mockExam.ts:450–495` —
+ * field names align with `@/learner/core/exam/engine/loadModel` so callers
+ * reuse the same loader as Lesen/Sprachbausteine.
+ */
+export interface HoerenAudioTrack {
+  readonly slug: string;
+  readonly label: string;
+  readonly audio_url: string | null;
+  readonly audio_missing?: boolean;
+  readonly transcript_md?: string | null;
+}
+
+export interface HoerenQuestion {
+  readonly id: string;
+  readonly item_number: number;
+  readonly stem_de: string | null;
+  readonly answer_format: string;
+  readonly options: readonly LesenOption[];
+  readonly correct_answer: string;
+  readonly audio_track_slug: string | null;
+}
+
+export interface HoerenPart {
+  readonly teil_number: number;
+  readonly teil_label: string;
+  readonly part_kind: string;
+  readonly duration_minutes: number;
+  readonly instructions_de: string;
+  readonly audio_tracks: readonly HoerenAudioTrack[];
+  readonly questions: readonly HoerenQuestion[];
+}
+
+export interface HoerenModule {
+  readonly module_code: "HOEREN";
+  readonly source_slug: string;
+  readonly parts: readonly HoerenPart[];
+}
+
+export interface HoerenSessionPayload {
+  /** Server attempt id in live (Examen) mode. `null` on the practice path. */
+  readonly attemptId: string | null;
+  readonly examSlug: string;
+  readonly manifest: RawManifest;
+  readonly module: HoerenModule;
+}
+
+/**
+ * Two-entry arg for `fetchHoerenSession`. Exactly one of the fields must be
+ * set — `examSlug` to create/reuse an attempt via `hoeren-start`,
+ * `attemptId` to hydrate an existing one via `hoeren-session-get`.
+ *
+ * Web delta: mobile also accepts a plain-string overload
+ * (`FetchHoerenSessionArgs | string`, mobile mockExam.ts:582) — deliberately
+ * dropped here; only the object form ships.
+ */
+export type FetchHoerenSessionArgs =
+  | { readonly examSlug: string; readonly attemptId?: undefined }
+  | { readonly attemptId: string; readonly examSlug?: undefined };
+
+interface RawHoerenSessionResponse {
+  readonly attempt_id?: string;
+  readonly exam_slug?: string;
+  readonly manifest?: RawManifest;
+  readonly module?: HoerenModule;
+  readonly error?: string;
+}
+
 /** One published practice set, as listed by `practice-sets-list`. */
 export interface PracticeSetInfo {
   readonly slug: string;
@@ -331,7 +427,11 @@ export async function startMockExam(args: StartMockExamArgs): Promise<StartMockE
   try {
     raw = await invokeFn<RawStartResponse>("mock-exam-start", {
       method: "POST",
-      body: { exam_slug: args.examSlug },
+      // `module` omitted entirely (not sent as `undefined`) when absent —
+      // deployed back-compat with the pre-#59 endpoint contract.
+      body: args.module
+        ? { exam_slug: args.examSlug, module: args.module }
+        : { exam_slug: args.examSlug },
     });
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) {
@@ -363,8 +463,9 @@ export async function startMockExam(args: StartMockExamArgs): Promise<StartMockE
     examSlug: raw.exam_slug,
     nextModule: raw.next_module ?? "LESEN",
     lesenAttemptId: raw.lesen_attempt_id ?? null,
+    hoerenAttemptId: raw.hoeren_attempt_id ?? null,
     created: true,
-    status: raw.status ?? "in_progress",
+    status: raw.status ?? defaultStatusForModule(args.module),
   };
 }
 
@@ -482,6 +583,46 @@ export async function fetchLesenSession(
   };
 }
 
+/**
+ * Hören-side mirror of `fetchLesenSession` (mobile `582–635`). Two-entry
+ * dispatch: `attemptId` → `hoeren-session-get {attempt_id}`, `examSlug` →
+ * `hoeren-start {exam_slug}`. Both return the same nested envelope shape;
+ * `hoeren-session-get` responses carry extra keys (`answers`, `status`,
+ * …) that this client ignores.
+ */
+export async function fetchHoerenSession(
+  args: FetchHoerenSessionArgs
+): Promise<HoerenSessionPayload> {
+  const isAttemptRef = args.attemptId !== undefined;
+  const fn = isAttemptRef ? "hoeren-session-get" : "hoeren-start";
+  const prefix = isAttemptRef ? "hoeren_session_get" : "hoeren_start";
+  const body = isAttemptRef ? { attempt_id: args.attemptId } : { exam_slug: args.examSlug };
+
+  let raw: RawHoerenSessionResponse;
+  try {
+    raw = await invokeFn<RawHoerenSessionResponse>(fn, { method: "POST", body });
+  } catch (err) {
+    rethrowTransportError(err, prefix);
+  }
+
+  if (!raw) {
+    throw new Error(`${prefix}_empty_response`);
+  }
+  if (raw.error) {
+    throw new Error(raw.error);
+  }
+  if (!raw.attempt_id || !raw.exam_slug || !raw.manifest || !raw.module) {
+    throw new Error(`${prefix}_malformed_response`);
+  }
+
+  return {
+    attemptId: raw.attempt_id,
+    examSlug: raw.exam_slug,
+    manifest: raw.manifest,
+    module: raw.module,
+  };
+}
+
 type TextPracticeFn = "lesen-practice-get" | "sprachbausteine-practice-get";
 
 /**
@@ -536,13 +677,58 @@ export async function fetchSprachbausteinePracticeSession(
 }
 
 /**
+ * Apprendre (Pratique) Hören practice fetch (mobile `651–677`). Calls the
+ * read-only `hoeren-practice-get` edge function, which creates no
+ * `hoeren_attempts` row and applies no rate limit — grading is local, so
+ * the payload legitimately carries `correct_answer`. The guard checks
+ * `exam_slug` / `manifest` / `module` only (no `attempt_id` check, unlike
+ * the live `fetchHoerenSession`); `attemptId` is always `null`, even if the
+ * server happens to echo an `attempt_id`.
+ *
+ * Web delta: `slug?` param (P14) — mobile takes level only.
+ */
+export async function fetchHoerenPracticeSession(
+  level: PracticeLevel,
+  slug?: string
+): Promise<HoerenSessionPayload> {
+  const body: Record<string, unknown> = slug ? { level, slug } : { level };
+
+  let raw: RawHoerenSessionResponse;
+  try {
+    raw = await invokeFn<RawHoerenSessionResponse>("hoeren-practice-get", {
+      method: "POST",
+      body,
+    });
+  } catch (err) {
+    rethrowTransportError(err, "hoeren_practice_get");
+  }
+
+  if (!raw) {
+    throw new Error("hoeren_practice_get_empty_response");
+  }
+  if (raw.error) {
+    throw new Error(raw.error);
+  }
+  if (!raw.exam_slug || !raw.manifest || !raw.module) {
+    throw new Error("hoeren_practice_get_malformed_response");
+  }
+
+  return {
+    attemptId: null,
+    examSlug: raw.exam_slug,
+    manifest: raw.manifest,
+    module: raw.module,
+  };
+}
+
+/**
  * Enumerates the published practice sets for a (level, module) cell via
  * `practice-sets-list`, ordered slug asc. An empty cell is a valid state
  * and returns `[]`.
  */
 export async function fetchPracticeSetsList(
   level: PracticeLevel,
-  module: "LESEN" | "SPRACHBAUSTEINE"
+  module: "LESEN" | "SPRACHBAUSTEINE" | "HOEREN"
 ): Promise<PracticeSetInfo[]> {
   let raw: RawPracticeSetsListResponse;
   try {

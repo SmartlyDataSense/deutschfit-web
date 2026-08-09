@@ -14,6 +14,11 @@
  * analogue of "re-derive on every screen focus" (locks persist per pick
  * inside the session, so a learner returning to this tab after
  * completing a practice session in another tab/window sees fresh chips).
+ *
+ * `PracticeHubChips`/`MODALITIES` cover only `TextPracticeModality`
+ * (Lesen, Sprachbausteine) — Hören has no row here because it persists no
+ * `practice_progress` row to derive a chip from (P13); its hub row
+ * hardcodes a "todo" chip instead (see `PracticeHubScreen`).
  */
 import { useCallback, useEffect, useState } from "react";
 
@@ -25,7 +30,7 @@ import { listPracticeProgress } from "@/learner/core/storage/practiceProgress";
 import { deriveChip } from "@/learner/practice/model/progressChip";
 import type { PracticeChip } from "@/learner/practice/model/progressChip";
 import { MODULE_BY_MODALITY } from "@/learner/practice/model/types";
-import type { PracticeModality } from "@/learner/practice/model/types";
+import type { TextPracticeModality } from "@/learner/practice/model/types";
 
 export interface PracticeHubChips {
   readonly lesen: PracticeChip;
@@ -37,7 +42,7 @@ export interface PracticeHubState {
   readonly chips: PracticeHubChips;
 }
 
-const MODALITIES: readonly PracticeModality[] = ["lesen", "sprachbausteine"];
+const MODALITIES: readonly TextPracticeModality[] = ["lesen", "sprachbausteine"];
 
 const TODO_CHIPS: PracticeHubChips = {
   lesen: { state: "todo" },

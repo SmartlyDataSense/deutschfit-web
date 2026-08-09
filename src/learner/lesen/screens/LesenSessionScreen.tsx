@@ -38,9 +38,9 @@ import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import type { MockExamModule } from "@/learner/core/exam/mockExamSession";
 import { advanceSession, finalizeSession } from "@/learner/core/exam/mockExamSession";
 import type { SessionScore } from "@/learner/core/exam/engine/scoring";
+import { minutesToMs, useExamTimer } from "@/learner/core/exam/useExamTimer";
 import { AppText, EmptyState, ProgressBar, Skeleton, TimerPill } from "@/learner/ui/primitives";
 
-import { minutesToMs, useExamTimer } from "../hooks/useExamTimer";
 import { useLesenSession } from "../hooks/useLesenSession";
 import { useLesenResultsStore, type SkillModuleKey, type SkillScore } from "../resultsStore";
 import type { CompetenceSkills } from "@/learner/core/api/mockExam";

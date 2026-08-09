@@ -33,10 +33,10 @@ import { PracticeRecap } from "../components/PracticeRecap";
 import { usePracticeSession } from "../hooks/usePracticeSession";
 import type { ReadingTextInfo } from "../hooks/usePracticeSession";
 import { partProgress } from "../model/lockState";
-import type { PracticeModality } from "../model/types";
+import type { TextPracticeModality } from "../model/types";
 
 export interface PracticeSessionScreenProps {
-  readonly modality: PracticeModality;
+  readonly modality: TextPracticeModality;
   readonly slug?: string;
 }
 
@@ -44,7 +44,7 @@ const CLOZE_FORMATS = new Set(["CLOZE_RADIO", "CLOZE_DRAG"]);
 
 // Explicit map — no template-literal t() keys (the i18n linter and
 // i18next-parser cannot see dynamic keys).
-const TITLE_KEY: Record<PracticeModality, string> = {
+const TITLE_KEY: Record<TextPracticeModality, string> = {
   lesen: "apprendre:practice.rows.lesen",
   sprachbausteine: "apprendre:practice.rows.sprachbausteine",
 };

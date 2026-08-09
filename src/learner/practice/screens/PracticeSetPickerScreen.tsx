@@ -22,6 +22,16 @@
  * (`ChangeExamDateScreen.tsx`) even though `router.replace` itself is
  * synchronous — defends against a future refactor that awaits something
  * first.
+ *
+ * Session-route target (Task 5.5, spec §4 route map): the lock-based
+ * `TextPracticeModality` set (`lesen`, `sprachbausteine`) forwards into
+ * the shared session screen under this same route tree
+ * (`/apprendre/practice/<modality>/session?slug=`); `hoeren` forwards to
+ * its own session surface (`/app/hoeren/session?slug=`, built in Task
+ * 5.7) instead — Hören keeps its own screen rather than joining the
+ * shared, persistence-backed `PracticeSessionScreen` (P13: Hören
+ * practice persists nothing). `sessionPath()` centralizes that branch so
+ * both the row push and the single-set auto-forward stay in sync.
  */
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -46,7 +56,18 @@ export interface PracticeSetPickerScreenProps {
 const TITLE_KEY: Record<PracticeModality, string> = {
   lesen: "apprendre:practice.rows.lesen",
   sprachbausteine: "apprendre:practice.rows.sprachbausteine",
+  hoeren: "apprendre:practice.rows.hoeren",
 };
+
+// Per-modality session route (spec §4 route map) — see the module doc
+// comment. Text modalities stay under this route tree; hoeren forwards to
+// its own session surface.
+function sessionPath(locale: string, modality: PracticeModality, slug: string): string {
+  if (modality === "hoeren") {
+    return `/${locale}/app/hoeren/session?slug=${slug}`;
+  }
+  return `/${locale}/app/apprendre/practice/${modality}/session?slug=${slug}`;
+}
 
 const PILL_TONE_BG: Record<PracticeChip["state"], string> = {
   done: "bg-success-subtle",
@@ -106,11 +127,11 @@ export function PracticeSetPickerScreen({ modality }: PracticeSetPickerScreenPro
     if (hasForwardedRef.current === singleSlug) return;
     if (!isMountedRef.current) return;
     hasForwardedRef.current = singleSlug;
-    router.replace(`/${locale}/app/apprendre/practice/${modality}/session?slug=${singleSlug}`);
+    router.replace(sessionPath(locale, modality, singleSlug));
   }, [locale, modality, router, singleSlug]);
 
   const openSet = (set: PracticeSetRow): void => {
-    router.push(`/${locale}/app/apprendre/practice/${modality}/session?slug=${set.slug}`);
+    router.push(sessionPath(locale, modality, set.slug));
   };
 
   const chipLabel = (chip: PracticeChip): string => {
