@@ -60,9 +60,9 @@ describe("PerformanceHistoryScreen", () => {
     expect(screen.getByTestId("performance-history-pinned-delta")).toHaveTextContent(
       "+1 niveau depuis le 1er mars"
     );
-    // P17 (S6 Task 6.9) — the default fixture row is `kind: "schreiben"`,
-    // so it's now a real button (no `aria-disabled`); see the dedicated
-    // P17 tests below for the sprechen `aria-disabled` contrast.
+    // P17 — the default fixture row is `kind: "schreiben"`, so it's a real
+    // button (no `aria-disabled`); see the dedicated P17 tests below for
+    // sprechen rows, also interactive since S7 Task 7.9.
     expect(screen.getByTestId("performance-history-row-r1").tagName).toBe("BUTTON");
     expect(screen.getByTestId("performance-history-row-r1")).not.toHaveAttribute("aria-disabled");
     expect(screen.getByTestId("performance-history-row-board-r1")).toHaveTextContent("Goethe");
@@ -97,11 +97,11 @@ describe("PerformanceHistoryScreen", () => {
     expect(screen.getByTestId("performance-history-pinned-empty-cta")).toBeInTheDocument();
   });
 
-  // P17 (S6 Task 6.9, Constraint 8) — a Schreiben row's id IS its
-  // submission id, so tap-through is a direct feedback-screen navigation.
-  // Sprechen has no feedback screen yet (S7) and keeps the S3
-  // `aria-disabled` non-interactive contract.
-  it("a graded schreiben row is a real button navigating to the feedback route; a sprechen row keeps aria-disabled", async () => {
+  // P17 (S6 Task 6.9 + S7 Task 7.9, Constraint 8) — a row's id IS its
+  // submission id, so tap-through is a direct feedback-screen navigation,
+  // routed by `kind`. Both schreiben AND sprechen rows are real buttons
+  // now — sprechen closed the gap in S7.
+  it("a graded schreiben row and a graded sprechen row are both real buttons navigating to their kind's feedback route", async () => {
     fetchHistory.mockResolvedValue({
       pinnedDiagnostic: null,
       feed: [
@@ -122,11 +122,13 @@ describe("PerformanceHistoryScreen", () => {
     expect(push).toHaveBeenCalledWith("/fr/app/schreiben/feedback/r1");
 
     const sprechenRow = screen.getByTestId("performance-history-row-r3");
-    expect(sprechenRow.tagName).toBe("DIV");
-    expect(sprechenRow).toHaveAttribute("aria-disabled", "true");
+    expect(sprechenRow.tagName).toBe("BUTTON");
+    expect(sprechenRow).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(sprechenRow);
+    expect(push).toHaveBeenCalledWith("/fr/app/sprechen/feedback/r3");
   });
 
-  it("a rejected schreiben row is also a real button (kind === schreiben applies to graded AND rejected)", async () => {
+  it("a rejected schreiben row and a rejected sprechen row are also both real buttons (kind × status = graded/rejected all interactive)", async () => {
     fetchHistory.mockResolvedValue({
       pinnedDiagnostic: null,
       feed: [
@@ -135,6 +137,13 @@ describe("PerformanceHistoryScreen", () => {
           kind: "schreiben",
           status: "rejected",
           errorMessage: "language_not_german",
+          title: null,
+        }),
+        row({
+          id: "r5",
+          kind: "sprechen",
+          status: "rejected",
+          errorMessage: "duration_too_short",
           title: null,
         }),
       ],
@@ -148,6 +157,11 @@ describe("PerformanceHistoryScreen", () => {
     expect(schreibenRejectedRow.tagName).toBe("BUTTON");
     fireEvent.click(schreibenRejectedRow);
     expect(push).toHaveBeenCalledWith("/fr/app/schreiben/feedback/r4");
+
+    const sprechenRejectedRow = screen.getByTestId("performance-history-row-r5");
+    expect(sprechenRejectedRow.tagName).toBe("BUTTON");
+    fireEvent.click(sprechenRejectedRow);
+    expect(push).toHaveBeenCalledWith("/fr/app/sprechen/feedback/r5");
   });
 
   it("empty feed renders the calm empty card; error renders retry", async () => {

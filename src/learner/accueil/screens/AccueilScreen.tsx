@@ -17,13 +17,15 @@
  *   - Every deep-link the mobile screen routes on `getParent()` hops
  *     (Hero post-session CTA, Hero countdown tap, `StatusStrip` ready-tap)
  *     falls back to a single `/{locale}/app/history` push — **half-resolved
- *     as of S6 Task 6.9**: the Hero CTA/countdown fallbacks are unchanged,
- *     but `StatusStrip`'s ready-tap now deep-links directly to
- *     `/{locale}/app/schreiben/feedback/<submissionId>` when the signal's
- *     module is `"schreiben"` (`handleOpenReady` below) — this is what
- *     makes `acknowledgeReadiness` reachable from the home Hero pulse. A
- *     `"sprechen"` signal still falls back to `/{locale}/app/history`
- *     until the Sprechen feedback screen lands in S7.
+ *     as of S6 Task 6.9, fully resolved for readiness taps as of S7 Task
+ *     7.9**: the Hero CTA/countdown fallbacks are unchanged, but
+ *     `StatusStrip`'s ready-tap now deep-links directly to
+ *     `/{locale}/app/schreiben/feedback/<submissionId>` or
+ *     `/{locale}/app/sprechen/feedback/<submissionId>` depending on the
+ *     signal's module (`handleOpenReady` below) — this is what makes
+ *     `acknowledgeReadiness` reachable from the home Hero pulse for both
+ *     modules. Any other/unknown module still falls back to
+ *     `/{locale}/app/history`.
  *   - `StatusStrip`'s `onRetry` is a noop stub (mobile: "wired in P6").
  *   - Mobile persists the exam-date save result as a toast
  *     (`useToast().show(...)`); the web learner app has no toast system
@@ -135,13 +137,18 @@ export function AccueilScreen() {
     router.push(`/${locale}/app/history`);
   }, [router, locale]);
 
-  // P17 (S6 Task 6.9) — StatusStrip's ready-tap deep-links straight to the
-  // graded submission when the module has a feedback screen (Schreiben).
-  // Sprechen has none yet (S7), so it keeps the S3 history fallback.
+  // P17 — StatusStrip's ready-tap deep-links straight to the graded
+  // submission for every module that has a feedback screen (Schreiben —
+  // S6 Task 6.9; Sprechen — S7 Task 7.9). Any other/unknown module still
+  // falls back to the S3 history route.
   const handleOpenReady = useCallback(
     (signal: ReadinessSignal): void => {
       if (signal.module === "schreiben") {
         router.push(`/${locale}/app/schreiben/feedback/${signal.submissionId}`);
+        return;
+      }
+      if (signal.module === "sprechen") {
+        router.push(`/${locale}/app/sprechen/feedback/${signal.submissionId}`);
         return;
       }
       router.push(`/${locale}/app/history`);
