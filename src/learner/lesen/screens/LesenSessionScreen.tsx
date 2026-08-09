@@ -375,7 +375,7 @@ export function LesenSessionScreen({
             {current.item.stem ?? "(Frage wird in einer kommenden Inhaltsversion ergänzt.)"}
           </AppText>
           <div
-            role="group"
+            role="radiogroup"
             aria-label={current.item.stem ?? `Aufgabe ${current.item.number}`}
             data-testid="lesen-session-option-list"
             className="flex flex-col gap-2"
