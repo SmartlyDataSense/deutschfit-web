@@ -5,12 +5,11 @@
  * `resetPart`). Pure functions over a readonly map so hooks can persist by
  * identity comparison.
  *
- * Verbatim port of
- * `deutschfit-mobile/src/features/practice/model/lockState.ts`, with one
- * delta: mobile's `gradeItem` (`core/exam/scoring.ts`) is called the same
- * way, but this repo's exam engine (Task 4.2,
- * `core/exam/engine/scoring.ts`) returns a full `ItemResult` object rather
- * than a boolean-shaped verdict — `lockPick` reads `.isCorrect` off it.
+ * Straight port of
+ * `deutschfit-mobile/src/features/practice/model/lockState.ts` — mobile's
+ * `gradeItem` (`core/exam/scoring.ts`) already returns a full `ItemResult`
+ * and mobile's `lockPick` already reads `.isCorrect` off it identically;
+ * there is no web delta here.
  */
 import { gradeItem } from "@/learner/core/exam/engine/scoring";
 import type { AnswerMap } from "@/learner/core/exam/engine/scoring";

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { __resetLearnerDbForTests, getLearnerDb } from "@/learner/core/db";
+import { LEARNER_TABLE_SCHEMAS } from "@/learner/core/db/schema";
 import {
   listPracticeProgress,
   loadPracticeProgress,
@@ -33,6 +34,11 @@ describe("practiceProgress storage + chip/lock models", () => {
     const db = await getLearnerDb();
     const row = await db.practiceProgress.get(["u1", "telc", "B1", "LESEN", "s1"]);
     expect(row).toMatchObject({ correct_count: 1, total_count: 10, quiz_slug: "s1" });
+  });
+
+  it("practiceProgress Dexie schema indexes user_id (listPracticeProgress's whereEquals needs a real index, not just the compound PK)", () => {
+    const tokens = LEARNER_TABLE_SCHEMAS.practiceProgress.split(",").map((t) => t.trim());
+    expect(tokens).toContain("user_id");
   });
 
   it("deriveChip: null→todo, locked 0→todo even with a row, partial→inProgress, completed→done", () => {
