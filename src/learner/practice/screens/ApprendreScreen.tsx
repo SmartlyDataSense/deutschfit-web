@@ -64,9 +64,15 @@ export function ApprendreScreen() {
   const handlePress = useCallback(
     (card: SkillCard): void => {
       if (!card.active) return;
-      // Both active cards (lesen, sprachbausteine) route to the shared
-      // Übungen hub — the graded Lesen exam simulation stays on its own
-      // exam-track surface, reached elsewhere.
+      // `sprechen` (Task 7.6) has no Übungstest picker — same routing
+      // shape as `schreiben`'s own gap (PracticeHubScreen wires its
+      // dedicated destination; this card routes straight to the topic
+      // picker). Every other active card keeps the shared Übungen hub
+      // destination.
+      if (card.id === "sprechen") {
+        router.push(`/${locale}/app/sprechen`);
+        return;
+      }
       router.push(`/${locale}/app/apprendre/practice`);
     },
     [router, locale]

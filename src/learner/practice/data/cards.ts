@@ -18,6 +18,13 @@
  * click still lands on the shared Übungen hub — `PracticeHubScreen` is
  * where the schreiben row's own (different) destination
  * (`/schreiben?board=<board>-<level>`) is wired.
+ *
+ * Task 7.6 does the same for `sprechen`: like schreiben, the Apprendre
+ * card click does NOT land on the shared Übungen hub — `sprechen` has no
+ * Übungstest picker either. `ApprendreScreen.handlePress` gains a
+ * per-id branch routing it straight to `/{locale}/app/sprechen` (the
+ * topic picker); `PracticeHubScreen` gets its own sprechen row wired to
+ * the same destination.
  */
 export type SkillCard = {
   id: "schreiben" | "lesen" | "sprachbausteine" | "hoeren" | "sprechen" | "srs";
@@ -25,7 +32,7 @@ export type SkillCard = {
 };
 
 export const skillCards: SkillCard[] = [
-  { id: "sprechen", active: false },
+  { id: "sprechen", active: true },
   { id: "schreiben", active: true },
   { id: "hoeren", active: true },
   { id: "lesen", active: true },
