@@ -37,7 +37,7 @@ test.describe("learner shell — offline banner + error boundary (dev backend)",
     // which is visible — see `learner-nav.spec.ts`); default Playwright
     // viewport (1280×720) is above the 1024px breakpoint, so Sidebar is the
     // visible one here.
-    await expect(page.getByRole("heading", { name: "Accueil" })).toBeVisible();
+    await expect(page.getByTestId("accueil-greeting")).toBeVisible();
     await expect(page.getByTestId("learner-sidebar")).toBeVisible();
 
     // Online: banner absent.
@@ -53,6 +53,6 @@ test.describe("learner shell — offline banner + error boundary (dev backend)",
     // Back online: banner disappears, shell still intact underneath.
     await context.setOffline(false);
     await expect(page.getByTestId("learner-offline-banner")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Accueil" })).toBeVisible();
+    await expect(page.getByTestId("accueil-greeting")).toBeVisible();
   });
 });
