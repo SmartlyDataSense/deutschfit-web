@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { getFlag, learnerOnboardingDoneKeyFor, removeFlag, setFlag } from "@/learner/core/storage/flags";
+import {
+  getFlag,
+  learnerOnboardingDoneKeyFor,
+  removeFlag,
+  setFlag,
+} from "@/learner/core/storage/flags";
 
 function isUsableUserId(userId: string | null | undefined): userId is string {
   return typeof userId === "string" && userId.length > 0;
@@ -32,7 +37,10 @@ export const useOnboardingFlagStore = create<OnboardingFlagStore>((set, get) => 
   done: false,
   hydrated: false,
   hydrateFor: (userId) => {
-    if (!isUsableUserId(userId)) { set({ userId: null, done: false, hydrated: true }); return; }
+    if (!isUsableUserId(userId)) {
+      set({ userId: null, done: false, hydrated: true });
+      return;
+    }
     set({ userId, done: readOnboardingDoneFor(userId), hydrated: true });
   },
   markDone: () => {
