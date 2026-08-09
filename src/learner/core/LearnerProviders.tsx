@@ -5,6 +5,7 @@ import { useLocale } from "next-intl";
 
 import { identifyUser, initPostHog, resetAnalyticsUser } from "./analytics/posthog";
 import { bootstrapLearnerSession, useLearnerSession } from "./auth/useLearnerSession";
+import { usePrefetchOnLogin } from "./content/usePrefetchOnLogin";
 import { LearnerI18nProvider } from "./i18n/LearnerI18nProvider";
 import { useOnboardingFlagStore } from "./onboarding/useOnboardingFlag";
 import { clearReadiness } from "./readiness";
@@ -54,6 +55,13 @@ import { OfflineBanner } from "@/learner/ui/chrome/OfflineBanner";
  *      The teardowns are kept in a ref and run — together with
  *      `clearReadiness()` — on `"unauthenticated"`, so a sign-out drops
  *      both the in-memory slot and every listener the adapters installed.
+ *   7. Calls `usePrefetchOnLogin()` (S4 Task 4.10, port of mobile's
+ *      `src/features/content/hooks/usePrefetchOnLogin.ts`) — warms the
+ *      `prompts-list` content cache once per login transition so the S6
+ *      Schreiben slice reads a warm cache instead of paying the first-load
+ *      network round-trip. A plain hook call, not an adapter install — it
+ *      owns its own effect/ref lifecycle and doesn't join the
+ *      readiness-teardown ref machinery above.
  *
  * `bootstrapLearnerSession()` is idempotent (see its docstring), so
  * React StrictMode's double-invoke of effects in development is safe.
@@ -70,6 +78,10 @@ export function LearnerProviders({ children }: { children: React.ReactNode }) {
   const userId = useLearnerSession((state) => state.session?.user.id);
   const readinessInstalledForUserIdRef = useRef<string | null>(null);
   const readinessTeardownsRef = useRef<Array<() => void>>([]);
+
+  // S4 Task 4.10 — port of mobile's usePrefetchOnLogin (src/features/content/
+  // hooks/usePrefetchOnLogin.ts). Warms prompts-list once per login.
+  usePrefetchOnLogin();
 
   useEffect(() => {
     void bootstrapLearnerSession();

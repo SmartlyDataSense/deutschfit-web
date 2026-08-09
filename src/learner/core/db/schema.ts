@@ -105,9 +105,14 @@ const TABLE_INDEX_SPECS: Record<LearnerTableName, TableIndexSpec> = {
     extraIndexes: ["queued_at"],
   },
   // Composite PK (user_id, board, level, module_code, quiz_slug) mirrors mobile's
-  // exact composite PK for the untimed practice surface.
+  // exact composite PK for the untimed practice surface. `user_id` is also
+  // indexed, mirroring `mockExamCache` above, so `listPracticeProgress`'s
+  // `whereEquals("user_id", ...)` (core/storage/practiceProgress.ts) can run
+  // as a real Dexie `.where("user_id")` query instead of throwing DataError
+  // for lack of an index.
   practiceProgress: {
     primaryKey: ["user_id", "board", "level", "module_code", "quiz_slug"],
+    extraIndexes: ["user_id"],
   },
 };
 

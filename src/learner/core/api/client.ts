@@ -27,13 +27,16 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly detail?: string;
+  /** Full parsed JSON error body, when the response had one (S4 — mock-exam 409 carries mock_attempt_id/status). */
+  readonly bodyJson?: unknown;
 
-  constructor(status: number, code: string, detail?: string) {
+  constructor(status: number, code: string, detail?: string, bodyJson?: unknown) {
     super(detail ?? code);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.detail = detail;
+    this.bodyJson = bodyJson;
   }
 }
 
@@ -84,23 +87,23 @@ async function buildHeaders(idempotencyKey?: string): Promise<Headers> {
   return headers;
 }
 
-/** Best-effort JSON body parse — non-JSON / empty bodies fall back to `{}`. */
-async function parseErrorBody(res: Response): Promise<{ error?: string; detail?: string }> {
+/** Best-effort JSON body parse — non-JSON / empty bodies fall back to `undefined`. */
+async function parseErrorBody(res: Response): Promise<unknown> {
   try {
-    const parsed = (await res.json()) as unknown;
-    if (parsed !== null && typeof parsed === "object") {
-      return parsed as { error?: string; detail?: string };
-    }
-    return {};
+    return await res.json();
   } catch {
-    return {};
+    return undefined;
   }
 }
 
 async function toApiError(res: Response): Promise<ApiError> {
-  const body = await parseErrorBody(res);
+  const bodyJson = await parseErrorBody(res);
+  const body =
+    bodyJson !== null && typeof bodyJson === "object"
+      ? (bodyJson as { error?: string; detail?: string })
+      : {};
   const code = body.error ?? res.statusText ?? "unknown_error";
-  return new ApiError(res.status, code, body.detail);
+  return new ApiError(res.status, code, body.detail, bodyJson);
 }
 
 type Method = "GET" | "POST";
