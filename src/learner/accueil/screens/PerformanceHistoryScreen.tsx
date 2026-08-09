@@ -5,12 +5,23 @@
  * 3.10). Web port of
  * `deutschfit-mobile/src/features/accueil/screens/PerformanceHistoryScreen.tsx`.
  *
+ * `data-testid="performance-history-screen"` sits on the screen's root
+ * container — nav bar, pinned card, feed, and every empty/error state are
+ * descendants of it, mirroring mobile's same-named root testID so
+ * Playwright locators (Task 3.12) can scope off it.
+ *
  * Layout (top → bottom): nav bar (sprite `back` button → `router.back()`
  * + centered title) → pinned diagnostic section ("TON NIVEAU" header +
  * card, or the empty-diagnostic CTA card) → feed section ("TES EXERCICES"
  * header + rows, or the calm empty card / error card) → footer spinner
  * while `loadMore()` is in flight → an `IntersectionObserver` sentinel
- * that triggers `loadMore()` when `hasMore`.
+ * that triggers `loadMore()` when `hasMore`. The observer callback gates
+ * on an `isLoadingMoreRef` (kept current via its own effect) before
+ * calling `loadMore()` — `useHistory.loadMore` has no re-entrancy guard
+ * of its own, so a second intersection landing while a fetch is still in
+ * flight would otherwise double-fire the same cursor (duplicate rows /
+ * React keys). Mirrors mobile's `handleEndReached` guard
+ * (`if (!hasMore || isLoadingMore) return`).
  *
  * Deviations from mobile (S3 scope):
  *   - `FlatList` (`onEndReached` + `RefreshControl`) → plain scrollable
@@ -120,6 +131,17 @@ export function PerformanceHistoryScreen() {
     router.push(`/${locale}/app/onboarding/diagnostic?mode=retake`);
   }, [router, locale]);
 
+  // `loadMore` has no re-entrancy guard of its own (mobile's
+  // `handleEndReached` gates on `isLoadingMore` before calling — see
+  // `PerformanceHistoryScreen.tsx:205-208` on mobile), so the observer
+  // callback must check a ref (not the `isLoadingMore` state closed over
+  // at effect-creation time) to avoid firing the same cursor twice when a
+  // slow fetch is still in flight and a second intersection lands.
+  const isLoadingMoreRef = useRef(isLoadingMore);
+  useEffect(() => {
+    isLoadingMoreRef.current = isLoadingMore;
+  }, [isLoadingMore]);
+
   // Infinite-scroll sentinel — observed only while `hasMore`. Guarded for
   // environments without `IntersectionObserver` (unit tests never render
   // the sentinel since none of this task's fixtures set `nextCursor`).
@@ -131,6 +153,7 @@ export function PerformanceHistoryScreen() {
     if (typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
+        if (isLoadingMoreRef.current) return;
         if (entries.some((entry) => entry.isIntersecting)) {
           void loadMore();
         }
@@ -332,8 +355,11 @@ export function PerformanceHistoryScreen() {
   const showFeedEmpty = showEmptyOrError && !isError;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8 lg:px-8">
-      <div className="flex items-center gap-3" data-testid="performance-history-screen">
+    <div
+      className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8 lg:px-8"
+      data-testid="performance-history-screen"
+    >
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={handleBack}
