@@ -46,6 +46,10 @@ function toFiniteNonNegative(value: number): number {
 export function createHtmlAudioPlayer(
   createElement: () => HTMLAudioElement = () => new Audio()
 ): HoerenNativePlayer | null {
+  // Web delta: mobile's resolveHoerenNativePlayer returns null when
+  // `require("expo-audio")` throws (module unavailable). The web analog of
+  // "unavailable" is SSR / no global `Audio` — same null contract, a
+  // different unavailability signal.
   if (typeof window === "undefined" || typeof window.Audio === "undefined") {
     return null;
   }
@@ -59,6 +63,12 @@ export function createHtmlAudioPlayer(
     didJustFinish = true;
   };
 
+  // Web delta: mobile's adaptExpoAudio tears down and recreates a native
+  // player instance on every load() (instance.pause(); instance.remove();
+  // instance = createPlayer(...)) — that's how expo-audio's per-source
+  // player model works. HTMLAudioElement doesn't need that: one element is
+  // lazily created once and reused across load() calls (load() just
+  // reassigns src/preload and calls el.load()).
   const ensureElement = (): HTMLAudioElement => {
     if (!el) {
       el = createElement();
@@ -81,6 +91,8 @@ export function createHtmlAudioPlayer(
     pause() {
       el?.pause();
     },
+    // Web delta: clamps to >= 0 (brief-mandated); mobile's seekTo passes
+    // positionSec straight through to expo-audio without clamping.
     seekTo(positionSec: number) {
       if (el) el.currentTime = Math.max(0, positionSec);
     },
@@ -96,12 +108,20 @@ export function createHtmlAudioPlayer(
         didJustFinish: latch,
       };
     },
+    // Web delta: wrapped in try/catch/finally so release() never throws —
+    // jsdom's HTMLMediaElement methods are unimplemented, and a real
+    // <audio> element can also throw mid-teardown; mobile's release() has
+    // no such guard since expo-audio's instance.remove() doesn't need one.
     release() {
       try {
         el?.pause();
         if (el) {
           el.removeEventListener("ended", handleEnded);
-          el.src = "";
+          // Web delta: removeAttribute("src"), not `el.src = ""` — setting
+          // src to the empty string re-triggers the resource-selection
+          // algorithm against the page URL (spurious fetch/error event in
+          // real browsers); removeAttribute detaches cleanly.
+          el.removeAttribute("src");
         }
       } catch {
         // jsdom / detached element — release must never throw.

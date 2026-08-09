@@ -14,7 +14,10 @@
  * policy rejection). Mobile's sync `try/catch` around `native.play()`
  * cannot see that. `play` and `replay` additionally chain a `.catch()`
  * onto the native call's return value and dispatch the same
- * `ERROR play_failed` the sync path uses.
+ * `ERROR play_failed` the sync path uses — and also `stopTick()`, since by
+ * the time the rejection lands the tick loop is already running (unlike
+ * mobile's sync throw, which never reaches `startTick`); without it,
+ * polling leaks past the error state.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -193,8 +196,12 @@ export function useHoerenAudio(
     try {
       // Web delta: HTMLAudioElement.play() returns a promise that can
       // reject asynchronously (autoplay policy) after this call returns —
-      // the sync catch below can't see that; chain a catch too.
+      // the sync catch below can't see that; chain a catch too. The tick
+      // loop is already running by the time the rejection lands (unlike
+      // mobile's sync throw, where startTick is never reached), so this
+      // catch must also stopTick() or polling leaks past the error state.
       Promise.resolve(native.play()).catch(() => {
+        stopTick();
         dispatch({ type: "ERROR", message: "play_failed" });
       });
       dispatch({ type: "PLAY" });
@@ -202,7 +209,7 @@ export function useHoerenAudio(
     } catch {
       dispatch({ type: "ERROR", message: "play_failed" });
     }
-  }, [dispatch, native, startTick]);
+  }, [dispatch, native, startTick, stopTick]);
 
   const pause = useCallback((): void => {
     if (!native) return;
@@ -221,8 +228,9 @@ export function useHoerenAudio(
     }
     try {
       native.seekTo(0);
-      // Web delta: see `play` above.
+      // Web delta: see `play` above (same async-rejection + stopTick fix).
       Promise.resolve(native.play()).catch(() => {
+        stopTick();
         dispatch({ type: "ERROR", message: "play_failed" });
       });
       dispatch({ type: "REPLAY" });
@@ -230,7 +238,7 @@ export function useHoerenAudio(
     } catch {
       dispatch({ type: "ERROR", message: "play_failed" });
     }
-  }, [dispatch, native, startTick]);
+  }, [dispatch, native, startTick, stopTick]);
 
   const reset = useCallback((): void => {
     stopTick();

@@ -281,6 +281,40 @@ describe("useHoerenAudio", () => {
     expect(result.current.errorMessage).toBe("play_failed");
   });
 
+  it("P1b regression: async play_failed stops the tick loop (no leaked polling past error)", async () => {
+    const pollStatus = vi.fn<() => FakePollResult>(() => ({
+      positionSec: 1,
+      durationSec: 60,
+      playing: true,
+      isLoaded: true,
+      didJustFinish: false,
+    }));
+    const player = makeFakeNativePlayer({
+      play: vi.fn(() => Promise.reject(new Error("NotAllowedError"))),
+      pollStatus,
+    });
+    const { result } = renderHook(() => useHoerenAudio(() => player));
+    act(() => result.current.load("u"));
+    act(() => result.current.play());
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.status).toBe("error");
+    expect(result.current.errorMessage).toBe("play_failed");
+
+    const callsAtError = pollStatus.mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    // The tick loop must be stopped once the async rejection lands —
+    // otherwise pollStatus() keeps firing past the error state, and a
+    // later didJustFinish:true poll could silently flip error -> ended.
+    expect(pollStatus.mock.calls.length).toBe(callsAtError);
+    expect(result.current.status).toBe("error");
+  });
+
   it("sync-throwing play() -> play_failed too", () => {
     const player = makeFakeNativePlayer({
       play: vi.fn(() => {
@@ -294,9 +328,17 @@ describe("useHoerenAudio", () => {
     expect(result.current.errorMessage).toBe("play_failed");
   });
 
-  it("replay(): rejected promise also -> play_failed", async () => {
+  it("replay(): rejected promise also -> play_failed, and stops the tick loop too", async () => {
+    const pollStatus = vi.fn<() => FakePollResult>(() => ({
+      positionSec: 1,
+      durationSec: 60,
+      playing: true,
+      isLoaded: true,
+      didJustFinish: false,
+    }));
     const player = makeFakeNativePlayer({
       play: vi.fn(() => Promise.reject(new Error("NotAllowedError"))),
+      pollStatus,
     });
     const { result } = renderHook(() => useHoerenAudio(() => player));
     act(() => result.current.load("u"));
@@ -310,6 +352,12 @@ describe("useHoerenAudio", () => {
     });
     expect(result.current.status).toBe("error");
     expect(result.current.errorMessage).toBe("play_failed");
+
+    const callsAtError = pollStatus.mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    expect(pollStatus.mock.calls.length).toBe(callsAtError); // tick stopped
   });
 
   it("unmount calls release() exactly once", () => {
@@ -362,6 +410,7 @@ function makeFakeAudioElement(): FakeAudioElement {
     play: vi.fn(() => Promise.resolve()),
     pause: vi.fn(),
     load: vi.fn(),
+    removeAttribute: vi.fn(),
     addEventListener: (type: string, cb: () => void) => {
       if (!listeners.has(type)) listeners.set(type, new Set());
       listeners.get(type)!.add(cb);
@@ -406,6 +455,16 @@ describe("createHtmlAudioPlayer (HTML5 adapter)", () => {
     const fake = makeFakeAudioElement();
     const player = createHtmlAudioPlayer(() => fake)!;
     expect(() => player.release()).not.toThrow();
+    expect(player.pollStatus()).toBeNull();
+  });
+
+  it("release() after a load pauses, detaches src via removeAttribute (not src=''), and clears state", () => {
+    const fake = makeFakeAudioElement();
+    const player = createHtmlAudioPlayer(() => fake)!;
+    player.load("https://example.com/a.mp3");
+    player.release();
+    expect(fake.pause).toHaveBeenCalledTimes(1);
+    expect(fake.removeAttribute).toHaveBeenCalledWith("src");
     expect(player.pollStatus()).toBeNull();
   });
 
