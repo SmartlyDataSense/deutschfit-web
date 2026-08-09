@@ -71,12 +71,11 @@ function setPolling(status: string, data: Record<string, unknown> | null): void 
   pollingState.data = data;
 }
 
-// `LearnerI18nProvider` (not the `renderWithI18n` helper) so a same-props
-// `rerender(...)` call keeps the SAME element type across passes — the
-// `acknowledgeReadiness` once-guard test below re-renders the tree to
-// prove the `clearedRef` guard, and a different wrapper type per call
-// would force React to unmount/remount (a fresh mount legitimately calls
-// `acknowledgeReadiness` again, which would falsely fail that guard).
+// `LearnerI18nProvider` (not the `renderWithI18n` helper) so every test in
+// this file mounts through the same wrapper shape. The `acknowledgeReadiness`
+// once-guard test below does NOT use this helper — it needs a `StrictMode`
+// wrapper around the same tree to exercise React 18's dev-only mount →
+// cleanup → remount double-invocation, so it calls `rtlRender` directly.
 function render(submissionId = "sub-1") {
   return rtlRender(
     <LearnerI18nProvider lng="fr">

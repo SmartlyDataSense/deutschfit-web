@@ -127,6 +127,18 @@ export function SchreibenEditorScreen({ promptId }: SchreibenEditorScreenProps) 
   // than once. Checked ahead of the `disabled` attribute's render.
   const inFlightRef = useRef(false);
   const draftInputRef = useRef<HTMLTextAreaElement>(null);
+  const confirmDialogRef = useRef<HTMLDivElement>(null);
+
+  // Constraint 8 — the confirm-submit dialog moves focus into itself on
+  // open (role="dialog" + aria-modal="true" alone don't do this). The
+  // dialog card itself is the target (no native-focusable element inside
+  // it is guaranteed first — `AppButton` doesn't forward a ref), given a
+  // synthetic `tabIndex={-1}` below so it can receive programmatic focus.
+  useEffect(() => {
+    if (confirmVisible) {
+      confirmDialogRef.current?.focus();
+    }
+  }, [confirmVisible]);
 
   useEffect(() => {
     if (!isExamContextLoaded) return;
@@ -437,7 +449,9 @@ export function SchreibenEditorScreen({ promptId }: SchreibenEditorScreenProps) 
           onClick={handleCancelConfirm}
         >
           <div
-            className="flex w-full max-w-md flex-col gap-4 rounded-[var(--radius-md)] border border-line-subtle bg-bg-card p-6"
+            ref={confirmDialogRef}
+            tabIndex={-1}
+            className="flex w-full max-w-md flex-col gap-4 rounded-[var(--radius-md)] border border-line-subtle bg-bg-card p-6 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <AppText size="h3" weight="bold" family="serif">

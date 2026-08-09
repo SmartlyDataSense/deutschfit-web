@@ -219,6 +219,14 @@ describe("SchreibenEditorScreen — composer (S6 Task 6.8)", () => {
     expect(submitWritingMock).not.toHaveBeenCalled();
   });
 
+  it("Constraint 8: the confirm-submit dialog moves focus into itself on open (guard-removal-verified)", async () => {
+    await renderReady();
+    await fillAndOpenConfirm(words(6));
+
+    const dialog = screen.getByTestId("schreiben-confirm-submit");
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  });
+
   it("F8 guard #2 (Web delta, in-flight): rapid double/triple-click on confirm while submitWriting is pending calls it exactly once (guard-removal-verified)", async () => {
     const deferred = createDeferred<{ ok: true; value: { id: string; status: string } }>();
     submitWritingMock.mockReturnValue(deferred.promise);

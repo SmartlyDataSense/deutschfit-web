@@ -22,7 +22,7 @@
  */
 import { prefetchContent } from "@/learner/core/content/loadContent";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
-import type { WritingPrompt } from "@/learner/core/api/writing";
+import { promptsCacheKey, type WritingPrompt } from "@/learner/core/api/writing";
 
 // `WritingPrompt` used to be declared locally here (pre-S6, before the S6
 // Schreiben slice — the actual consumer of this cache key — landed). Now
@@ -67,7 +67,7 @@ export async function prefetchOnLogin(overrides: PrefetchOnLoginOverrides = {}):
     // payload shape: { prompts: WritingPrompt[] }
     prefetchContent({
       fnName: "prompts-list",
-      cacheKey: `prompts-list:writing:${examBoard}:${examLevel}`,
+      cacheKey: promptsCacheKey(examBoard, examLevel),
       method: "GET",
       mode: "prefetch",
     }),
