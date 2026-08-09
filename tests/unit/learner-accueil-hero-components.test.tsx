@@ -79,6 +79,18 @@ describe("CountdownHeroCard", () => {
     fireEvent.click(screen.getByTestId("cd-date-pill"));
     expect(screen.getByTestId("cd-mini-calendar")).toBeInTheDocument();
   });
+
+  it("non-clickable card (no onPress) exposes its aria-label via role=group, not a dropped div label", () => {
+    // A plain <div aria-label> with no ARIA role isn't a recognized
+    // accessibility host — assistive tech silently drops the label.
+    // role="group" is required whenever the card isn't role="button".
+    ui(<CountdownHeroCard {...base} testID="cd" />);
+    expect(
+      screen.getByRole("group", {
+        name: "Compte à rebours examen. 42 jours restants. Examen le 17 juin 2026. Préparation 50%. Objectif 80.",
+      })
+    ).toBeInTheDocument();
+  });
 });
 
 describe("HeroCard", () => {
@@ -100,5 +112,17 @@ describe("HeroCard", () => {
     expect(screen.getByTestId("hero-milestone-caption")).toHaveTextContent("On regarde ça ensemble.");
     fireEvent.click(screen.getByTestId("hero-cta"));
     expect(onCtaPress).toHaveBeenCalled();
+  });
+
+  it("non-clickable dark card (non-countdown states) exposes its aria-label via role=group", () => {
+    const payload = computeHeroState({
+      daysUntilExam: 42,
+      submission: { status: "graded", ageHours: 1, correctionUnseen: true },
+    });
+    ui(<HeroCard payload={payload} testID="hero"
+      countdownProps={{ daysRemaining: 42, examDateLabel: "x", preparationPct: 0, targetScore: 80, noDateSetLabel: "x" }} />);
+    expect(
+      screen.getByRole("group", { name: `${payload.headline} ${payload.body}` })
+    ).toBeInTheDocument();
   });
 });

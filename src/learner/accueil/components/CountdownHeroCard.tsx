@@ -186,11 +186,17 @@ export function CountdownHeroCard({
     onSelectExamDate?.(iso);
   };
 
+  // A plain `<div>` with no ARIA role isn't a recognized accessibility
+  // host — an `aria-label` on it is silently dropped by assistive tech
+  // (unlike RN, where `accessibilityLabel` on a `View` carries regardless
+  // of role). `role="button"` already covers the clickable branch; the
+  // non-clickable branch needs an explicit `role="group"` so the label
+  // is still exposed.
   return (
     <div
       data-testid={testID}
       aria-label={a11y}
-      role={cardOnClick ? "button" : undefined}
+      role={cardOnClick ? "button" : "group"}
       tabIndex={cardOnClick ? 0 : undefined}
       onClick={cardOnClick}
       onKeyDown={cardOnClick ? handleCardKeyDown : undefined}

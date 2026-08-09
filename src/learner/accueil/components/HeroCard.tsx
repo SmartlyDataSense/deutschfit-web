@@ -77,10 +77,15 @@ export function HeroCard({ payload, countdownProps, onCtaPress, testID }: HeroCa
   const captionTone = payload.milestone ? "gold" : "inverse";
 
   return (
+    // A plain `<div>` with no ARIA role isn't a recognized accessibility
+    // host — `aria-label` on it is silently dropped by assistive tech.
+    // `role="group"` exposes it (this card is never clickable itself —
+    // only its inner CTA button is).
     <div
       className="rounded-3xl bg-bg-premium p-6 text-on-premium"
       data-testid={testID}
       aria-label={a11y}
+      role="group"
     >
       <div className="mb-4 flex items-center justify-between">
         <AppText
