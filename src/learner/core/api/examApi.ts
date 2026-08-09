@@ -123,6 +123,43 @@ export {
   type SubmitErrorKind,
 } from "./writingErrors";
 
+// ---------------------------------------------------------------------------
+// Sprechen (S7 · Task 7.1) — re-exports canonical types + functions from
+// `./sprechen` and `./sprechenTopics`, same "one stable surface" rationale
+// as the blocks above (Constraint 15: feature code under
+// `src/learner/sprechen/` imports wire fns/types ONLY from this facade;
+// FeedbackV2 types come from `@/learner/core/feedback` instead).
+// ---------------------------------------------------------------------------
+
+export {
+  finalize,
+  getSprechenAudioUrl,
+  getSprechenSubmission,
+  putAudio,
+  reserveUpload,
+  type FinalizeResult,
+  type ReserveUploadResult,
+  type SprechenFeedbackJson,
+  type SprechenPollingStatus,
+  type SprechenStatus,
+  type SprechenSubmission,
+  type SprechenTeil,
+} from "./sprechen";
+
+export {
+  createTopic,
+  fetchTopics,
+  sortTopicsByCert,
+  SUBGENRE_BY_LEVEL,
+  type CreateTopicInput,
+  type FetchTopicsArgs,
+  type OutlineStep,
+  type SprechenCertCode,
+  type SprechenPickerLevel,
+  type SprechenSubgenre,
+  type TopicCard,
+} from "./sprechenTopics";
+
 export const listModelltests = mockExamListModelltests;
 export const startMockExam = mockExamStartMockExam;
 export const advanceMockExam = mockExamAdvanceMockExam;
