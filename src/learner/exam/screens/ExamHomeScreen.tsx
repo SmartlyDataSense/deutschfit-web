@@ -46,16 +46,22 @@
  * never flashes the un-hydrated default track, and never warms the
  * pending-scan against a stale/default board+level combo.
  *
- * Pending-mock-exam fetch effect — one-shot ref + `isMountedRef` guard +
- * reset-on-failure (S7 Constraint 9, carried into S8): the ref blocks a
- * second concurrent call (React StrictMode's dev double-invoke fires this
- * effect's setup twice, synchronously, before either call's promise
- * settles), but the resume scan is best-effort — a rejection resets the
- * ref so a later *legitimate* re-run (the effect's real dependencies
- * changing, e.g. the session resolving/rotating a fresh `userId`) is not
- * permanently blocked by one earlier failure. `userId` is read reactively
- * off `useLearnerSession` (mirrors mobile's `useAuth((s) =>
- * s.session?.user?.id ?? null)` selector for this exact effect).
+ * Pending-mock-exam fetch effect — value-keyed one-shot ref +
+ * `isMountedRef` guard + reset-on-failure (S7 Constraint 9, carried into
+ * S8; mirrors `FeedbackScreen.tsx`'s `fetchedPromptIdRef` exactly, not a
+ * plain boolean): `fetchedForUserIdRef` stores the `userId` the scan last
+ * ran for, so the guard both blocks a second concurrent call (React
+ * StrictMode's dev double-invoke fires this effect's setup twice,
+ * synchronously, before either call's promise settles) AND still re-runs
+ * the scan on a genuine `userId` change while mounted (the effect's own
+ * declared dependency) — a plain boolean would stick forever after the
+ * first success. The resume scan is best-effort — a rejection resets the
+ * ref to `null` so a later *legitimate* re-run (dependency change, or the
+ * same `userId` again) is not permanently blocked by one earlier failure.
+ * `userId` is read reactively off `useLearnerSession` (mirrors mobile's
+ * `useAuth((s) => s.session?.user?.id ?? null)` selector for this exact
+ * effect — web's own selector is `s.session?.user.id`, no `?.` before
+ * `.id` since `user` is non-optional once `session` exists).
  */
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -99,7 +105,7 @@ export function ExamHomeScreen() {
   const userId = useLearnerSession((s) => s.session?.user.id ?? null);
 
   const [pending, setPending] = useState<MockExamCacheRecord | null>(null);
-  const fetchedRef = useRef(false);
+  const fetchedForUserIdRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
 
   // This route has no ancestor that hydrates the exam-context store (see
@@ -123,8 +129,8 @@ export function ExamHomeScreen() {
   useEffect(() => {
     if (!isExamContextLoaded) return;
     if (!userId) return;
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
+    if (fetchedForUserIdRef.current === userId) return;
+    fetchedForUserIdRef.current = userId;
     void (async () => {
       try {
         const row = await readPendingMockExam(userId);
@@ -134,7 +140,7 @@ export function ExamHomeScreen() {
         // pending-scan fails (offline, Dexie unavailable). Reset the guard
         // so a later legitimate re-run isn't permanently blocked by this
         // one failure (S7 Constraint 9).
-        fetchedRef.current = false;
+        fetchedForUserIdRef.current = null;
         if (isMountedRef.current) setPending(null);
       }
     })();

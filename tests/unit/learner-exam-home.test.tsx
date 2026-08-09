@@ -134,6 +134,34 @@ describe("ExamHomeScreen — S8 Task 8.3 (track badge, resume card, module + sim
     await waitFor(() => expect(screen.getByTestId("examHome.resume")).toBeInTheDocument());
   });
 
+  it("value-keyed guard: a SUCCESSFUL scan for user A does not permanently block a later scan when userId changes to user B while mounted", async () => {
+    // Regression for a plain-boolean one-shot ref (`fetchedRef = useRef(false)`):
+    // once a scan succeeds, a boolean guard sticks `true` forever, so a
+    // later genuine `userId` change (the effect's own declared dependency)
+    // would never re-trigger the scan. The guard must be keyed to the
+    // `userId` it last ran for (mirrors `FeedbackScreen.tsx`'s
+    // `fetchedPromptIdRef` idiom) so a real user swap always gets a fresh
+    // attempt — independent of the failure-reset branch exercised above.
+    readPendingMockExamMock.mockResolvedValueOnce(null);
+    renderWithI18n(<ExamHomeScreen />);
+
+    await waitFor(() => expect(readPendingMockExamMock).toHaveBeenCalledTimes(1));
+    expect(readPendingMockExamMock).toHaveBeenCalledWith("u1");
+    expect(screen.queryByTestId("examHome.resume")).not.toBeInTheDocument();
+
+    readPendingMockExamMock.mockResolvedValueOnce(pendingRow({ userId: "u2" }));
+    act(() => {
+      useLearnerSession.setState({
+        status: "authenticated",
+        session: { user: { id: "u2" } },
+      } as never);
+    });
+
+    await waitFor(() => expect(readPendingMockExamMock).toHaveBeenCalledTimes(2));
+    expect(readPendingMockExamMock).toHaveBeenLastCalledWith("u2");
+    await waitFor(() => expect(screen.getByTestId("examHome.resume")).toBeInTheDocument());
+  });
+
   it("three module/simulation cards render locale copy, route correctly, and each fire their own catalogued event", async () => {
     renderWithI18n(<ExamHomeScreen />);
 
