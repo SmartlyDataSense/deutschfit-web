@@ -362,6 +362,10 @@ export function useSprechenSession(args: UseSprechenSessionArgs): UseSprechenSes
           await putFn(reservation.signed_put_url, entry.blob, entry.mimeType);
           if (cancelledRef.current) return;
 
+          // Web delta: brief-pinned full finalize tuple (grader routing +
+          // prompt hydration server-side) — mobile's current hook body
+          // under-sends `{submissionId}` only; confirm parity before the
+          // picker screens ship (7.6/7.7).
           await finalizeFn({
             submissionId: reservation.submission_id,
             subgenre,
@@ -378,6 +382,9 @@ export function useSprechenSession(args: UseSprechenSessionArgs): UseSprechenSes
           setState({
             phase: "fallback",
             error: code,
+            // Mirrors mobile's fallback state: submissionId resets to null on
+            // ANY submit failure (even post-reserve) — same quirk, not
+            // web-specific. Recovery UX tracked as a future parity task.
             submissionId: null,
             submission: null,
             recordingUri,
