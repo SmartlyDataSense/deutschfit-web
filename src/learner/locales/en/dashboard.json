@@ -31,6 +31,11 @@
     "openA11y": "Pick exam date",
     "closeA11y": "Close calendar"
   },
+  "error": {
+    "title": "Couldn't load your home screen",
+    "description": "Check your connection and try again — your progress is saved.",
+    "retry": "Try again"
+  },
   "status": {
     "inflight": "Correcting your work… ⏱ ~1 min",
     "inflightSlow": "Still correcting — taking a bit longer than usual. You can close, we'll let you know.",

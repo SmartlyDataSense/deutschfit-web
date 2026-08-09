@@ -26,7 +26,7 @@ test.describe("learner login (password mode, dev backend)", () => {
 
     await page.waitForURL("**/fr/app", { timeout: 15_000 });
     expect(page.url()).toMatch(/\/fr\/app$/);
-    await expect(page.getByRole("heading", { name: "Accueil" })).toBeVisible();
+    await expect(page.getByTestId("accueil-greeting")).toBeVisible();
   });
 
   test("invalid password shows the friendly FR error, never a raw Supabase message", async ({
