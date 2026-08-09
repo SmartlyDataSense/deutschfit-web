@@ -1,14 +1,33 @@
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// `pushMock`/`hydrateMock` are built via `vi.hoisted` (not plain top-level
+// `const`s) because `vi.mock` factories are hoisted above the rest of the
+// module — see `tests/unit/learner-onboarding-exam-type.test.tsx`'s header
+// comment for the TDZ rationale.
+const { pushMock, hydrateMock } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  hydrateMock: vi.fn(),
+}));
 
 const { listMock } = vi.hoisted(() => ({ listMock: vi.fn() }));
 vi.mock("@/learner/core/storage/practiceProgress", () => ({
   listPracticeProgress: listMock,
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: pushMock, replace: vi.fn() }),
   usePathname: () => "/fr/app/apprendre/practice",
 }));
+vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
+// Partial mock: keep the real `useExamContextStore` (tests drive it
+// directly via `setState`) but stub `hydrateExamContext` so the screen's
+// self-hydrate mount effect (Task 4.7 fix round, adjudicated addition A)
+// doesn't hit real localStorage/Supabase in jsdom — tests control
+// `isLoaded` transitions explicitly instead.
+vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/core/exam/examContext")>();
+  return { ...actual, hydrateExamContext: hydrateMock };
+});
 
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { useExamContextStore } from "@/learner/core/exam/examContext";
@@ -18,6 +37,8 @@ import { PracticeHubScreen } from "@/learner/practice/screens/PracticeHubScreen"
 describe("PracticeHubScreen — chips from IndexedDB only", () => {
   beforeEach(() => {
     listMock.mockReset();
+    pushMock.mockReset();
+    hydrateMock.mockReset();
     useLearnerSession.setState({
       status: "authenticated",
       session: { user: { id: "u1" } },
@@ -70,5 +91,50 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     await waitFor(() =>
       expect(screen.getByText((s) => s.length > 0 && /niveau|level/i.test(s))).toBeInTheDocument()
     );
+  });
+
+  it("adjudicated addition A — self-hydrates on mount and renders once the store's isLoaded flag flips (deep-link/refresh regression)", async () => {
+    listMock.mockResolvedValue([]);
+    // Reproduces a hard refresh / deep-link straight onto this route:
+    // before the fix, nothing ever called `hydrateExamContext()` for this
+    // screen, so `isLoaded` stayed `false` forever and the loading skeleton
+    // never resolved into the row chrome.
+    useExamContextStore.setState({ board: "telc", level: "b1", isLoaded: false } as never);
+
+    renderWithI18n(<PracticeHubScreen />);
+
+    await waitFor(() => expect(hydrateMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId("practice-hub-loading")).toBeInTheDocument();
+    expect(screen.queryByTestId("practice-hub-row-lesen")).not.toBeInTheDocument();
+
+    // Hydration lands (in real code this is `hydrateExamContext` flipping
+    // the store; here the test drives it directly since `hydrateMock` is
+    // stubbed).
+    act(() => {
+      useExamContextStore.setState({ isLoaded: true } as never);
+    });
+
+    await waitFor(() => expect(screen.getByTestId("practice-hub-row-lesen")).toBeInTheDocument());
+    expect(screen.queryByTestId("practice-hub-loading")).not.toBeInTheDocument();
+  });
+
+  it("adjudicated addition B — clicking the lesen/sprachbausteine rows navigates to the picker route; hoeren/schreiben stay non-interactive", async () => {
+    listMock.mockResolvedValue([]);
+    renderWithI18n(<PracticeHubScreen />);
+
+    await waitFor(() => expect(screen.getByTestId("practice-hub-row-lesen")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId("practice-hub-row-lesen"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/apprendre/practice/lesen");
+
+    fireEvent.click(screen.getByTestId("practice-hub-row-sprachbausteine"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/apprendre/practice/sprachbausteine");
+    expect(pushMock).toHaveBeenCalledTimes(2);
+
+    // hoeren/schreiben render no button/link chrome to click — the
+    // wrapper stays a plain `aria-disabled` group, matching the "coming
+    // soon" rows shipped before this fix.
+    const hoerenRow = screen.getByTestId("practice-hub-row-hoeren");
+    expect(hoerenRow.querySelector("button")).not.toBeInTheDocument();
   });
 });

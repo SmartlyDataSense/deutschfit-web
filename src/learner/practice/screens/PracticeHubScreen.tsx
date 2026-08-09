@@ -16,21 +16,37 @@
  * only `hoeren`'s deviation) because on web `schreiben` is equally
  * unbuilt, not just `hoeren`.
  *
- * The `lesen`/`sprachbausteine` rows themselves are non-interactive this
- * slice too — no `PracticeSetPicker`/session screen exists yet to route
- * to (that's a later S4 task). They render progress only, mirroring
- * `PerformanceHistoryScreen`'s precedent for rows whose tap-through target
- * hasn't shipped (`aria-disabled` placeholder, no `onClick`).
+ * The `lesen`/`sprachbausteine` rows route to the Übungstest picker
+ * (`/apprendre/practice/<modality>`, Task 4.6/4.7 — mobile parity: rows are
+ * tappable) since that surface and the session screen now exist. `hoeren`
+ * + `schreiben` stay non-interactive, mirroring `PerformanceHistoryScreen`'s
+ * precedent for rows whose tap-through target hasn't shipped
+ * (`aria-disabled` placeholder, no `onClick`).
  *
  * Progress chip tone: the `Chip` primitive (`@/learner/ui/primitives`)
  * has no per-instance tone — same constraint `StatusStrip` hit — so
  * the tone pill here is a small local composition over `AppText`'s tone
  * prop (`PILL_TONE_BG`/`PILL_TONE_TEXT`) instead of the tone-less `Chip`.
+ *
+ * Hydration guard (Task 4.7 fix round, adjudicated addition A): like
+ * `usePracticeSets` (Task 4.6), `/apprendre/practice` is deep-linkable and
+ * sits under `(protected)`, whose layout chain never calls
+ * `hydrateExamContext()` — only individual screens do, each in its own
+ * mount effect. Before this fix, a deep-link/refresh landed with the store
+ * still at `isLoaded: false` and never transitioning — `usePracticeHub`
+ * reads `board`/`level` straight off the store with no hydrate call of its
+ * own, so the `!isExamContextLoaded` guard below would gate the render on
+ * a flag nothing ever flips, showing the loading skeleton forever. This
+ * screen now self-hydrates (same idiom as `AccueilScreen`/`usePracticeSets`)
+ * so `isLoaded` reliably flips to `true` even with no ancestor hydrating it.
  */
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import clsx from "clsx";
 
-import { useExamContextStore } from "@/learner/core/exam/examContext";
+import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { Icon } from "@/learner/core/icons/Icon";
 import type { IconName } from "@/learner/core/icons/iconSprite";
 import { AppText, Card, EmptyState, Skeleton, type AppTextTone } from "@/learner/ui/primitives";
@@ -83,8 +99,22 @@ function ChipPill({ chip, label, testID }: { chip: PracticeChip; label: string; 
 
 export function PracticeHubScreen() {
   const { t } = useTranslation(["apprendre"]);
+  const router = useRouter();
+  const locale = useLocale();
   const isExamContextLoaded = useExamContextStore((s) => s.isLoaded);
   const { supported, chips } = usePracticeHub();
+
+  // This route has no ancestor that hydrates the exam-context store (see
+  // doc comment) — trigger it here, same idiom as `AccueilScreen`'s own
+  // mount effect. `hydrate()` is idempotent/cheap to call again if some
+  // other screen already did.
+  useEffect(() => {
+    void hydrateExamContext();
+  }, []);
+
+  const openModality = (modality: PracticeModality): void => {
+    router.push(`/${locale}/app/apprendre/practice/${modality}`);
+  };
 
   const chipLabel = (chip: PracticeChip): string => {
     switch (chip.state) {
@@ -144,6 +174,7 @@ export function PracticeHubScreen() {
             <Card
               key={modality}
               testID={`practice-hub-row-${modality}`}
+              onClick={() => openModality(modality)}
               className="flex items-center gap-3"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
