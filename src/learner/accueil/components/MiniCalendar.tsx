@@ -25,7 +25,13 @@ import { AppText } from "@/learner/ui/primitives";
  *     legitimately book a same-day exam).
  *   - No calendar-outline glyph exists in the DeutschFit sprite/Ionicons
  *     set — month navigation reuses the single sprite `chevron` glyph
- *     (rotated via CSS), never an invented icon.
+ *     (rotated via CSS), never an invented icon. Mobile uses distinct
+ *     `chevron-back` (points left) / `chevron-forward` (points right)
+ *     Ionicons for prev/next (`MiniCalendar.tsx:193,218`); the sprite's
+ *     `chevron` path (`M9 4.5 L16.5 12 L9 19.5`) already points right by
+ *     default (vertex at the rightmost point), so `next` needs no
+ *     rotation and `prev` is mirrored via `rotate-180` — matching
+ *     mobile's left/right pair exactly, not an up/down substitute.
  *
  * `buildMonthGrid` / `toLocalIsoDate` / `startOfLocalDay` are ported
  * verbatim (pure date math, no RN/DOM dependency).
@@ -164,10 +170,9 @@ export function MiniCalendar({
           data-testid={testID ? `${testID}-prev` : undefined}
           className="rounded-[var(--radius-full)] p-1 opacity-90 transition hover:opacity-100"
         >
-          {/* No calendar/chevron-back glyph in the sprite — reuse the
-              single right-pointing `chevron`, rotated up (like a
-              spinner's "previous" arrow). */}
-          <span className="-rotate-90 inline-block">
+          {/* Sprite `chevron` points right by default — mirror it to
+              point left (mobile's `chevron-back`) via a 180° rotation. */}
+          <span className="inline-block rotate-180">
             <Icon name="chevron" size={18} color="var(--color-on-premium)" />
           </span>
         </button>
@@ -186,7 +191,9 @@ export function MiniCalendar({
           data-testid={testID ? `${testID}-next` : undefined}
           className="rounded-[var(--radius-full)] p-1 opacity-90 transition hover:opacity-100"
         >
-          <span className="rotate-90 inline-block">
+          {/* Already points right by default (mobile's `chevron-forward`)
+              — no rotation needed. */}
+          <span className="inline-block">
             <Icon name="chevron" size={18} color="var(--color-on-premium)" />
           </span>
         </button>

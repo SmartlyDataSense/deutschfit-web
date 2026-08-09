@@ -28,6 +28,21 @@ describe("MiniCalendar", () => {
     fireEvent.click(screen.getByTestId("cal-next"));
     expect(screen.getByTestId("cal-month-label")).toHaveTextContent(/septembre 2026/i);
   });
+
+  it("prev/next chevrons are mirrored 180° (mobile chevron-back/chevron-forward parity)", () => {
+    // Mobile uses distinct `chevron-back` (left) / `chevron-forward`
+    // (right) Ionicons. The web sprite has only one `chevron` glyph
+    // (points right by default), so parity requires rotating `prev` by
+    // exactly 180° relative to `next` — never the same rotation, and
+    // never an up/down substitute.
+    ui(<MiniCalendar referenceDate={ref} onSelect={() => {}} testID="cal" />);
+    const prevSpan = screen.getByTestId("cal-prev").querySelector("span");
+    const nextSpan = screen.getByTestId("cal-next").querySelector("span");
+    expect(prevSpan).toHaveClass("rotate-180");
+    expect(nextSpan).not.toHaveClass("rotate-180");
+    expect(nextSpan).not.toHaveClass("rotate-90");
+    expect(nextSpan).not.toHaveClass("-rotate-90");
+  });
 });
 
 describe("CountdownHeroCard", () => {
