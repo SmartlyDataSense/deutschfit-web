@@ -38,7 +38,7 @@ export type SubscriptionListRow = {
   valid_from: string;
   valid_until: string;
   created_at: string;
-  assigned_by: string;
+  assigned_by: string | null;
   assigned_by_email: string | null;
 };
 
@@ -112,7 +112,7 @@ export async function listSubscriptions(
   const actorIds = new Set<string>();
   for (const row of data ?? []) {
     userIds.add(row.user_id);
-    actorIds.add(row.assigned_by);
+    if (row.assigned_by) actorIds.add(row.assigned_by);
   }
   const emailMap = await loadEmailMap(sb, Array.from(new Set([...userIds, ...actorIds])));
 
@@ -134,7 +134,7 @@ export async function listSubscriptions(
       valid_until: row.valid_until,
       created_at: row.created_at,
       assigned_by: row.assigned_by,
-      assigned_by_email: emailMap.get(row.assigned_by) ?? null,
+      assigned_by_email: row.assigned_by ? (emailMap.get(row.assigned_by) ?? null) : null,
     };
   });
 

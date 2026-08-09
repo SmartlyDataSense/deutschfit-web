@@ -120,7 +120,7 @@ export type SubscriptionRow = {
   note: string | null;
   plan_code: string | null;
   plan_name: string | null;
-  assigned_by: string;
+  assigned_by: string | null;
   assigned_by_email: string | null;
 };
 
@@ -129,7 +129,7 @@ export type AuditRow = {
   action: string;
   reason: string | null;
   created_at: string;
-  actor_id: string;
+  actor_id: string | null;
   actor_email: string | null;
   subscription_id: string | null;
   before: unknown;
@@ -170,10 +170,10 @@ export async function loadUserDetail(
 
   const actorIds = new Set<string>();
   for (const row of auditRes.data ?? []) {
-    actorIds.add(row.actor_id);
+    if (row.actor_id) actorIds.add(row.actor_id);
   }
   for (const row of subsRes.data ?? []) {
-    actorIds.add(row.assigned_by);
+    if (row.assigned_by) actorIds.add(row.assigned_by);
   }
   const actorEmailMap = await loadEmailMap(sb, Array.from(actorIds));
 
@@ -195,7 +195,7 @@ export async function loadUserDetail(
       plan_code: planRecord?.code ?? null,
       plan_name: planRecord?.name ?? null,
       assigned_by: row.assigned_by,
-      assigned_by_email: actorEmailMap.get(row.assigned_by) ?? null,
+      assigned_by_email: row.assigned_by ? (actorEmailMap.get(row.assigned_by) ?? null) : null,
     };
   });
 
@@ -205,7 +205,7 @@ export async function loadUserDetail(
     reason: row.reason,
     created_at: row.created_at,
     actor_id: row.actor_id,
-    actor_email: actorEmailMap.get(row.actor_id) ?? null,
+    actor_email: row.actor_id ? (actorEmailMap.get(row.actor_id) ?? null) : null,
     subscription_id: row.subscription_id,
     before: row.before,
     after: row.after,

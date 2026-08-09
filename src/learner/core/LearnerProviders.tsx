@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { identifyUser, initPostHog, resetAnalyticsUser } from "./analytics/posthog";
 import { bootstrapLearnerSession, useLearnerSession } from "./auth/useLearnerSession";
 import { LearnerI18nProvider } from "./i18n/LearnerI18nProvider";
+import { useOnboardingFlagStore } from "./onboarding/useOnboardingFlag";
 import { LearnerErrorBoundary } from "@/learner/ui/chrome/LearnerErrorBoundary";
 import { OfflineBanner } from "@/learner/ui/chrome/OfflineBanner";
 
@@ -59,8 +60,10 @@ export function LearnerProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (status === "authenticated" && userId) {
       identifyUser(userId);
+      useOnboardingFlagStore.getState().hydrateFor(userId);
     } else if (status === "unauthenticated") {
       resetAnalyticsUser();
+      useOnboardingFlagStore.getState().hydrateFor(null);
     }
   }, [status, userId]);
 

@@ -18,7 +18,7 @@ export type RecentActivityRow = {
   reason: string | null;
   target_user_id: string;
   target_email: string | null;
-  actor_id: string;
+  actor_id: string | null;
   actor_email: string | null;
   plan_code: string | null;
 };
@@ -165,7 +165,7 @@ export async function getRecentActivity(
       target_user_id: row.user_id,
       target_email: emailMap.get(row.user_id) ?? null,
       actor_id: row.actor_id,
-      actor_email: emailMap.get(row.actor_id) ?? null,
+      actor_email: row.actor_id ? (emailMap.get(row.actor_id) ?? null) : null,
       plan_code: planRecord?.code ?? null,
     };
   });

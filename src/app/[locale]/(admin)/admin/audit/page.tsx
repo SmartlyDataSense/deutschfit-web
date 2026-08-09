@@ -111,7 +111,7 @@ export default async function AdminAuditPage({ params, searchParams }: Props) {
                   </td>
                   <td className="px-4 py-3 text-text-primary">{row.action}</td>
                   <td className="px-4 py-3 text-text-secondary">
-                    {row.actor_email ?? row.actor_id.slice(0, 8)}
+                    {row.actor_email ?? row.actor_id?.slice(0, 8) ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
                     <Link
