@@ -70,6 +70,15 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchedForRef = useRef<string | null>(null);
+  // Set right before navigating to /result on a successful submit — guards
+  // the unmount-reset effect below so it doesn't wipe the `result` the
+  // result screen is about to read out of this same store. Both live in
+  // React's passive-effect phase: this component's unmount cleanup and the
+  // result screen's first read can land in either order, so clearing
+  // `result` unconditionally here made the result screen flip to its empty
+  // state right after rendering correctly once (P0 — every real submit hit
+  // this race).
+  const justSubmittedRef = useRef(false);
 
   const fetchPack = useCallback(
     (cancelledRef: { current: boolean }) => {
@@ -106,9 +115,12 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
     };
   }, [attemptId, fetchPack]);
 
-  // Reset the zustand store when the component unmounts.
+  // Reset the zustand store when the component unmounts — but not when the
+  // unmount is itself the forward navigation to /result after a submit
+  // (see `justSubmittedRef`).
   useEffect(() => {
     return () => {
+      if (justSubmittedRef.current) return;
       reset();
     };
   }, [reset]);
@@ -159,6 +171,7 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
         });
         setResult(result);
         setFailedAttempts(0);
+        justSubmittedRef.current = true;
         router.push(`/${locale}/app/onboarding/result?attempt=${attemptId}&mode=${mode}`);
       } catch (err) {
         const code = err instanceof Error && err.message ? err.message : "diagnostic_submit_failed";

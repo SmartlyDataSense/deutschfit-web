@@ -37,8 +37,24 @@ export class ApiError extends Error {
   }
 }
 
-function requiredEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"): string {
-  const value = process.env[name];
+type SupabasePublicEnvVar = "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY";
+
+/**
+ * Next.js/webpack inlines `NEXT_PUBLIC_*` vars into the client bundle via a
+ * static textual replacement of `process.env.NEXT_PUBLIC_X` — it cannot see
+ * through computed/bracket access like `process.env[name]`. Reading through
+ * a dynamic key silently resolves to `undefined` in production (the
+ * `process.env` object shipped to the browser only carries the literal keys
+ * that were textually referenced elsewhere in the bundle), even though the
+ * exact same var reads correctly wherever it's accessed with dot notation
+ * (e.g. `src/lib/supabase/browser.ts`). Both branches below must stay
+ * spelled out with the literal dotted form so the build can find them.
+ */
+function requiredEnv(name: SupabasePublicEnvVar): string {
+  const value =
+    name === "NEXT_PUBLIC_SUPABASE_URL"
+      ? process.env.NEXT_PUBLIC_SUPABASE_URL
+      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!value) {
     throw new Error(`Supabase env vars missing: ${name} is required.`);
   }
