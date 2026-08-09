@@ -50,4 +50,33 @@ describe("ChangeExamDateScreen", () => {
     await waitFor(() => expect(screen.getByTestId("change-exam-date-status")).toBeInTheDocument());
     expect(back).not.toHaveBeenCalled();
   });
+
+  it("does not navigate back if the screen unmounts before a pending save resolves", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    let resolveUpdate: () => void = () => {};
+    updateExamDate.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        })
+    );
+    const { unmount } = ui();
+    const iso = futureIso(21);
+    fireEvent.click(screen.getByTestId(`change-exam-date-mini-calendar-day-${iso}`));
+    await waitFor(() => expect(updateExamDate).toHaveBeenCalledWith(iso));
+
+    // Learner navigates away (e.g. taps back) while the write is still in
+    // flight — the screen unmounts before `updateExamDate` settles.
+    unmount();
+    resolveUpdate();
+
+    // Flush the resolved microtask plus the full 600ms back-delay window —
+    // long enough for a stray, untracked `setTimeout(router.back, 600)` to
+    // have fired if the unmount guard were missing.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+
+    expect(back).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });

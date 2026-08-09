@@ -33,6 +33,17 @@
  *   - Mobile's `LiquidGlassTopBar` / tab-bar inset plumbing doesn't apply
  *     — the shared `(learner)/app/layout.tsx` nav chrome already reserves
  *     that space for every `(protected)` route.
+ *
+ * Unmount-mid-save guard: if the learner picks a date (write in flight)
+ * then taps back before `updateExamDate` resolves, the async closure must
+ * not touch state or schedule a `router.back()` after the fact — the
+ * screen is already gone, and firing a *second*, untracked `router.back()`
+ * 600ms later would pop one level too far. `isMountedRef` gates every
+ * post-await `setSaveState`/`setTimeout` call. The same "saving" guard
+ * also closes the related race of two rapid clicks firing two concurrent
+ * `updateExamDate` calls — `handleSelect` is a no-op once a save is
+ * already in flight, and the back button + calendar are visually/
+ * functionally disabled for the same window.
  */
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -54,11 +65,15 @@ export function ChangeExamDateScreen() {
   const { t } = useTranslation(["profil", "dashboard"]);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const backTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   // Clear a pending "navigate back" timer if the screen unmounts before it
-  // fires (e.g. the learner clicks the back button manually mid-delay).
+  // fires (e.g. the learner clicks the back button manually mid-delay), and
+  // flip `isMountedRef` so the async closure in `handleSelect` bails before
+  // touching state or scheduling a timer after the fact.
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
     };
   }, []);
@@ -67,16 +82,24 @@ export function ChangeExamDateScreen() {
     router.back();
   };
 
+  const isSaving = saveState === "saving";
+
   const handleSelect = (isoDate: string): void => {
+    // Guards two rapid picks from firing two concurrent `updateExamDate`
+    // calls — the calendar/back button are also visually disabled while
+    // saving, but this is the source-of-truth guard for the interaction.
+    if (isSaving) return;
     setSaveState("saving");
     void (async () => {
       try {
         await updateExamDate(isoDate);
+        if (!isMountedRef.current) return;
         setSaveState("success");
         backTimeoutRef.current = setTimeout(() => {
           router.back();
         }, BACK_DELAY_MS);
       } catch {
+        if (!isMountedRef.current) return;
         setSaveState("error");
       }
     })();
@@ -98,9 +121,10 @@ export function ChangeExamDateScreen() {
         <button
           type="button"
           onClick={handleBack}
+          disabled={isSaving}
           aria-label={t("profil:header.backA11y")}
           data-testid="change-exam-date-back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-card transition hover:opacity-90"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-card transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Icon name="back" size={18} label={t("profil:header.backA11y")} />
         </button>
@@ -128,7 +152,16 @@ export function ChangeExamDateScreen() {
         data-testid="change-exam-date-card"
         className="rounded-3xl bg-bg-premium p-6 text-on-premium"
       >
-        <MiniCalendar onSelect={handleSelect} testID="change-exam-date-mini-calendar" />
+        {/* `MiniCalendar` has no `disabled` prop of its own — wrapping it
+            is enough since `handleSelect` already no-ops while saving (the
+            source-of-truth guard); this just gives the learner a visible
+            "busy" cue and blocks pointer events during the same window. */}
+        <div
+          aria-busy={isSaving}
+          className={isSaving ? "pointer-events-none opacity-50" : undefined}
+        >
+          <MiniCalendar onSelect={handleSelect} testID="change-exam-date-mini-calendar" />
+        </div>
       </div>
 
       {statusMessage ? (
