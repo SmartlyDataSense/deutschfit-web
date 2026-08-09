@@ -19,6 +19,21 @@
  *   updater — persistence must run exactly once per lock.
  * - Deliberately NOT importing `useExamTimer` (untimed) and NOT importing
  *   anything from Hören/Schreiben surfaces (feature isolation, H4 parity).
+ *
+ * Hydration guard (fix round 1, post-review): `/apprendre/practice/
+ * [modality]/session` is deep-linkable (the picker `router.replace`s a
+ * single-set modality straight here, and a `?slug=` link can be opened
+ * directly) and its route chain never calls `hydrateExamContext()` — same
+ * gap already found and fixed twice upstream of this hook:
+ * `usePracticeSets` (870ebea) and `PracticeHubScreen` (890a2a3). Without a
+ * guard here this hook would fetch off the store's un-hydrated defaults
+ * (`DEFAULT_EXAM_BOARD`/`DEFAULT_EXAM_LEVEL`, `isLoaded: false`) on first
+ * mount, then silently refetch once the real values land — a wrong-track
+ * flash at best, a wrong-track `practice_progress` write at worst if the
+ * learner locks a pick before hydration resolves. So this hook
+ * self-hydrates on mount (same idiom as `usePracticeSets`) and the fetch
+ * effect stays in the `loading` state (reusing the existing
+ * `practice-session-loading` testID) until `isLoaded` is true.
  */
 import { useCallback, useEffect, useState } from "react";
 
@@ -27,7 +42,7 @@ import {
   fetchSprachbausteinePracticeSession,
 } from "@/learner/core/api/mockExam";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
-import { useExamContextStore } from "@/learner/core/exam/examContext";
+import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { buildSession } from "@/learner/core/exam/engine/loadModel";
 import { toPracticeLevel } from "@/learner/core/exam/engine/practiceLevel";
 import type { ExamItem, ExamPart, ExamSession } from "@/learner/core/exam/engine/types";
@@ -74,11 +89,26 @@ export function usePracticeSession(
 } {
   const board = useExamContextStore((s) => s.board);
   const rawLevel = useExamContextStore((s) => s.level);
+  const isExamContextLoaded = useExamContextStore((s) => s.isLoaded);
   const level = toPracticeLevel(rawLevel);
   const [state, setState] = useState<PracticeSessionState>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
+  // This route has no ancestor that hydrates the exam-context store (see
+  // doc comment) — trigger it here, same idiom as `usePracticeSets`.
+  // `hydrateExamContext()` is idempotent/cheap to call again if some other
+  // screen already did.
   useEffect(() => {
+    void hydrateExamContext();
+  }, []);
+
+  useEffect(() => {
+    if (!isExamContextLoaded) {
+      // Still resolving the learner's real (board, level) — do not fetch
+      // against the store's not-yet-hydrated default values.
+      setState({ status: "loading" });
+      return;
+    }
     if (!level) {
       setState({ status: "unsupported" });
       return;
@@ -131,7 +161,7 @@ export function usePracticeSession(
     return () => {
       cancelled = true;
     };
-  }, [board, level, modality, reloadKey, slug]);
+  }, [board, isExamContextLoaded, level, modality, reloadKey, slug]);
 
   const persistLocks = useCallback(
     (session: ExamSession, locks: LockMap, complete: boolean) => {
