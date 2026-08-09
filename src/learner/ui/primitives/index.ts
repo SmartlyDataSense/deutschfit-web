@@ -4,6 +4,9 @@
  * `deutschfit-mobile/src/ui/primitives/*` — see each file's docstring for
  * what matches mobile 1:1 vs. what's an intentional web deviation.
  */
+export { BrandMark } from "./BrandMark";
+export type { BrandMarkProps, BrandTone } from "./BrandMark";
+
 export { AppText } from "./AppText";
 export type {
   AppTextProps,
