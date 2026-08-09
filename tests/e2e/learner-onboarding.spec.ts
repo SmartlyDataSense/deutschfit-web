@@ -89,7 +89,9 @@ test.describe("onboarding wizard (qa1, direct entry)", () => {
     await page.getByTestId("onboarding-schedule-option-20").click();
     await page.getByTestId("onboarding-schedule-continue").click();
     await page.waitForURL("**/fr/app", { timeout: 20_000 });
-    await expect(page.getByRole("heading", { name: "Accueil" })).toBeVisible();
+    // Task 3.9 replaced the `<h1>Accueil</h1>` placeholder with the real
+    // AccueilScreen — the greeting is now the first stable landmark.
+    await expect(page.getByTestId("accueil-greeting")).toBeVisible();
   });
 
   test("retake deep link (?mode=retake) self-completes its URL and finish-later goes back", async ({
