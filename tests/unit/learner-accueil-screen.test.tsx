@@ -2,7 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }),
+}));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
 
 const fetchAccueilHome = vi.fn();
@@ -23,7 +25,9 @@ vi.mock("@/learner/core/api/dailyDrill", async (importOriginal) => {
 vi.mock("@/learner/core/auth/useLearnerSession", () => {
   const state = {
     status: "authenticated",
-    session: { user: { id: "u1", email: "amadou@df.dev", user_metadata: { display_name: "Amadou" } } },
+    session: {
+      user: { id: "u1", email: "amadou@df.dev", user_metadata: { display_name: "Amadou" } },
+    },
   };
   const hook = (selector?: (s: typeof state) => unknown) => (selector ? selector(state) : state);
   hook.getState = () => state;
@@ -32,18 +36,43 @@ vi.mock("@/learner/core/auth/useLearnerSession", () => {
 
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
-import { __resetReadinessForTest, __setUserIdResolverForTest } from "@/learner/core/readiness";
+import {
+  __hydrateForBoot,
+  __resetReadinessForTest,
+  __setUserIdResolverForTest,
+} from "@/learner/core/readiness";
 import { useExamContextStore } from "@/learner/core/exam/examContext";
 import { AccueilScreen } from "@/learner/accueil/screens/AccueilScreen";
 
 afterEach(cleanup);
 beforeAll(() => initLearnerI18n("fr"));
-const ui = () => render(<LearnerI18nProvider lng="fr"><AccueilScreen /></LearnerI18nProvider>);
+const ui = () =>
+  render(
+    <LearnerI18nProvider lng="fr">
+      <AccueilScreen />
+    </LearnerI18nProvider>
+  );
 
 const homeWithDate = {
-  currentLevel: "b1", targetLevel: "b1",
-  countdown: { daysRemaining: 42, examDateLabel: "17 juin 2026", preparationPct: 50, targetScore: 80 },
-  priorityTask: { skill: "", title: "", level: "", teil: "", body: "", durationMinutes: 0, pointsDelta: 0, attempts: 0, bestScore: 0 },
+  currentLevel: "b1",
+  targetLevel: "b1",
+  countdown: {
+    daysRemaining: 42,
+    examDateLabel: "17 juin 2026",
+    preparationPct: 50,
+    targetScore: 80,
+  },
+  priorityTask: {
+    skill: "",
+    title: "",
+    level: "",
+    teil: "",
+    body: "",
+    durationMinutes: 0,
+    pointsDelta: 0,
+    attempts: 0,
+    bestScore: 0,
+  },
   todayStats: { taskCount: 0, minutes: 0 },
 };
 
@@ -51,7 +80,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   __resetReadinessForTest();
   __setUserIdResolverForTest(() => null);
-  useExamContextStore.setState({ board: "goethe", level: "b1", source: "onboarding", isLoaded: true });
+  useExamContextStore.setState({
+    board: "goethe",
+    level: "b1",
+    source: "onboarding",
+    isLoaded: true,
+  });
   fetchDailyDrill.mockResolvedValue({ itemCount: 4, reason: "ok" });
 });
 
@@ -60,7 +94,9 @@ describe("AccueilScreen", () => {
     fetchAccueilHome.mockResolvedValue(homeWithDate);
     ui();
     expect(screen.getByTestId("accueil-loading")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toHaveTextContent("Bonjour, Amadou."));
+    await waitFor(() =>
+      expect(screen.getByTestId("accueil-greeting")).toHaveTextContent("Bonjour, Amadou.")
+    );
     expect(screen.getByTestId("accueil-current-level-pill")).toHaveTextContent("B1");
     expect(screen.getByTestId("accueil-date-eyebrow").textContent).toMatch(/·/);
     expect(screen.getByTestId("accueil-countdown-days-remaining")).toHaveTextContent("42");
@@ -103,5 +139,35 @@ describe("AccueilScreen", () => {
     await waitFor(() => expect(screen.getByTestId("accueil-error")).toBeInTheDocument());
     fireEvent.click(screen.getByTestId("accueil-error-retry"));
     await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toBeInTheDocument());
+  });
+
+  // P17 (S6 Task 6.9) — StatusStrip's ready-tap deep-links straight to the
+  // Schreiben feedback screen (closes the loop `acknowledgeReadiness`
+  // needs); Sprechen has no feedback screen yet (S7) and keeps the S3
+  // history fallback.
+  describe("StatusStrip ready-tap (P17 handleOpenReady)", () => {
+    it("a schreiben ready signal pushes the feedback route", async () => {
+      __hydrateForBoot(
+        { submissionId: "s1", module: "schreiben", state: "ready", startedAt: 0 },
+        true
+      );
+      fetchAccueilHome.mockResolvedValue(homeWithDate);
+      ui();
+      await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("accueil-status-strip-press"));
+      expect(push).toHaveBeenCalledWith("/fr/app/schreiben/feedback/s1");
+    });
+
+    it("a sprechen ready signal still pushes /history (no Sprechen feedback screen until S7)", async () => {
+      __hydrateForBoot(
+        { submissionId: "s2", module: "sprechen", state: "ready", startedAt: 0 },
+        true
+      );
+      fetchAccueilHome.mockResolvedValue(homeWithDate);
+      ui();
+      await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("accueil-status-strip-press"));
+      expect(push).toHaveBeenCalledWith("/fr/app/history");
+    });
   });
 });

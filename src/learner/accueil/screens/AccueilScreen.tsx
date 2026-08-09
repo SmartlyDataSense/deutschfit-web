@@ -16,8 +16,14 @@
  *     `handleOpenNotifications` had no real destination yet either.
  *   - Every deep-link the mobile screen routes on `getParent()` hops
  *     (Hero post-session CTA, Hero countdown tap, `StatusStrip` ready-tap)
- *     falls back to a single `/{locale}/app/history` push — the real
- *     Schreiben/Sprechen feedback deep links land in S6/S7.
+ *     falls back to a single `/{locale}/app/history` push — **half-resolved
+ *     as of S6 Task 6.9**: the Hero CTA/countdown fallbacks are unchanged,
+ *     but `StatusStrip`'s ready-tap now deep-links directly to
+ *     `/{locale}/app/schreiben/feedback/<submissionId>` when the signal's
+ *     module is `"schreiben"` (`handleOpenReady` below) — this is what
+ *     makes `acknowledgeReadiness` reachable from the home Hero pulse. A
+ *     `"sprechen"` signal still falls back to `/{locale}/app/history`
+ *     until the Sprechen feedback screen lands in S7.
  *   - `StatusStrip`'s `onRetry` is a noop stub (mobile: "wired in P6").
  *   - Mobile persists the exam-date save result as a toast
  *     (`useToast().show(...)`); the web learner app has no toast system
@@ -44,6 +50,7 @@ import clsx from "clsx";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { Icon } from "@/learner/core/icons/Icon";
+import type { ReadinessSignal } from "@/learner/core/readiness";
 import { AppButton, AppText, BrandMark, Chip, EmptyState, Skeleton } from "@/learner/ui/primitives";
 
 import { updateExamDate } from "../api";
@@ -127,6 +134,20 @@ export function AccueilScreen() {
   const handleOpenHistory = useCallback((): void => {
     router.push(`/${locale}/app/history`);
   }, [router, locale]);
+
+  // P17 (S6 Task 6.9) — StatusStrip's ready-tap deep-links straight to the
+  // graded submission when the module has a feedback screen (Schreiben).
+  // Sprechen has none yet (S7), so it keeps the S3 history fallback.
+  const handleOpenReady = useCallback(
+    (signal: ReadinessSignal): void => {
+      if (signal.module === "schreiben") {
+        router.push(`/${locale}/app/schreiben/feedback/${signal.submissionId}`);
+        return;
+      }
+      router.push(`/${locale}/app/history`);
+    },
+    [router, locale]
+  );
 
   const handleSelectExamDate = useCallback(
     (isoDate: string): void => {
@@ -302,7 +323,7 @@ export function AccueilScreen() {
         </div>
       ) : null}
 
-      <StatusStrip onReady={handleOpenHistory} onRetry={noop} testID="accueil-status-strip" />
+      <StatusStrip onReady={handleOpenReady} onRetry={noop} testID="accueil-status-strip" />
 
       <AppText
         tone="secondary"
