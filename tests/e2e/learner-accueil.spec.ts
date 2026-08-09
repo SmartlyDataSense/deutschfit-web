@@ -84,7 +84,13 @@ test.describe("Accueil (qa1, real backend)", () => {
     await expect(rows.first().or(empty)).toBeVisible({ timeout: 20_000 });
 
     await page.getByTestId("performance-history-pinned-retake").click();
-    await page.waitForURL("**/fr/app/onboarding/diagnostic?mode=retake", { timeout: 20_000 });
+    // diagnostic/page.tsx canonicalizes the URL to `?attempt=<uuid>&level=…
+    // &mode=retake` shortly after mount, so the literal `?mode=retake` only
+    // matches in a brief timing window — tolerate both forms (same pattern
+    // as learner-onboarding.spec.ts's retake-deep-link test).
+    await page.waitForURL(/diagnostic\?(mode=retake|attempt=[0-9a-f-]{36}.*mode=retake)/, {
+      timeout: 20_000,
+    });
   });
 
   test("exam-date screen renders the month grid and pages months (no commit)", async ({ page }) => {
@@ -98,6 +104,7 @@ test.describe("Accueil (qa1, real backend)", () => {
   });
 
   test("both viewports: tab bar on mobile, sidebar on desktop, screenshots", async ({ page }) => {
+    test.setTimeout(120_000);
     await login(page);
     for (const vp of [
       { width: 390, height: 844 },
@@ -110,10 +117,22 @@ test.describe("Accueil (qa1, real backend)", () => {
         path: `test-results/accueil-${vp.width}x${vp.height}.png`,
         fullPage: true,
       });
+
+      // History content renders behind its own isLoading flag, separate
+      // from the screen shell — wait for the pinned card (or the empty
+      // feed, same either-branch pattern as the history test above)
+      // before capturing, or the shot only shows the header.
+      await page.goto("/fr/app/history");
+      await expect(page.getByTestId("performance-history-screen")).toBeVisible({
+        timeout: 20_000,
+      });
+      const pinned = page.getByTestId("performance-history-pinned-card");
+      const empty = page.getByTestId("performance-history-feed-empty");
+      await expect(pinned.or(empty).first()).toBeVisible({ timeout: 20_000 });
+      await page.screenshot({
+        path: `test-results/history-${vp.width}x${vp.height}.png`,
+        fullPage: true,
+      });
     }
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/fr/app/history");
-    await expect(page.getByTestId("performance-history-screen")).toBeVisible({ timeout: 20_000 });
-    await page.screenshot({ path: "test-results/history-390x844.png", fullPage: true });
   });
 });
