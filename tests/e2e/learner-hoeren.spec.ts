@@ -193,8 +193,9 @@ test.describe("Hören practice + graded drill (qa1, real backend)", () => {
     await expect(page.locator("text=/premium|abonnement|upgrade/i")).toHaveCount(0);
 
     // See the header note: practice mode DOES fire one `hoeren-submit`
-    // request (synthetic `local-<sessionId>` attempt id, server 404s,
-    // zero rate-limit quota consumed) — log + assert it never retries.
+    // request (synthetic `local-<sessionId>` attempt id, fails server-side
+    // before the quota check — zero rate-limit quota consumed) — log +
+    // assert it never retries.
     // eslint-disable-next-line no-console
     console.log(`[hoeren e2e][practice] hoeren-submit requests fired: ${submitRequests.length}`);
     expect(submitRequests.length).toBeLessThanOrEqual(1);
