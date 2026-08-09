@@ -160,6 +160,30 @@ export {
   type TopicCard,
 } from "./sprechenTopics";
 
+// ---------------------------------------------------------------------------
+// Dialogue / paired Sprechen (S7 · Task 7.10) — re-exports canonical types +
+// functions from `./dialogue`, same "one stable surface" rationale as the
+// blocks above (Constraint 15: `src/learner/sprechen/dialogue/` feature
+// code — screens (7.11) and `useDialogueSession` — imports wire fns/types
+// ONLY from this facade).
+// ---------------------------------------------------------------------------
+
+export {
+  finalizeDialogue,
+  listDialogueTeile,
+  putStudentAudio,
+  reserveStudentTurnUpload,
+  sendDialogueTurn,
+  startDialogue,
+  type DialogueDimension,
+  type DialogueResult,
+  type DialogueStartResult,
+  type DialogueTeilConfig,
+  type DialogueTheme,
+  type DialogueThemeWire,
+  type DialogueTurnResult,
+} from "./dialogue";
+
 export const listModelltests = mockExamListModelltests;
 export const startMockExam = mockExamStartMockExam;
 export const advanceMockExam = mockExamAdvanceMockExam;
