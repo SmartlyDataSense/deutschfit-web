@@ -97,6 +97,23 @@ describe("OfflineBanner", () => {
     expect(banner).toHaveAttribute("aria-live", "polite");
     expect(banner).toHaveTextContent("Hors ligne — certaines fonctionnalités sont indisponibles");
   });
+
+  it("server-renders nothing even when the client would be offline (hydration safety)", async () => {
+    // Regression: the SSR HTML never contains the banner (the server can't
+    // know the client's connectivity), so the first client render must match
+    // it — even when `navigator.onLine` is already false at hydration time.
+    // With the old lazy-`useState` read this mismatched and React logged a
+    // recoverable hydration error on /fr/app/login.
+    const { renderToString } = await import("react-dom/server");
+    setOnline(false);
+    const instance = initLearnerI18n("fr");
+    const html = renderToString(
+      <I18nextProvider i18n={instance}>
+        <OfflineBanner />
+      </I18nextProvider>
+    );
+    expect(html).not.toContain("learner-offline-banner");
+  });
 });
 
 describe("LearnerErrorBoundary", () => {

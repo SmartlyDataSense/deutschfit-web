@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppText } from "@/learner/ui/primitives";
+
+function subscribeToConnectivity(onStoreChange: () => void): () => void {
+  window.addEventListener("online", onStoreChange);
+  window.addEventListener("offline", onStoreChange);
+  return () => {
+    window.removeEventListener("online", onStoreChange);
+    window.removeEventListener("offline", onStoreChange);
+  };
+}
 
 /**
  * `useOnlineStatus` — live online/offline status for the browser tab.
@@ -16,40 +25,18 @@ import { AppText } from "@/learner/ui/primitives";
  * caveat mobile's `NetInfoState.isConnected` has; good enough for "should we
  * warn the learner their next network call might fail."
  *
- * Reads the initial value lazily in `useState` (not `useEffect`) so the
- * first render already reflects reality instead of defaulting to "online"
- * for one tick — SSR-safe via the `typeof navigator === "undefined"` guard
- * (server has no `navigator`; `navigator.onLine` isn't part of the initial
- * HTML anyway, so this never causes a hydration mismatch in practice).
+ * `useSyncExternalStore` with a server snapshot of "online": the SSR HTML
+ * never contains the banner (the server can't know the client's
+ * connectivity), so the hydrating render must produce the same tree even
+ * when `navigator.onLine` is already false — React then re-renders with the
+ * client snapshot immediately after hydration, without a mismatch.
  */
 export function useOnlineStatus(): boolean {
-  const [isOffline, setIsOffline] = useState(() =>
-    typeof navigator === "undefined" ? false : !navigator.onLine
+  return useSyncExternalStore(
+    subscribeToConnectivity,
+    () => !navigator.onLine,
+    () => false
   );
-
-  useEffect(() => {
-    function handleOnline() {
-      setIsOffline(false);
-    }
-    function handleOffline() {
-      setIsOffline(true);
-    }
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    // Re-sync on mount in case connectivity changed between the lazy
-    // `useState` initializer (evaluated at module/component construction)
-    // and this effect running (e.g. React StrictMode's double-invoke, or a
-    // slow hydration window).
-    setIsOffline(!navigator.onLine);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  return isOffline;
 }
 
 /**
