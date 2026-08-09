@@ -128,6 +128,10 @@
       "overline": "Points to cover",
       "intro": "Cover each of these points during your presentation — they count toward your grade."
     },
+    "betreuerObservation": {
+      "overline": "Betreuer tip",
+      "body": "Structure your monologue in three parts: an introduction, a development with a concrete example, then a conclusion."
+    },
     "micCheck": {
       "title": "Test mic and speaker",
       "intro": "5 seconds of recording, then playback to make sure everything works.",
@@ -185,6 +189,11 @@
     "fallbackBanner": "Fallback feedback · the AI grader is temporarily unavailable."
   },
   "session": {
+    "topicNotFound": {
+      "title": "Topic not found",
+      "body": "This topic is no longer available. Choose another one from the catalogue.",
+      "action": "Back to catalogue"
+    },
     "awaitingInline": "The Betreuer is grading your recording…",
     "submittedToast": "Received · your feedback arrives in ~3 min",
     "failedToast": "This module isn't graded yet. None of your effort is lost — try another topic in the meantime.",
