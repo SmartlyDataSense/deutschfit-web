@@ -25,7 +25,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createWebRecorder } from "../audio/webRecorder";
+import { createWebRecorder, releaseRecording } from "../audio/webRecorder";
 
 export type RecorderStatus = "idle" | "requesting" | "recording" | "stopped" | "error";
 
@@ -194,6 +194,13 @@ export function useRecorder(
   const [state, setState] = useState<RecorderSnapshot>(INITIAL_RECORDER_SNAPSHOT);
   const nativeRef = useRef<NativeRecorder | null>(null);
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Latest-state ref for the unmount cleanup below — a plain `state` read
+  // inside that effect's closure would be frozen at whatever `state` was
+  // when the effect last (re-)ran, not the value at the moment the
+  // component actually unmounts. Assigned during render (not inside an
+  // effect) so it's always current by the time cleanup fires.
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const dispatch = useCallback((event: RecorderEvent) => {
     setState((prev) => reduceRecorder(prev, event));
@@ -305,8 +312,29 @@ export function useRecorder(
   useEffect(() => {
     return () => {
       stopTick();
+      // Web delta: mobile's unmount cleanup here only calls stopTick() —
+      // expo-audio's native module is reclaimed by the OS once the screen
+      // unmounts/the app backgrounds, so there's nothing else to tear down.
+      // On web nothing currently blocks navigation mid-recording (browser
+      // back, route change), and `createWebRecorder()`'s MediaStream
+      // tracks / MediaRecorder / AudioContext are only released inside its
+      // own `stopRecording()` — an unmount that never calls it leaves the
+      // mic stream open and the tab's red recording indicator lit for the
+      // rest of the SPA session (privacy-relevant, not just a resource
+      // leak). So stop an in-progress recording here and release its blob.
+      // Read `stateRef` (not `state`, the value this effect's closure
+      // closed over when it last ran) so this reflects the CURRENT status
+      // at the moment of unmount; the ordinary `handleStop` path already
+      // calls `stop()` before unmount, leaving status "stopped" by then,
+      // so this is a no-op on that path.
+      if (stateRef.current.status === "recording") {
+        void native
+          ?.stopRecording()
+          .then((r) => releaseRecording(r.uri))
+          .catch(() => {});
+      }
     };
-  }, [stopTick]);
+  }, [native, stopTick]);
 
   return {
     ...state,

@@ -1,6 +1,18 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// F1/F2 guard: `useRecorder`'s unmount cleanup calls the REAL
+// `releaseRecording` from `webRecorder.ts` (not a test seam) — mock just
+// that export (passthrough for everything else, including the untouched
+// module-level registry the mocked fn doesn't share) so tests can assert
+// it was invoked without wiring a full fake registry.
+const { releaseRecordingMock } = vi.hoisted(() => ({ releaseRecordingMock: vi.fn() }));
+
+vi.mock("@/learner/sprechen/audio/webRecorder", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/sprechen/audio/webRecorder")>();
+  return { ...actual, releaseRecording: releaseRecordingMock };
+});
+
 import {
   appendLevel,
   INITIAL_RECORDER_SNAPSHOT,
@@ -14,6 +26,7 @@ import {
 
 afterEach(() => {
   cleanup();
+  releaseRecordingMock.mockReset();
 });
 
 // ---------------------------------------------------------------------------
@@ -431,5 +444,58 @@ describe("useRecorder", () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
     expect(pollStatus.mock.calls.length).toBe(callsAtUnmount);
+  });
+
+  // -------------------------------------------------------------------------
+  // F1 — unmount mid-recording must stop the native recorder (mic
+  // stream/MediaRecorder/AudioContext) and release its blob, not just stop
+  // the tick loop. Removing the cleanup's `stateRef.current.status ===
+  // "recording"` branch in useRecorder.ts makes both tests below fail.
+  // -------------------------------------------------------------------------
+  it("F1: unmount while recording stops the native recorder and releases its blob", async () => {
+    const stopRecording = vi.fn(async () => ({ uri: "blob:live-recording", durationMs: 3_000 }));
+    const native = makeFakeNativeRecorder({ stopRecording });
+    const { result, unmount } = renderHook(() => useRecorder(() => native));
+
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.status).toBe("recording");
+
+    unmount();
+    // `native.stopRecording()` resolves asynchronously (it's a Promise even
+    // in this fake) — flush the microtask queue the cleanup's `.then()`
+    // chain runs on.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(stopRecording).toHaveBeenCalledTimes(1);
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:live-recording");
+  });
+
+  it("F1: a normal unmount AFTER stop() already resolved does not call native.stopRecording() again (status is no longer 'recording')", async () => {
+    const stopRecording = vi.fn(async () => ({ uri: "blob:already-stopped", durationMs: 1_000 }));
+    const native = makeFakeNativeRecorder({ stopRecording });
+    const { result, unmount } = renderHook(() => useRecorder(() => native));
+
+    await act(async () => {
+      await result.current.start();
+    });
+    await act(async () => {
+      await result.current.stop();
+    });
+    stopRecording.mockClear();
+    releaseRecordingMock.mockClear();
+
+    unmount();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(stopRecording).not.toHaveBeenCalled();
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
   });
 });

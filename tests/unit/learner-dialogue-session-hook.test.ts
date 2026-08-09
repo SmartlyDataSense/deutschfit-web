@@ -31,6 +31,16 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// F2 guard: `submitStudentTurn`'s post-TURN_SUCCESS release calls the REAL
+// `releaseRecording` from `webRecorder.ts` (not part of `DialogueDeps`) —
+// mock just that export so turn-success/-failure tests can assert it.
+const { releaseRecordingMock } = vi.hoisted(() => ({ releaseRecordingMock: vi.fn() }));
+
+vi.mock("@/learner/sprechen/audio/webRecorder", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/sprechen/audio/webRecorder")>();
+  return { ...actual, releaseRecording: releaseRecordingMock };
+});
+
 import { useDialogueResult } from "@/learner/sprechen/dialogue/resultStore";
 import {
   useDialogueSession,
@@ -129,6 +139,7 @@ afterEach(() => {
 
 beforeEach(() => {
   useDialogueResult.getState().clear();
+  releaseRecordingMock.mockReset();
 });
 
 describe("useDialogueSession", () => {
@@ -213,6 +224,24 @@ describe("useDialogueSession", () => {
     expect(result.current.turnCount).toBe(1);
   });
 
+  it("F2: a successful submitStudentTurn releases the student-turn uri once upload + sendDialogueTurn resolved", async () => {
+    const deps = makeDeps();
+    const { result } = renderHook(() => useDialogueSession(deps));
+
+    await act(async () => {
+      await result.current.start({ board: "telc", level: "B1", teil: "b1_teil_3" });
+    });
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.submitStudentTurn({ fileUri: "blob:turn-1", userId: "user-1" });
+    });
+
+    expect(result.current.phase).toBe("awaiting_student");
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:turn-1");
+    expect(releaseRecordingMock).toHaveBeenCalledTimes(1);
+  });
+
   it("no recorded blob -> ERROR('recording_not_found'), reserve/send never called", async () => {
     const deps = makeDeps({ getRecordingBlob: vi.fn().mockReturnValue(null) });
     const { result } = renderHook(() => useDialogueSession(deps));
@@ -249,6 +278,10 @@ describe("useDialogueSession", () => {
     });
     expect(result.current.phase).toBe("failed");
     expect(result.current.errorMessage).toBe("concurrent_turn_conflict");
+    // F2: the failed turn's blob must be RETAINED (never released) — a
+    // retry needs `getRecordingBlob("blob:turn-1")` to still resolve so it
+    // can re-PUT the exact same bytes under the same `clientTurnId`.
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
 
     // Retry -> succeeds.
     await act(async () => {
@@ -263,6 +296,9 @@ describe("useDialogueSession", () => {
     expect(idAttempt1).toBeTruthy();
     expect(idAttempt2).toBe(idAttempt1);
     expect(result.current.phase).toBe("awaiting_student");
+    // F2: the RETRY succeeded — now (and only now) is the blob released.
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:turn-1");
+    expect(releaseRecordingMock).toHaveBeenCalledTimes(1);
   });
 
   it("a fresh turn after a success mints a NEW clientTurnId (cleared on success)", async () => {

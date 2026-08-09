@@ -57,7 +57,10 @@ import {
   type DialogueTurnResult,
 } from "@/learner/core/api/examApi";
 
-import { getRecordingBlob as defaultGetRecordingBlob } from "../../audio/webRecorder";
+import {
+  getRecordingBlob as defaultGetRecordingBlob,
+  releaseRecording,
+} from "../../audio/webRecorder";
 import { useDialogueResult } from "../resultStore";
 
 export type DialoguePhase =
@@ -385,6 +388,15 @@ export function useDialogueSession(
         dispatch({ type: "TURN_SUCCESS", response });
         // Success: clear so the NEXT turn gets a fresh id.
         pendingTurnIdRef.current = null;
+        // Blob-registry contract (F2): reserve, PUT, and sendDialogueTurn
+        // all succeeded — the server has this turn's audio, so the local
+        // Blob/object URL is no longer needed. Release only here, after
+        // the LAST consumer (`putStudentAudio` above) has read it; the
+        // catch block below must NOT release — P20 relies on a FAILED
+        // turn's audio still being resolvable via `getRecordingBlob` so a
+        // retry can re-PUT the exact same bytes under the same
+        // `clientTurnId`.
+        releaseRecording(args.fileUri);
       } catch (e) {
         if (cancelledRef.current || myGeneration !== runGenerationRef.current) return;
         const message = e instanceof Error ? e.message : "turn_failed";

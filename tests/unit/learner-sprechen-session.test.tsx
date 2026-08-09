@@ -23,6 +23,7 @@ const {
   trackEventMock,
   markSubmissionInFlightMock,
   acknowledgeReadinessMock,
+  releaseRecordingMock,
 } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -31,6 +32,7 @@ const {
   trackEventMock: vi.fn(),
   markSubmissionInFlightMock: vi.fn(),
   acknowledgeReadinessMock: vi.fn(),
+  releaseRecordingMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -63,6 +65,14 @@ vi.mock("@/learner/core/readiness", () => ({
 vi.mock("@/learner/core/analytics/posthog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/analytics/posthog")>();
   return { ...actual, trackEvent: trackEventMock };
+});
+
+// F2 guard: `handleReviewRetake` calls the REAL `releaseRecording` from
+// `webRecorder.ts` (not a test seam) — mock just that export so the retake
+// test can assert it fired with the discarded review uri.
+vi.mock("@/learner/sprechen/audio/webRecorder", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/sprechen/audio/webRecorder")>();
+  return { ...actual, releaseRecording: releaseRecordingMock };
 });
 
 // Stub the replay control — the F-028 assertion reads the `uri` prop it
@@ -268,6 +278,7 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
     trackEventMock.mockReset();
     markSubmissionInFlightMock.mockReset();
     acknowledgeReadinessMock.mockReset();
+    releaseRecordingMock.mockReset();
     useExamContextStore.setState({ board: "goethe", level: "b1", isLoaded: true } as never);
     useTopicHandoff.setState({ topic: null });
   });
@@ -542,6 +553,52 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
     // not per-attempt), so the advice card reappears instead.
     await waitFor(() => expect(screen.getByTestId("sprechen-session-advice")).toBeInTheDocument());
     expect(screen.queryByTestId("sprechen-session-mic-check")).not.toBeInTheDocument();
+  });
+
+  it("retake releases the discarded review uri (F2); a fresh recording's uri is left retained", async () => {
+    useTopicHandoff.setState({ topic: sampleTopic() });
+    const fakeRecorder = makeFakeRecorder();
+    fakeRecorder.stopRecordingMock.mockResolvedValueOnce({
+      uri: "blob:retake-old-uri",
+      durationMs: 32_000,
+    });
+
+    renderScreen({ recorderFactory: () => fakeRecorder });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-mic-check")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-mic-check-skip"));
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-stop-cta")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("sprechen-session-stop-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-retake")).toBeInTheDocument()
+    );
+
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("sprechen-session-review-retake"));
+
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:retake-old-uri");
+    expect(releaseRecordingMock).toHaveBeenCalledTimes(1);
+
+    // A second, fresh recording round: back at `prep` (advice card — the
+    // mic-check skip persists), record again, stop with a NEW uri. That
+    // uri must NOT be released here — it's the one about to be reviewed /
+    // submitted, not discarded.
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-advice")).toBeInTheDocument());
+    releaseRecordingMock.mockClear();
+    fakeRecorder.stopRecordingMock.mockResolvedValueOnce({
+      uri: "blob:retake-new-uri",
+      durationMs: 30_000,
+    });
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-stop-cta")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("sprechen-session-stop-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-retake")).toBeInTheDocument()
+    );
+
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
   });
 
   it("submit walks prep -> awaiting; the dismiss effect fires exactly once: readiness in-flight + sprechen_session_resolve submitted-optimistic + replace to /fr/app", async () => {

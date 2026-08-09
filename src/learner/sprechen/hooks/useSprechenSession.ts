@@ -53,7 +53,10 @@ import {
   type SprechenTeil,
 } from "@/learner/core/api/examApi";
 
-import { getRecordingBlob as defaultGetRecordingBlob } from "../audio/webRecorder";
+import {
+  getRecordingBlob as defaultGetRecordingBlob,
+  releaseRecording,
+} from "../audio/webRecorder";
 import { createSprechenPoller, type SprechenPollingSnapshot } from "./useSprechenSubmissionPolling";
 
 export type SprechenSessionPhase =
@@ -374,6 +377,14 @@ export function useSprechenSession(args: UseSprechenSessionArgs): UseSprechenSes
             durationSec: Math.floor(durationMs / 1000),
           });
           if (cancelledRef.current) return;
+
+          // Blob-registry contract (F2): reserve, PUT, and finalize all
+          // succeeded — the server has the audio, so the local Blob/object
+          // URL is no longer needed. Release only here, after the LAST
+          // consumer (`putFn` above, via `getRecordingBlobFn`) has read it;
+          // the catch block below must NOT release — any failure in this
+          // sequence means the blob may still need to be re-uploaded.
+          releaseRecording(recordingUri);
 
           enterAwaiting(reservation.submission_id);
         } catch (err) {

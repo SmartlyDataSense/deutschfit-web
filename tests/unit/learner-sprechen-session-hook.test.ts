@@ -19,11 +19,22 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { trackEventMock } = vi.hoisted(() => ({ trackEventMock: vi.fn() }));
+const { trackEventMock, releaseRecordingMock } = vi.hoisted(() => ({
+  trackEventMock: vi.fn(),
+  releaseRecordingMock: vi.fn(),
+}));
 
 vi.mock("@/learner/core/analytics/posthog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/analytics/posthog")>();
   return { ...actual, trackEvent: trackEventMock };
+});
+
+// F2 guard: the hook's post-finalize release calls the REAL
+// `releaseRecording` from `webRecorder.ts` (not part of `SprechenSessionDeps`)
+// — mock just that export so finalize-success/-failure tests can assert it.
+vi.mock("@/learner/sprechen/audio/webRecorder", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/sprechen/audio/webRecorder")>();
+  return { ...actual, releaseRecording: releaseRecordingMock };
 });
 
 import type { ReserveUploadResult, SprechenSubmission } from "@/learner/core/api/examApi";
@@ -56,6 +67,7 @@ afterEach(() => {
 
 beforeEach(() => {
   trackEventMock.mockReset();
+  releaseRecordingMock.mockReset();
 });
 
 describe("useSprechenSession", () => {
@@ -147,6 +159,50 @@ describe("useSprechenSession", () => {
     expect(pollerStart).toHaveBeenCalledTimes(1);
   });
 
+  it("F2: finalize success releases the submitted uri once reserve/put/finalize all resolved", async () => {
+    const reserveUploadMock = vi.fn().mockResolvedValue({
+      submission_id: "sub-1",
+      signed_put_url: "https://signed.example/put",
+      storage_path: "u1/sub-1.m4a",
+      expires_in: 900,
+    } satisfies ReserveUploadResult);
+    const blob = new Blob(["audio-bytes"], { type: "audio/webm;codecs=opus" });
+    const getRecordingBlobMock = vi
+      .fn()
+      .mockReturnValue({ blob, mimeType: "audio/webm;codecs=opus" });
+    const putAudioMock = vi.fn().mockResolvedValue(undefined);
+    const finalizeMock = vi
+      .fn()
+      .mockResolvedValue({ submission_id: "sub-1", status: "queued", replay: false });
+    const createPollerMock = vi.fn().mockReturnValue({ start: vi.fn(), stop: vi.fn() });
+
+    const { result } = renderHook(() =>
+      useSprechenSession({
+        examSlug: "goethe-b1",
+        teil: 2,
+        topicId: "topic-1",
+        subgenre: "praesentation",
+        level: "B1",
+        deps: {
+          reserveUpload: reserveUploadMock,
+          putAudio: putAudioMock,
+          finalize: finalizeMock,
+          getRecordingBlob: getRecordingBlobMock,
+          createPoller: createPollerMock,
+        },
+      })
+    );
+
+    act(() => result.current.reviewRecording({ recordingUri: "blob:uri-1", durationMs: 32_000 }));
+    act(() => result.current.submitRecording({ recordingUri: "blob:uri-1", durationMs: 32_000 }));
+
+    await waitFor(() => expect(result.current.phase).toBe("awaiting"));
+    // The blob was still needed while `putFn` ran — release must not have
+    // fired before finalize actually resolved.
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:uri-1");
+    expect(releaseRecordingMock).toHaveBeenCalledTimes(1);
+  });
+
   it("finalize rejection lands the fallback phase with the server code surfaced", async () => {
     const reserveUploadMock = vi.fn().mockResolvedValue({
       submission_id: "sub-2",
@@ -184,6 +240,9 @@ describe("useSprechenSession", () => {
     expect(result.current.error).toBe("bad_source_status");
     // The upload never completed — no poller was ever created.
     expect(createPollerMock).not.toHaveBeenCalled();
+    // F2: finalize failed — the blob must be RETAINED (never released) so
+    // a caller-driven retry can still resolve it via getRecordingBlobFn.
+    expect(releaseRecordingMock).not.toHaveBeenCalled();
   });
 
   it("re-entrant submitRecording while in-flight is a no-op (re-entrancy ref)", async () => {

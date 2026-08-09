@@ -104,6 +104,7 @@ import {
   dimensionScoresFromWire,
 } from "@/learner/ui/blocks/ModuleResultLayout";
 
+import { releaseRecording } from "../audio/webRecorder";
 import { LocalAudioPlayer } from "../components/LocalAudioPlayer";
 import {
   MIC_CHECK_DURATION_MS,
@@ -374,6 +375,16 @@ export function SprechenSessionScreen({
         actual_sec: reviewActualSec,
         target_sec: targetSec,
       });
+    }
+    // Blob-registry contract (F2): the review clip is being discarded — the
+    // learner is re-recording, `LocalAudioPlayer` above is about to unmount,
+    // and nothing else will ever read this uri again. Release it BEFORE
+    // `session.reset()` clears `recordingUri` so `webRecorder.ts`'s
+    // module-level registry doesn't retain the Blob + its object URL for
+    // the rest of the SPA session. The FRESH recording that follows gets
+    // its own new uri and is left untouched here.
+    if (session.recordingUri) {
+      releaseRecording(session.recordingUri);
     }
     recorder.reset();
     recorderBootRef.current = false;
