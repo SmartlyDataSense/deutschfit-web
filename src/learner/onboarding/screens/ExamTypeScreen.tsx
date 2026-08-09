@@ -15,6 +15,7 @@ import {
   type ExamBoard,
   type ExamLevel,
 } from "@/learner/core/exam/examTypes";
+import { useOnboardingFlagStore } from "@/learner/core/onboarding/useOnboardingFlag";
 import { AppButton, AppText } from "@/learner/ui/primitives";
 
 type DropdownKind = "board" | "level" | null;
@@ -29,17 +30,17 @@ type DropdownKind = "board" | "level" | null;
  * opening a fixed-inset overlay (`role="dialog"`) with a `role="radio"`
  * option list, and a sticky bottom primary CTA.
  *
- * Pre-seed rule (deviates slightly from the literal "seed whenever
- * isLoaded" mobile comment — see `examContext.ts`'s `ExamContextSource`
- * docstring: "onboarding can branch if the value is still the onboarding
- * default"): the store's `board`/`level` are never `null` — they start at
+ * Pre-seed rule (deviates from the literal "seed whenever isLoaded" mobile
+ * comment): the store's `board`/`level` are never `null` — they start at
  * `DEFAULT_EXAM_BOARD`/`DEFAULT_EXAM_LEVEL` even before any real choice was
  * made. Seeding on `isLoaded` alone would pre-fill (and instantly enable
  * Continue for) a brand-new user who never touched this screen. Gating the
- * seed on `source === "settings"` instead only pre-selects for a user who
- * *actually* chose a track before (retake / revisit flows) — a brand-new
- * onboarding pass always starts from `source: "onboarding"` and sees
- * placeholders, matching mobile's product intent.
+ * seed on `useOnboardingFlagStore`'s `done` flag (task 2.3) instead only
+ * pre-selects for a user who has already completed onboarding before
+ * (retake / revisit flows) — a brand-new user's flag is `false`, so they
+ * see placeholders, matching mobile's product intent. (An earlier version
+ * of this gate used `ExamContextSource === "settings"`, but nothing in
+ * this slice ever writes `"settings"` server-side — that was dead code.)
  */
 export function ExamTypeScreen() {
   const router = useRouter();
@@ -48,9 +49,9 @@ export function ExamTypeScreen() {
 
   const ctxBoard = useExamContextStore((s) => s.board);
   const ctxLevel = useExamContextStore((s) => s.level);
-  const ctxSource = useExamContextStore((s) => s.source);
   const isLoaded = useExamContextStore((s) => s.isLoaded);
   const setExamContext = useExamContextStore((s) => s.setExamContext);
+  const onboardingDone = useOnboardingFlagStore((s) => s.done);
 
   const [board, setBoard] = useState<ExamBoard | null>(null);
   const [level, setLevel] = useState<ExamLevel | null>(null);
@@ -67,11 +68,11 @@ export function ExamTypeScreen() {
   useEffect(() => {
     if (!isLoaded || seededRef.current) return;
     seededRef.current = true;
-    if (ctxSource === "settings") {
+    if (onboardingDone) {
       setBoard(ctxBoard);
       setLevel(ctxLevel);
     }
-  }, [isLoaded, ctxSource, ctxBoard, ctxLevel]);
+  }, [isLoaded, onboardingDone, ctxBoard, ctxLevel]);
 
   useEffect(() => {
     if (openDropdown === null) return;

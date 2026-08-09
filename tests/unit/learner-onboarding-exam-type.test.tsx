@@ -43,9 +43,16 @@ vi.mock("@/learner/core/api/client", async (importOriginal) => ({
 
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
+import { useOnboardingFlagStore } from "@/learner/core/onboarding/useOnboardingFlag";
 import { ExamTypeScreen } from "@/learner/onboarding/screens/ExamTypeScreen";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // `useOnboardingFlagStore` is a real (unmocked) module-level singleton —
+  // reset it after every test so the retake-path test's `done: true` never
+  // leaks into the brand-new-user tests.
+  useOnboardingFlagStore.setState({ userId: null, done: false, hydrated: false });
+});
 
 beforeAll(() => {
   initLearnerI18n("fr");
@@ -109,5 +116,22 @@ describe("ExamTypeScreen", () => {
     for (const b of ["goethe", "telc", "oesd", "testdaf", "ecl", "pflege", "beruf_tourismus"]) {
       expect(screen.getByTestId(`exam-board-option-${b}`)).toBeInTheDocument();
     }
+  });
+
+  it("pre-selects the stored exam context for a retake/revisit user (onboarding-done flag set)", () => {
+    useOnboardingFlagStore.setState({ userId: "u1", done: true, hydrated: true });
+    ui();
+    // Store is mocked to { board: "goethe", level: "b1" } — both pre-filled,
+    // so Continue is enabled without the user touching either dropdown.
+    expect(screen.getByTestId("onboarding-exam-type-continue")).toBeEnabled();
+    fireEvent.click(screen.getByTestId("exam-board-trigger"));
+    expect(screen.getByTestId("exam-board-option-goethe")).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByTestId("exam-level-trigger")); // switches the overlay to the level list
+    expect(screen.getByTestId("exam-level-option-b1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("does not pre-select anything for a brand-new user (onboarding-done flag false)", () => {
+    ui();
+    expect(screen.getByTestId("onboarding-exam-type-continue")).toBeDisabled();
   });
 });
