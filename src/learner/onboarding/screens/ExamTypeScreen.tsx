@@ -41,6 +41,16 @@ type DropdownKind = "board" | "level" | null;
  * see placeholders, matching mobile's product intent. (An earlier version
  * of this gate used `ExamContextSource === "settings"`, but nothing in
  * this slice ever writes `"settings"` server-side — that was dead code.)
+ *
+ * Hydration race: `useExamContextStore` (`isLoaded`) and
+ * `useOnboardingFlagStore` (`hydrated`, set by `hydrateFor()` in
+ * `LearnerProviders`, gated on session bootstrap) hydrate independently
+ * and asynchronously — one can settle before the other. The seed effect
+ * therefore waits on BOTH flags before it ever reads `done`, and does not
+ * latch `seededRef` until it has actually run the seed decision — so if
+ * exam-context hydration finishes first, the effect no-ops and re-fires
+ * once the flag store catches up, instead of permanently locking in a
+ * decision made from a still-default `{ done: false, hydrated: false }`.
  */
 export function ExamTypeScreen() {
   const router = useRouter();
@@ -52,6 +62,7 @@ export function ExamTypeScreen() {
   const isLoaded = useExamContextStore((s) => s.isLoaded);
   const setExamContext = useExamContextStore((s) => s.setExamContext);
   const onboardingDone = useOnboardingFlagStore((s) => s.done);
+  const onboardingFlagHydrated = useOnboardingFlagStore((s) => s.hydrated);
 
   const [board, setBoard] = useState<ExamBoard | null>(null);
   const [level, setLevel] = useState<ExamLevel | null>(null);
@@ -66,13 +77,16 @@ export function ExamTypeScreen() {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded || seededRef.current) return;
+    // Wait on BOTH hydration flags — they settle independently and
+    // asynchronously, so latching on just one risks seeding from a
+    // still-default `{ done: false }` if the other hasn't caught up yet.
+    if (!isLoaded || !onboardingFlagHydrated || seededRef.current) return;
     seededRef.current = true;
     if (onboardingDone) {
       setBoard(ctxBoard);
       setLevel(ctxLevel);
     }
-  }, [isLoaded, onboardingDone, ctxBoard, ctxLevel]);
+  }, [isLoaded, onboardingFlagHydrated, onboardingDone, ctxBoard, ctxLevel]);
 
   useEffect(() => {
     if (openDropdown === null) return;

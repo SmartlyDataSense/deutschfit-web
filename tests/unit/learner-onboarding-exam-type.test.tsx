@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // vitest.config.ts runs with `globals: false`, so @testing-library/react's
@@ -131,7 +131,30 @@ describe("ExamTypeScreen", () => {
   });
 
   it("does not pre-select anything for a brand-new user (onboarding-done flag false)", () => {
+    useOnboardingFlagStore.setState({ userId: "u1", done: false, hydrated: true });
     ui();
     expect(screen.getByTestId("onboarding-exam-type-continue")).toBeDisabled();
+  });
+
+  it("re-seeds once the onboarding-flag store hydrates later than the exam-context store (race regression)", () => {
+    // Exam context is mocked already `isLoaded: true` at module-eval time;
+    // the flag store starts unhydrated (afterEach's reset default:
+    // `{ hydrated: false, done: false }`) — this reproduces the race where
+    // exam-context hydration settles first. The seed effect must not latch
+    // a "no pre-fill" decision from the still-default flag state; it has
+    // to wait for `hydrated` too and seed once that catches up.
+    ui();
+    expect(useOnboardingFlagStore.getState().hydrated).toBe(false);
+    expect(screen.getByTestId("onboarding-exam-type-continue")).toBeDisabled();
+
+    act(() => {
+      useOnboardingFlagStore.setState({ userId: "u1", done: true, hydrated: true });
+    });
+
+    expect(screen.getByTestId("onboarding-exam-type-continue")).toBeEnabled();
+    fireEvent.click(screen.getByTestId("exam-board-trigger"));
+    expect(screen.getByTestId("exam-board-option-goethe")).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByTestId("exam-level-trigger"));
+    expect(screen.getByTestId("exam-level-option-b1")).toHaveAttribute("aria-checked", "true");
   });
 });
