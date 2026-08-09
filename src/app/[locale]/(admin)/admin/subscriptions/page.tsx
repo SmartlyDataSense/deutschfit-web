@@ -169,7 +169,7 @@ export default async function AdminSubscriptionsPage({ params, searchParams }: P
                     {formatDate(row.valid_from)} → {formatDate(row.valid_until)}
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
-                    {row.assigned_by_email ?? row.assigned_by.slice(0, 8)}
+                    {row.assigned_by_email ?? row.assigned_by?.slice(0, 8) ?? "—"}
                   </td>
                 </tr>
               ))

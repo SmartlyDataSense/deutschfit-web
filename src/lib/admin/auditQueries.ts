@@ -23,7 +23,7 @@ export type AuditListRow = {
   created_at: string;
   user_id: string;
   user_email: string | null;
-  actor_id: string;
+  actor_id: string | null;
   actor_email: string | null;
   subscription_id: string | null;
 };
@@ -87,7 +87,7 @@ export async function listAudit(sb: ServiceClient, filter: AuditFilter): Promise
   const ids = new Set<string>();
   for (const row of data ?? []) {
     ids.add(row.user_id);
-    ids.add(row.actor_id);
+    if (row.actor_id) ids.add(row.actor_id);
   }
   const emailMap = await loadEmailMap(sb, Array.from(ids));
 
@@ -99,7 +99,7 @@ export async function listAudit(sb: ServiceClient, filter: AuditFilter): Promise
     user_id: row.user_id,
     user_email: emailMap.get(row.user_id) ?? null,
     actor_id: row.actor_id,
-    actor_email: emailMap.get(row.actor_id) ?? null,
+    actor_email: row.actor_id ? (emailMap.get(row.actor_id) ?? null) : null,
     subscription_id: row.subscription_id,
   }));
 

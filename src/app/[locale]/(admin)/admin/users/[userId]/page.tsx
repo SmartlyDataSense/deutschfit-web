@@ -132,7 +132,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
                       <br />→ {formatDate(sub.valid_until)}
                     </td>
                     <td className="px-4 py-3 text-text-secondary">
-                      {sub.assigned_by_email ?? sub.assigned_by.slice(0, 8)}
+                      {sub.assigned_by_email ?? sub.assigned_by?.slice(0, 8) ?? "—"}
                     </td>
                     <td className="px-4 py-3">
                       {sub.status === "active" ? (
@@ -215,7 +215,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3 text-text-primary">{row.action}</td>
                     <td className="px-4 py-3 text-text-secondary">
-                      {row.actor_email ?? row.actor_id.slice(0, 8)}
+                      {row.actor_email ?? row.actor_id?.slice(0, 8) ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{row.reason ?? "—"}</td>
                   </tr>
