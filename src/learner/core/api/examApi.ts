@@ -22,8 +22,14 @@ import {
   type AdvanceMockExamResult,
   type CompetenceBar,
   type CompetenceSkills,
+  type FetchHoerenSessionArgs,
   type FinalizeMockExamArgs,
   type FinalizeMockExamResult,
+  type HoerenAudioTrack,
+  type HoerenModule,
+  type HoerenPart,
+  type HoerenQuestion,
+  type HoerenSessionPayload,
   type LesenManifestModule,
   type LesenModule,
   type LesenOption,
@@ -53,8 +59,14 @@ export {
   type AdvanceMockExamResult,
   type CompetenceBar,
   type CompetenceSkills,
+  type FetchHoerenSessionArgs,
   type FinalizeMockExamArgs,
   type FinalizeMockExamResult,
+  type HoerenAudioTrack,
+  type HoerenModule,
+  type HoerenPart,
+  type HoerenQuestion,
+  type HoerenSessionPayload,
   type LesenManifestModule,
   type LesenModule,
   type LesenOption,
@@ -72,6 +84,8 @@ export {
   type StartMockExamResult,
 };
 export {
+  fetchHoerenPracticeSession,
+  fetchHoerenSession,
   fetchLesenPracticeSession,
   fetchLesenSession,
   fetchPracticeSetsList,
@@ -103,6 +117,7 @@ export async function resumeMockExam(args: StartMockExamArgs): Promise<StartMock
         examSlug: args.examSlug,
         nextModule: nextModuleForStatus(err.status),
         lesenAttemptId: null,
+        hoerenAttemptId: null,
         created: false,
         status: err.status,
       };
@@ -185,6 +200,49 @@ export async function submitLesen(args: SubmitLesenArgs): Promise<SubmitModuleRe
   }
   if (!raw.attempt_id || typeof raw.raw_score !== "number") {
     throw new Error("lesen_submit_malformed_response");
+  }
+  return raw;
+}
+
+// ---------------------------------------------------------------------------
+// Hören submit wrapper (S5 · Task 5.1) — mirrors `submitLesen` above,
+// implemented right beside it per Constraint 15 (mobile splits Hören
+// wrappers into `examApi.ts:271–294`; web keeps the whole facade in one
+// file). Same error-string taxonomy: server `error` codes (`rate_limited`,
+// `attempt_not_submittable`) surface as `Error(code)` via `ApiError.bodyJson`.
+// ---------------------------------------------------------------------------
+
+export interface SubmitHoerenArgs {
+  readonly attemptId: string;
+  readonly answers: AnswerMap;
+}
+
+export async function submitHoeren(args: SubmitHoerenArgs): Promise<SubmitModuleResponse> {
+  let raw: RawSubmitModuleResponse;
+  try {
+    raw = await invokeFn<RawSubmitModuleResponse>("hoeren-submit", {
+      method: "POST",
+      body: { attempt_id: args.attemptId, answers: args.answers },
+    });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const body = err.bodyJson;
+      const code =
+        body !== null && typeof body === "object" && !Array.isArray(body)
+          ? (body as Record<string, unknown>).error
+          : undefined;
+      throw new Error(typeof code === "string" ? code : "hoeren_submit_failed");
+    }
+    throw err;
+  }
+  if (!raw) {
+    throw new Error("hoeren_submit_empty_response");
+  }
+  if (raw.error) {
+    throw new Error(raw.error);
+  }
+  if (!raw.attempt_id || typeof raw.raw_score !== "number") {
+    throw new Error("hoeren_submit_malformed_response");
   }
   return raw;
 }

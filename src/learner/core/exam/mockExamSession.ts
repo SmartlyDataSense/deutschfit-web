@@ -40,6 +40,8 @@ export type { MockExamModule, MockExamStatus };
 export interface StartSessionArgs {
   readonly userId: string;
   readonly examSlug: string;
+  /** Single-module drill selector (S5 · Task 5.1), threaded to `startMockExam`. */
+  readonly module?: MockExamModule;
 }
 
 export interface SessionHandle {
@@ -48,6 +50,12 @@ export interface SessionHandle {
   readonly status: MockExamStatus;
   readonly nextModule: MockExamModule | null;
   readonly lesenAttemptId: string | null;
+  /**
+   * Hören attempt id when `module: "HOEREN"` was requested and the 201
+   * path ran. `null` on the 409 resume path — the resume body doesn't
+   * carry it (feeds P7).
+   */
+  readonly hoerenAttemptId: string | null;
   /** `true` when we just created the attempt, `false` when we resumed. */
   readonly resumed: boolean;
 }
@@ -153,7 +161,10 @@ export async function startSession(
   now: number = Date.now()
 ): Promise<SessionHandle> {
   try {
-    const created: StartMockExamResult = await startMockExam({ examSlug: args.examSlug });
+    const created: StartMockExamResult = await startMockExam({
+      examSlug: args.examSlug,
+      ...(args.module ? { module: args.module } : {}),
+    });
     await upsertCacheRow({
       userId: args.userId,
       modelltestSlug: args.examSlug,
@@ -168,6 +179,7 @@ export async function startSession(
       status: created.status,
       nextModule: created.nextModule,
       lesenAttemptId: created.lesenAttemptId,
+      hoerenAttemptId: created.hoerenAttemptId,
       resumed: false,
     };
   } catch (err) {
@@ -186,6 +198,7 @@ export async function startSession(
         status: err.status,
         nextModule: nextModuleForStatus(err.status),
         lesenAttemptId: null,
+        hoerenAttemptId: null,
         resumed: true,
       };
     }
