@@ -188,6 +188,7 @@ const TICK_INTERVAL_MS = 100;
  * `error` state with message `"recorder_unavailable"`.
  */
 export function useRecorder(
+  // Web delta: default factory swapped for the MediaRecorder adapter
   nativeFactory: () => NativeRecorder | null = createWebRecorder
 ): UseRecorderApi {
   const [state, setState] = useState<RecorderSnapshot>(INITIAL_RECORDER_SNAPSHOT);
@@ -260,6 +261,11 @@ export function useRecorder(
       // exact message instead of collapsing it into the generic
       // "start_failed" mobile uses for every other startRecording()
       // failure (permission races, device errors, etc.).
+      //
+      // Web delta consequence: requestPermission() does not gate on
+      // recorder availability; unsupported browsers surface
+      // recorder_unavailable at start(). Mic-check (7.3) detects it there
+      // since it always records.
       const message =
         err instanceof Error && err.message === "recorder_unavailable"
           ? "recorder_unavailable"

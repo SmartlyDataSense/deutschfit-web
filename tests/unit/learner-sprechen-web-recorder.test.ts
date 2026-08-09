@@ -210,6 +210,13 @@ describe("createWebRecorder() capture lifecycle", () => {
     expect(entry?.mimeType).toBe("audio/webm;codecs=opus");
     expect(entry?.blob).toBeInstanceOf(Blob);
     expect(entry?.blob.type).toBe("audio/webm;codecs=opus");
+    // Data-fidelity: FakeMediaRecorder.stop() fires one `dataavailable`
+    // carrying a 10-byte "fake-chunk" BlobPart before `stop` — the
+    // assembled Blob must actually contain it (catches a dropped
+    // `chunks.push(event.data)` in the adapter's dataavailable handler,
+    // which every other assertion here would miss since size 0 still
+    // satisfies "is a Blob of the right mime type").
+    expect(entry?.blob.size).toBe(10);
   });
 
   it("stopRecording stops the underlying MediaRecorder and releases the stream's tracks", async () => {
