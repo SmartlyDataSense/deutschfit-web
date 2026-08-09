@@ -7,11 +7,11 @@
  * Same module-level zustand hand-off shape as `useLesenResultsStore`
  * (`src/learner/lesen/resultsStore.ts`, S4 · Task 4.9 P7) — Next.js query
  * strings can't carry an object, so the session screen writes this store
- * immediately before `router.push('/{locale}/app/examen/hoeren/results')`
- * and the results page reads it. A hard refresh / direct deep-link onto
- * `/results` finds an empty store and redirects back (the results screen's
- * job, not this module's) — there is no query-string score, by design,
- * same documented deviation from mobile as Lesen's.
+ * immediately before `router.push('/{locale}/app/hoeren/results')` and the
+ * results page reads it. A hard refresh / direct deep-link onto `/results`
+ * finds an empty store and redirects back (the results screen's job, not
+ * this module's) — there is no query-string score, by design, same
+ * documented deviation from mobile as Lesen's.
  *
  * `mode` is a web-only addition (P9) with no `LesenResultsPayload`
  * equivalent: Hören's results route is shared between the graded
