@@ -34,9 +34,22 @@
  * `role="listbox"` panel of `role="option"` buttons, dismissed by
  * backdrop click, Escape, or a successful pick — same option sets and
  * labels as mobile (`ACTIVE_LEVELS`/`ALL_LEVELS`/`DISABLED_OPACITY`,
- * `SUBGENRES`), not a new primitive library.
+ * `SUBGENRES`), not a new primitive library. Constraint 8 also requires
+ * focus management on any overlay (`SchreibenEditorScreen.tsx:130-140`
+ * precedent — `tabIndex={-1}` container + a `useEffect` keyed on the open
+ * flag): both popover panels below take programmatic focus on open, run a
+ * roving `aria-activedescendant` highlight driven by ArrowUp/ArrowDown/
+ * Home/End, pick the highlighted option on Enter/Space, and return focus
+ * to the trigger button on every close path (pick, Escape, backdrop).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useTranslation } from "react-i18next";
@@ -267,7 +280,30 @@ function LevelPopover({
   readonly testID: string;
 }) {
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const enabledLevels = ALL_LEVELS.filter((l) => ACTIVE_LEVELS.has(l));
+
+  // Constraint 8 focus restore: every close path (pick, Escape, backdrop)
+  // routes through this single `close`, so focus always lands back on the
+  // trigger button that opened the panel.
+  const close = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  // Constraint 8 focus-on-open — `SchreibenEditorScreen.tsx:130-140`
+  // pattern: `tabIndex={-1}` panel + a `useEffect` keyed on the open flag
+  // takes programmatic focus. Also seeds the roving highlight on the
+  // currently selected level.
+  useEffect(() => {
+    if (!open) return;
+    const idx = enabledLevels.indexOf(value);
+    setActiveIndex(idx >= 0 ? idx : 0);
+    panelRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handlePick = useCallback(
     (level: SprechenPickerLevel) => {
@@ -278,15 +314,52 @@ function LevelPopover({
     [close, onChange, value]
   );
 
+  const handlePanelKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setActiveIndex((i) => Math.min(i + 1, enabledLevels.length - 1));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setActiveIndex((i) => Math.max(i - 1, 0));
+          break;
+        case "Home":
+          e.preventDefault();
+          setActiveIndex(0);
+          break;
+        case "End":
+          e.preventDefault();
+          setActiveIndex(enabledLevels.length - 1);
+          break;
+        case "Enter":
+        case " ": {
+          e.preventDefault();
+          const picked = enabledLevels[activeIndex] ?? value;
+          handlePick(picked);
+          break;
+        }
+        case "Escape":
+          close();
+          break;
+        default:
+          break;
+      }
+    },
+    [activeIndex, close, handlePick, enabledLevels, value]
+  );
+
   return (
     <div className="relative inline-block">
       <button
+        ref={triggerRef}
         type="button"
         data-testid={testID}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${title}: ${value}`}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? close() : setOpen(true))}
         className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-full)] border border-cta bg-cta px-4 py-1"
       >
         <AppText tone="inverse" size="small" weight="medium">
@@ -303,13 +376,14 @@ function LevelPopover({
             className="fixed inset-0 z-10 cursor-default"
           />
           <div
+            ref={panelRef}
+            tabIndex={-1}
             role="listbox"
             aria-label={title}
+            aria-activedescendant={`${testID}-option-${enabledLevels[activeIndex]}`}
             data-testid={`${testID}-listbox`}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") close();
-            }}
-            className="absolute left-0 top-full z-20 mt-1 flex min-w-40 flex-col gap-1 rounded-[var(--radius-md)] border border-line-soft bg-bg-card p-2 shadow-sm"
+            onKeyDown={handlePanelKeyDown}
+            className="absolute left-0 top-full z-20 mt-1 flex min-w-40 flex-col gap-1 rounded-[var(--radius-md)] border border-line-soft bg-bg-card p-2 shadow-sm outline-none"
           >
             {ALL_LEVELS.map((level) => {
               const active = ACTIVE_LEVELS.has(level);
@@ -325,9 +399,11 @@ function LevelPopover({
                   </div>
                 );
               }
+              const isActive = level === enabledLevels[activeIndex];
               return (
                 <button
                   key={level}
+                  id={`${testID}-option-${level}`}
                   type="button"
                   role="option"
                   aria-selected={isCurrent}
@@ -335,7 +411,7 @@ function LevelPopover({
                   onClick={() => handlePick(level)}
                   className={clsx(
                     "rounded-[var(--radius-sm)] px-2 py-1 text-left hover:bg-bg-subtle",
-                    isCurrent && "bg-bg-subtle"
+                    (isCurrent || isActive) && "bg-bg-subtle"
                   )}
                 >
                   <AppText size="small" weight={isCurrent ? "semi" : "regular"}>
@@ -376,12 +452,34 @@ function SubgenrePopover({
   readonly optionTestIDPrefix: string;
 }) {
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const activeLabel = useMemo(
     () => options.find((o) => o.id === value)?.label ?? value,
     [options, value]
   );
+
+  // Constraint 8 focus restore: every close path (pick, Escape, backdrop)
+  // routes through this single `close`, so focus always lands back on the
+  // trigger button that opened the panel.
+  const close = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  // Constraint 8 focus-on-open — `SchreibenEditorScreen.tsx:130-140`
+  // pattern: `tabIndex={-1}` panel + a `useEffect` keyed on the open flag
+  // takes programmatic focus. Also seeds the roving highlight on the
+  // currently selected subgenre.
+  useEffect(() => {
+    if (!open) return;
+    const idx = options.findIndex((o) => o.id === value);
+    setActiveIndex(idx >= 0 ? idx : 0);
+    panelRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handlePick = useCallback(
     (next: SprechenSubgenre) => {
@@ -391,15 +489,52 @@ function SubgenrePopover({
     [close, onChange, value]
   );
 
+  const handlePanelKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setActiveIndex((i) => Math.min(i + 1, options.length - 1));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setActiveIndex((i) => Math.max(i - 1, 0));
+          break;
+        case "Home":
+          e.preventDefault();
+          setActiveIndex(0);
+          break;
+        case "End":
+          e.preventDefault();
+          setActiveIndex(options.length - 1);
+          break;
+        case "Enter":
+        case " ": {
+          e.preventDefault();
+          const picked = options[activeIndex] ?? options[0];
+          if (picked) handlePick(picked.id);
+          break;
+        }
+        case "Escape":
+          close();
+          break;
+        default:
+          break;
+      }
+    },
+    [activeIndex, close, handlePick, options]
+  );
+
   return (
     <div className="relative inline-block">
       <button
+        ref={triggerRef}
         type="button"
         data-testid={testID}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${title}: ${activeLabel}`}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? close() : setOpen(true))}
         className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-full)] border border-cta bg-cta px-4 py-1"
       >
         <AppText tone="inverse" size="small" weight="medium">
@@ -416,19 +551,22 @@ function SubgenrePopover({
             className="fixed inset-0 z-10 cursor-default"
           />
           <div
+            ref={panelRef}
+            tabIndex={-1}
             role="listbox"
             aria-label={title}
+            aria-activedescendant={`${optionTestIDPrefix}-${options[activeIndex]?.id}`}
             data-testid={`${testID}-listbox`}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") close();
-            }}
-            className="absolute left-0 top-full z-20 mt-1 flex min-w-40 flex-col gap-1 rounded-[var(--radius-md)] border border-line-soft bg-bg-card p-2 shadow-sm"
+            onKeyDown={handlePanelKeyDown}
+            className="absolute left-0 top-full z-20 mt-1 flex min-w-40 flex-col gap-1 rounded-[var(--radius-md)] border border-line-soft bg-bg-card p-2 shadow-sm outline-none"
           >
-            {options.map((option) => {
+            {options.map((option, index) => {
               const isCurrent = option.id === value;
+              const isActive = index === activeIndex;
               return (
                 <button
                   key={option.id}
+                  id={`${optionTestIDPrefix}-${option.id}`}
                   type="button"
                   role="option"
                   aria-selected={isCurrent}
@@ -436,7 +574,7 @@ function SubgenrePopover({
                   onClick={() => handlePick(option.id)}
                   className={clsx(
                     "rounded-[var(--radius-sm)] px-2 py-1 text-left hover:bg-bg-subtle",
-                    isCurrent && "bg-bg-subtle"
+                    (isCurrent || isActive) && "bg-bg-subtle"
                   )}
                 >
                   <AppText size="small" weight={isCurrent ? "semi" : "regular"}>

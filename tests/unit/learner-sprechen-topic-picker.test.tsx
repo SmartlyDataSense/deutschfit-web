@@ -277,4 +277,55 @@ describe("TopicPickerScreen — sprechen monologue topic picker (S7 Task 7.6)", 
     await waitFor(() => expect(screen.getByTestId("sprechen-topic-card-t1")).toBeInTheDocument());
     expect(fetchTopicsMock).toHaveBeenCalledTimes(2);
   });
+
+  // Constraint 8 — LevelPopover/SubgenrePopover focus management. Follow-up
+  // fix round: focus-on-open, roving ArrowUp/ArrowDown/Home/End highlight,
+  // Enter/Space picks, and focus-restore-to-trigger on every close path
+  // (SchreibenEditorScreen.tsx:130-140 precedent). Only `LevelPopover` is
+  // exercised here — `SubgenrePopover` shares the identical implementation
+  // (same `handlePanelKeyDown`/`close` shape), so these three tests are the
+  // representative contract for both.
+  it("LevelPopover: opens with focus inside the panel (Constraint 8 focus-on-open) — guard-removal-verified, see task-7.6-report.md", async () => {
+    fetchTopicsMock.mockResolvedValue([topic({ id: "t1" })]);
+    renderWithI18n(<TopicPickerScreen />);
+
+    await waitFor(() => expect(screen.getByTestId("sprechen-topic-card-t1")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("sprechen-topic-picker-level"));
+
+    expect(screen.getByTestId("sprechen-topic-picker-level-listbox")).toHaveFocus();
+  });
+
+  it("LevelPopover: ArrowDown then Enter moves the roving highlight and selects the next enabled level", async () => {
+    fetchTopicsMock.mockResolvedValue([topic({ id: "t1" })]);
+    renderWithI18n(<TopicPickerScreen />);
+
+    await waitFor(() => expect(screen.getByTestId("sprechen-topic-card-t1")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("sprechen-topic-picker-level"));
+    const listbox = screen.getByTestId("sprechen-topic-picker-level-listbox");
+
+    fireEvent.keyDown(listbox, { key: "ArrowDown" }); // B1 -> B2 highlight
+    fireEvent.keyDown(listbox, { key: "Enter" }); // picks the highlighted option
+
+    expect(screen.queryByTestId("sprechen-topic-picker-level-listbox")).not.toBeInTheDocument();
+    expect(trackEventMock).toHaveBeenCalledWith("level_chip_changed", {
+      previous_level: "B1",
+      new_level: "B2",
+    });
+    expect(screen.getByTestId("sprechen-topic-picker-level").textContent).toContain("B2");
+  });
+
+  it("LevelPopover: Escape closes the panel and returns focus to the trigger button", async () => {
+    fetchTopicsMock.mockResolvedValue([topic({ id: "t1" })]);
+    renderWithI18n(<TopicPickerScreen />);
+
+    await waitFor(() => expect(screen.getByTestId("sprechen-topic-card-t1")).toBeInTheDocument());
+    const trigger = screen.getByTestId("sprechen-topic-picker-level");
+    fireEvent.click(trigger);
+    const listbox = screen.getByTestId("sprechen-topic-picker-level-listbox");
+
+    fireEvent.keyDown(listbox, { key: "Escape" });
+
+    expect(screen.queryByTestId("sprechen-topic-picker-level-listbox")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });
