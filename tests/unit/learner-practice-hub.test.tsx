@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { listMock } = vi.hoisted(() => ({ listMock: vi.fn() }));
@@ -18,7 +18,10 @@ import { PracticeHubScreen } from "@/learner/practice/screens/PracticeHubScreen"
 describe("PracticeHubScreen — chips from IndexedDB only", () => {
   beforeEach(() => {
     listMock.mockReset();
-    useLearnerSession.setState({ status: "authenticated", session: { user: { id: "u1" } } } as never);
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
     useExamContextStore.setState({ board: "telc", level: "b1", isLoaded: true } as never);
   });
   afterEach(cleanup);
@@ -54,8 +57,11 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     await waitFor(() => expect(screen.getByTestId("practice-hub-row-lesen")).toBeInTheDocument());
     expect(listMock).toHaveBeenCalledWith("u1", "telc", "B1");
     // lesen: completedAt set → done. sprachbausteine: answers {} → lockedCount 0 → todo.
-    // Assert the literal FR chip strings from fr/apprendre.json practice.chips.* once read.
-    expect(screen.getByTestId("practice-hub-row-lesen").textContent).toMatch(/./);
+    // Literal FR chip strings from fr/apprendre.json `practice.chips.{done,todo}`.
+    await waitFor(() =>
+      expect(screen.getByTestId("practice-hub-row-lesen").textContent).toContain("✓ Terminé")
+    );
+    expect(screen.getByTestId("practice-hub-row-sprachbausteine").textContent).toContain("À faire");
   });
 
   it("unsupported level renders the unsupported empty state", async () => {
