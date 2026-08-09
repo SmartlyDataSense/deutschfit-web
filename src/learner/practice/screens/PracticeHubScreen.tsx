@@ -7,21 +7,27 @@
  *
  * Chips (`lesen` + `sprachbausteine`) come exclusively from
  * `usePracticeHub` — Dexie `practice_progress` reads, zero network calls
- * (P12). `hoeren` + `schreiben` render as static rows, both disabled with
- * the `comingSoon` pill this slice: mobile links `hoeren` to the Hören
- * navigator and `schreiben` to the Writing stack, but neither surface has
- * a web equivalent yet (`src/learner/hoeren` and `src/learner/schreiben`
- * are still S0 placeholder directories) — S5+ wires them up and flips
- * these rows active. Deviates from mobile's brief note (which calls out
- * only `hoeren`'s deviation) because on web `schreiben` is equally
- * unbuilt, not just `hoeren`.
+ * (P12). `schreiben` still renders as a static row, disabled with the
+ * `comingSoon` pill: mobile links it to the Writing stack, but that
+ * surface has no web equivalent yet (`src/learner/schreiben` is still an
+ * S0 placeholder directory) — a later slice wires it up and flips this
+ * row active.
  *
- * The `lesen`/`sprachbausteine` rows route to the Übungstest picker
- * (`/apprendre/practice/<modality>`, Task 4.6/4.7 — mobile parity: rows are
- * tappable) since that surface and the session screen now exist. `hoeren`
- * + `schreiben` stay non-interactive, mirroring `PerformanceHistoryScreen`'s
- * precedent for rows whose tap-through target hasn't shipped
- * (`aria-disabled` placeholder, no `onClick`).
+ * `hoeren` (Task 5.5) is now an enabled row, same as `lesen`/
+ * `sprachbausteine` — it routes to the same Übungstest picker
+ * (`/apprendre/practice/hoeren`), which maps its own routing forward to
+ * `/hoeren/session?slug=` (`PracticeSetPickerScreen`, spec §4 route map).
+ * Its chip is hardcoded to `{ state: "todo" }` rather than derived from
+ * `usePracticeHub` — Hören practice persists nothing to
+ * `practice_progress` (P13), so there is no local record to ever flip it
+ * to "done"/"in progress".
+ *
+ * The `lesen`/`sprachbausteine`/`hoeren` rows route to the Übungstest
+ * picker (`/apprendre/practice/<modality>`, Task 4.6/4.7/5.5 — mobile
+ * parity: rows are tappable) since that surface exists for all three.
+ * `schreiben` stays non-interactive, mirroring
+ * `PerformanceHistoryScreen`'s precedent for rows whose tap-through
+ * target hasn't shipped (`aria-disabled` placeholder, no `onClick`).
  *
  * Progress chip tone: the `Chip` primitive (`@/learner/ui/primitives`)
  * has no per-instance tone — same constraint `StatusStrip` hit — so
@@ -53,18 +59,20 @@ import { AppText, Card, EmptyState, Skeleton, type AppTextTone } from "@/learner
 
 import { usePracticeHub } from "../hooks/usePracticeHub";
 import type { PracticeChip } from "../model/progressChip";
-import type { PracticeModality } from "../model/types";
+import type { PracticeModality, TextPracticeModality } from "../model/types";
 
-const PRACTICE_MODALITIES: readonly PracticeModality[] = ["lesen", "sprachbausteine"];
+// Chip-backed rows only (`usePracticeHub` derives progress for these two);
+// hoeren renders as its own hardcoded-chip row below (module doc comment).
+const PRACTICE_MODALITIES: readonly TextPracticeModality[] = ["lesen", "sprachbausteine"];
 
 // Explicit map — no template-literal t() keys (i18next-parser can't see dynamic keys).
-const ROW_LABEL_KEY: Record<PracticeModality, string> = {
+const ROW_LABEL_KEY: Record<TextPracticeModality, string> = {
   lesen: "apprendre:practice.rows.lesen",
   sprachbausteine: "apprendre:practice.rows.sprachbausteine",
 };
 
 // Canonical sprite glyphs only — never invent icons.
-const ROW_ICON: Record<PracticeModality, IconName> = {
+const ROW_ICON: Record<TextPracticeModality, IconName> = {
   lesen: "lesen",
   sprachbausteine: "target-focus",
 };
@@ -191,26 +199,23 @@ export function PracticeHubScreen() {
             </Card>
           ))}
 
-          <div
-            role="group"
-            aria-disabled="true"
-            aria-label={`${t("apprendre:practice.rows.hoeren")} – ${comingSoonLabel}`}
-            data-testid="practice-hub-row-hoeren"
+          <Card
+            testID="practice-hub-row-hoeren"
+            onClick={() => openModality("hoeren")}
+            className="flex items-center gap-3"
           >
-            <Card className="flex items-center gap-3 opacity-55">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
-                <Icon name="hoeren" size={24} />
-              </div>
-              <AppText family="serif" size="bodyLg" weight="semi" className="flex-1">
-                {t("apprendre:practice.rows.hoeren")}
-              </AppText>
-              <ChipPill
-                chip={{ state: "todo" }}
-                label={comingSoonLabel}
-                testID="practice-hub-row-hoeren-coming-soon"
-              />
-            </Card>
-          </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
+              <Icon name="hoeren" size={24} />
+            </div>
+            <AppText family="serif" size="bodyLg" weight="semi" className="flex-1">
+              {t("apprendre:practice.rows.hoeren")}
+            </AppText>
+            <ChipPill
+              chip={{ state: "todo" }}
+              label={chipLabel({ state: "todo" })}
+              testID="practice-hub-row-hoeren-chip"
+            />
+          </Card>
 
           <div
             role="group"

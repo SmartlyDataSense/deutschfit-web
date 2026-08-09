@@ -118,7 +118,7 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     expect(screen.queryByTestId("practice-hub-loading")).not.toBeInTheDocument();
   });
 
-  it("adjudicated addition B — clicking the lesen/sprachbausteine rows navigates to the picker route; hoeren/schreiben stay non-interactive", async () => {
+  it("adjudicated addition B — clicking the lesen/sprachbausteine/hoeren rows navigates to the picker route; schreiben stays non-interactive", async () => {
     listMock.mockResolvedValue([]);
     renderWithI18n(<PracticeHubScreen />);
 
@@ -129,12 +129,30 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
 
     fireEvent.click(screen.getByTestId("practice-hub-row-sprachbausteine"));
     expect(pushMock).toHaveBeenCalledWith("/fr/app/apprendre/practice/sprachbausteine");
-    expect(pushMock).toHaveBeenCalledTimes(2);
 
-    // hoeren/schreiben render no button/link chrome to click — the
+    // Task 5.5 — hoeren flips from a disabled "coming soon" row to an
+    // enabled one, exactly like lesen/sprachbausteine.
+    fireEvent.click(screen.getByTestId("practice-hub-row-hoeren"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/apprendre/practice/hoeren");
+    expect(pushMock).toHaveBeenCalledTimes(3);
+
+    // schreiben still renders no button/link chrome to click — the
     // wrapper stays a plain `aria-disabled` group, matching the "coming
-    // soon" rows shipped before this fix.
-    const hoerenRow = screen.getByTestId("practice-hub-row-hoeren");
-    expect(hoerenRow.querySelector("button")).not.toBeInTheDocument();
+    // soon" row shipped before this fix.
+    const schreibenRow = screen.getByTestId("practice-hub-row-schreiben");
+    expect(schreibenRow.querySelector("button")).not.toBeInTheDocument();
+  });
+
+  it("Task 5.5 — hoeren row has no comingSoon pill and its chip always reads «À faire» (P13: no practice_progress row is ever derived for it)", async () => {
+    listMock.mockResolvedValue([]);
+    renderWithI18n(<PracticeHubScreen />);
+
+    const hoerenRow = await waitFor(() => screen.getByTestId("practice-hub-row-hoeren"));
+    // Literal FR chip string from fr/apprendre.json `practice.chips.todo`
+    // — non-tautological: fails if the row still renders the distinct
+    // `comingSoon` copy ("Bientôt disponible") instead.
+    expect(hoerenRow.textContent).toContain("À faire");
+    expect(hoerenRow.textContent).not.toContain("Bientôt disponible");
+    expect(hoerenRow.getAttribute("aria-disabled")).toBeNull();
   });
 });

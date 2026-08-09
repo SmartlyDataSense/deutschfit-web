@@ -5,9 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // because `vi.mock` factories are hoisted above the rest of the module —
 // see `tests/unit/learner-onboarding-exam-type.test.tsx`'s header comment
 // for the TDZ rationale.
-const { fetchSetsMock, loadProgressMock, replaceMock, hydrateMock } = vi.hoisted(() => ({
+const { fetchSetsMock, loadProgressMock, pushMock, replaceMock, hydrateMock } = vi.hoisted(() => ({
   fetchSetsMock: vi.fn(),
   loadProgressMock: vi.fn(),
+  pushMock: vi.fn(),
   replaceMock: vi.fn(),
   hydrateMock: vi.fn(),
 }));
@@ -19,7 +20,7 @@ vi.mock("@/learner/core/storage/practiceProgress", () => ({
   loadPracticeProgress: (...args: unknown[]) => loadProgressMock(...args),
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
 }));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
 // Partial mock: keep the real `useExamContextStore` (tests drive it
@@ -41,6 +42,7 @@ describe("PracticeSetPickerScreen — set enumeration + single-set auto-forward"
   beforeEach(() => {
     fetchSetsMock.mockReset();
     loadProgressMock.mockReset();
+    pushMock.mockReset();
     replaceMock.mockReset();
     hydrateMock.mockReset();
     loadProgressMock.mockResolvedValue(null);
@@ -146,5 +148,43 @@ describe("PracticeSetPickerScreen — set enumeration + single-set auto-forward"
         "/fr/app/apprendre/practice/lesen/session?slug=only-one"
       )
     );
+  });
+
+  it("Task 5.5 — hoeren rows push /hoeren/session?slug=, not the shared text-modality session route", async () => {
+    fetchSetsMock.mockResolvedValue([
+      { slug: "hset-a", title: "Übungstest 01", shortLabel: null },
+      { slug: "hset-b", title: "Übungstest 02", shortLabel: null },
+    ]);
+
+    renderWithI18n(<PracticeSetPickerScreen modality="hoeren" />);
+
+    await waitFor(() => expect(screen.getByTestId("practice-set-hset-a")).toBeInTheDocument());
+    expect(fetchSetsMock).toHaveBeenCalledWith("B1", "HOEREN");
+
+    fireEvent.click(screen.getByTestId("practice-set-hset-a"));
+    // Non-tautological: fails if the picker fell through to the generic
+    // `.../apprendre/practice/<modality>/session` shape instead of the
+    // hoeren-specific spec §4 route.
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/session?slug=hset-a");
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("/apprendre/practice/hoeren/session")
+    );
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("Task 5.5 — a sole hoeren set auto-forwards via router.replace to /hoeren/session?slug=", async () => {
+    fetchSetsMock.mockResolvedValue([
+      { slug: "only-hoeren", title: "Übungstest 01", shortLabel: null },
+    ]);
+
+    renderWithI18n(<PracticeSetPickerScreen modality="hoeren" />);
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/hoeren/session?slug=only-hoeren")
+    );
+    expect(replaceMock).toHaveBeenCalledTimes(1);
+    expect(pushMock).not.toHaveBeenCalled();
+    // Still skeletons, same single-set idiom as the text-modality case.
+    expect(screen.getByTestId("practice-set-picker-loading")).toBeInTheDocument();
   });
 });

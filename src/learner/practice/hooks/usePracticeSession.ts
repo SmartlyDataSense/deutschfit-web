@@ -54,7 +54,7 @@ import {
 import { isSessionComplete, lockPick, resetPart } from "@/learner/practice/model/lockState";
 import type { LockMap } from "@/learner/practice/model/lockState";
 import { MODULE_BY_MODALITY } from "@/learner/practice/model/types";
-import type { PracticeModality } from "@/learner/practice/model/types";
+import type { TextPracticeModality } from "@/learner/practice/model/types";
 
 export interface ReadingTextInfo {
   readonly label: string;
@@ -79,7 +79,7 @@ const FETCH_BY_MODALITY = {
 } as const;
 
 export function usePracticeSession(
-  modality: PracticeModality,
+  modality: TextPracticeModality,
   slug?: string
 ): {
   state: PracticeSessionState;
