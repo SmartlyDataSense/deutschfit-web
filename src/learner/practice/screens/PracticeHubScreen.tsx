@@ -32,6 +32,12 @@
  * `writing_submissions`/`writing_drafts`, not `practice_progress`, so
  * there is no local record `usePracticeHub` could derive a chip from.
  *
+ * `sprechen` (Task 7.6) is now an enabled row too, same shape as
+ * `schreiben`/`hoeren`: no Übungstest picker, the row routes straight to
+ * the topic picker (`/sprechen`), and its chip is hardcoded to
+ * `{ state: "todo" }` — Sprechen submissions persist to
+ * `sprechen_submissions`, not `practice_progress`.
+ *
  * Progress chip tone: the `Chip` primitive (`@/learner/ui/primitives`)
  * has no per-instance tone — same constraint `StatusStrip` hit — so
  * the tone pill here is a small local composition over `AppText`'s tone
@@ -134,6 +140,12 @@ export function PracticeHubScreen() {
   // `?board=` param `PromptListScreen` consumes (module doc comment).
   const openSchreiben = (): void => {
     router.push(`/${locale}/app/schreiben?board=${board}-${level}`);
+  };
+
+  // Sprechen has no Übungstest picker either — routes straight to the
+  // topic picker (Task 7.6).
+  const openSprechen = (): void => {
+    router.push(`/${locale}/app/sprechen`);
   };
 
   const chipLabel = (chip: PracticeChip): string => {
@@ -243,6 +255,24 @@ export function PracticeHubScreen() {
               chip={{ state: "todo" }}
               label={chipLabel({ state: "todo" })}
               testID="practice-hub-row-schreiben-chip"
+            />
+          </Card>
+
+          <Card
+            testID="practice-hub-row-sprechen"
+            onClick={openSprechen}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
+              <Icon name="sprechen" size={24} />
+            </div>
+            <AppText family="serif" size="bodyLg" weight="semi" className="flex-1">
+              {t("apprendre:practice.rows.sprechen")}
+            </AppText>
+            <ChipPill
+              chip={{ state: "todo" }}
+              label={chipLabel({ state: "todo" })}
+              testID="practice-hub-row-sprechen-chip"
             />
           </Card>
         </div>

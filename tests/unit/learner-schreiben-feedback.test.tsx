@@ -318,6 +318,42 @@ describe("FeedbackScreen — graded, new format (telc points profile)", () => {
       })
     );
   });
+
+  // S7 Task 7.9 (Constraint 9 carry-in c) — guard-removal-verified
+  // regression. Before this fix, `fetchedPromptIdRef.current` was set to
+  // `promptId` BEFORE the async `listPrompts` call, and never reset on
+  // failure. A transient error therefore permanently blocked every later
+  // retry for that submission — no dependency change could ever re-arm
+  // the fetch. This test scripts `listPromptsMock` to reject once then
+  // resolve, forces the effect to re-run via an exam-context change (a
+  // `board` toggle is in the effect's dependency array), and asserts the
+  // prompt card eventually renders. Deleting the
+  // `fetchedPromptIdRef.current = null` reset in the `FeedbackScreen.tsx`
+  // catch block makes this test fail (the second `listPrompts` call never
+  // happens, the prompt card never renders).
+  it("a transient listPrompts failure resets the fetch guard so a later retry still renders the prompt card", async () => {
+    listPromptsMock.mockReset();
+    listPromptsMock.mockRejectedValueOnce(new Error("network_error"));
+    listPromptsMock.mockResolvedValue([samplePrompt]);
+
+    render();
+
+    await waitFor(() => expect(listPromptsMock).toHaveBeenCalledTimes(1));
+    // The catch path resolved — no prompt card yet, guard reset already
+    // happened synchronously inside the same catch.
+    expect(screen.queryByTestId("schreiben-feedback-prompt-card")).not.toBeInTheDocument();
+
+    // Force the effect to re-run: `board`/`level` are in its dependency
+    // array, so an exam-context change re-triggers the fetch (mirrors a
+    // real-world retry — e.g. the learner switches exam context and back,
+    // or any other state update that re-renders with a changed board).
+    useExamContextStore.setState({ board: "goethe", level: "b2", isLoaded: true } as never);
+
+    await waitFor(() => expect(listPromptsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByTestId("schreiben-feedback-prompt-card")).toBeInTheDocument()
+    );
+  });
 });
 
 describe("FeedbackScreen — graded, legacy format (pruefer_text = null)", () => {

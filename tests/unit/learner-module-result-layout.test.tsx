@@ -144,21 +144,100 @@ describe("ModuleResultLayout — rubric bars", () => {
   });
 });
 
-describe("ModuleResultLayout — P6 web delta (coach/focus/model sections)", () => {
-  it("renders nothing for coachFeedbackFr/focusAreas/personalizedModelDe — sub-cards land in S7", () => {
+describe("ModuleResultLayout — S6 null/empty prop set (S7 non-regression)", () => {
+  it("renders none of the three Betreuer sub-cards when props are null/empty", () => {
+    renderWithI18n(<ModuleResultLayout {...baseProps()} />);
+
+    expect(screen.queryByTestId("module-result-betreuer-card")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("module-result-focus-chips")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("module-result-personalized-model")).not.toBeInTheDocument();
+  });
+});
+
+describe("ModuleResultLayout — sections 3-4 Betreuer sub-cards (Task 7.5)", () => {
+  it("renders BetreuerCard with the mobile copy key + prose + next-drill line when coachFeedbackFr is set", () => {
     renderWithI18n(
       <ModuleResultLayout
         {...baseProps({
-          coachFeedbackFr: "x",
-          focusAreas: ["a"],
-          personalizedModelDe: "y",
+          coachFeedbackFr: "Ta réponse manque de connecteurs logiques.",
+          nextDrillFr: "Essaie l'exercice sur les conjonctions.",
         })}
       />
     );
 
-    expect(screen.queryByTestId("module-result-coach")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("module-result-focus-chips")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("module-result-model")).not.toBeInTheDocument();
+    const card = screen.getByTestId("module-result-betreuer-card");
+    expect(card).toHaveTextContent("Retour du Betreuer");
+    expect(card).toHaveTextContent("Ta réponse manque de connecteurs logiques.");
+    expect(card).toHaveTextContent("Essaie l'exercice sur les conjonctions.");
+  });
+
+  it("renders FocusChips with the mobile copy key + one chip per focusAreas entry when focusAreas is non-empty", () => {
+    renderWithI18n(
+      <ModuleResultLayout
+        {...baseProps({
+          focusAreas: ["Grammaire", "Cohérence"],
+        })}
+      />
+    );
+
+    const group = screen.getByTestId("module-result-focus-chips");
+    expect(group).toHaveAttribute("role", "group");
+    expect(group).toHaveTextContent("Points à travailler");
+    expect(group).toHaveTextContent("Grammaire");
+    expect(group).toHaveTextContent("Cohérence");
+  });
+
+  it("renders PersonalizedModelCard with the mobile copy keys + German prose when personalizedModelDe is set", () => {
+    renderWithI18n(
+      <ModuleResultLayout
+        {...baseProps({
+          personalizedModelDe: "Ich würde vorschlagen, dass wir uns treffen.",
+        })}
+      />
+    );
+
+    const card = screen.getByTestId("module-result-personalized-model");
+    expect(card).toHaveTextContent("Réponse modèle");
+    expect(card).toHaveTextContent("Générée par IA à partir de ta réponse");
+    expect(card).toHaveTextContent("Ich würde vorschlagen, dass wir uns treffen.");
+  });
+});
+
+describe("ModuleResultLayout — ScoreHeaderCard composed aria-label carry-in", () => {
+  it("composes the announcement with the objective sentence when passFloorPoints is set (ScoreHeaderCard.tsx:90-92)", () => {
+    renderWithI18n(
+      <ModuleResultLayout
+        {...baseProps({
+          score: 31,
+          scoreMax: 45,
+          passFloorPoints: 27,
+          scoreUnitLabel: "points",
+          objectiveLabel: "Objectif",
+        })}
+      />
+    );
+
+    expect(screen.getByTestId("module-result-scorecard")).toHaveAttribute(
+      "aria-label",
+      "31 sur 45 points. Objectif 27."
+    );
+  });
+
+  it("composes the short-form announcement when passFloorPoints is absent", () => {
+    renderWithI18n(
+      <ModuleResultLayout
+        {...baseProps({
+          score: 31,
+          scoreMax: 45,
+          scoreUnitLabel: "points",
+        })}
+      />
+    );
+
+    expect(screen.getByTestId("module-result-scorecard")).toHaveAttribute(
+      "aria-label",
+      "31 sur 45 points."
+    );
   });
 });
 

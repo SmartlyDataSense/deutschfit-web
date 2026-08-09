@@ -10,7 +10,10 @@ import {
 import type { DimensionScoresJson } from "@/learner/core/api/examApi";
 import { resultTypeFromScoreMax } from "@/learner/core/api/resultType";
 
+import { BetreuerCard } from "./BetreuerCard";
 import { CompetenceBarRow } from "./CompetenceBarRow";
+import { FocusChips } from "./FocusChips";
+import { PersonalizedModelCard } from "./PersonalizedModelCard";
 import { ScoreHeaderCard } from "./ScoreHeaderCard";
 
 /**
@@ -26,12 +29,13 @@ import { ScoreHeaderCard } from "./ScoreHeaderCard";
  *      (band/legacy profiles).
  *   2. Rubric bars — one `CompetenceBarRow` per dimension, labelled from
  *      `DIMENSION_LABEL_MAP` so no magic strings live in screen code.
- *   3-4. Coach section + personalized model text — mobile renders
- *      `CoachCard`/`FocusChips`/`PersonalizedModelCard` here.
- *      // Web delta (P6): CoachCard/FocusChips/PersonalizedModelCard are
- *      // not ported until S7 — the props below are accepted for full
- *      // parity with the mobile prop contract, but these two sections
- *      // render nothing on web regardless of their values.
+ *   3-4. Betreuer section + personalized model text — `BetreuerCard`/
+ *      `FocusChips`/`PersonalizedModelCard` (S7 Task 7.5 — ported from
+ *      mobile's `CoachCard`/`FocusChips`/`PersonalizedModelCard`;
+ *      `CoachCard` renamed per Constraint 10, "Coach" is a forbidden
+ *      in-app identifier). Render gates match mobile verbatim:
+ *      `coachFeedbackFr` null → no `BetreuerCard`; `focusAreas` empty →
+ *      no chips; `personalizedModelDe` null → no model card.
  *   5. Raw text — plain transcript card; shown only when `rawText` is set
  *      (Sprechen only; Schreiben omits this section).
  */
@@ -134,17 +138,6 @@ export function ModuleResultLayout({
 }: ModuleResultLayoutProps) {
   const { t } = useTranslation(["common"]);
 
-  // Web delta (P6): coachFeedbackFr/nextDrillFr/focusAreas/
-  // personalizedModelDe are accepted for prop-parity with the mobile
-  // contract (CoachCard/FocusChips/PersonalizedModelCard render from them
-  // there) but are intentionally unused here — those sub-cards are not
-  // ported until S7, so sections 3-4 below render nothing regardless of
-  // these values.
-  void coachFeedbackFr;
-  void nextDrillFr;
-  void focusAreas;
-  void personalizedModelDe;
-
   // Board-result dispatch: a *points* profile carries an authoritative
   // denominator (`scoreMax > 0`) and a server total (`score`) — render the
   // board-native scorecard and suppress the donut. Everything else (band
@@ -231,14 +224,20 @@ export function ModuleResultLayout({
         </div>
       ) : null}
 
-      {/*
-       * 3-4 — Coach section + personalized model text.
-       * Web delta (P6): CoachCard/FocusChips/PersonalizedModelCard are not
-       * ported until S7 — `coachFeedbackFr`/`nextDrillFr`/`focusAreas`/
-       * `personalizedModelDe` are accepted above for prop-parity with the
-       * mobile contract but intentionally render nothing here regardless
-       * of their values.
-       */}
+      {/* 3 — Betreuer section */}
+      {coachFeedbackFr ? (
+        <BetreuerCard
+          testID={`${testID}-betreuer-card`}
+          coachFeedbackFr={coachFeedbackFr}
+          nextDrillFr={nextDrillFr}
+        />
+      ) : null}
+      {focusAreas.length > 0 ? (
+        <FocusChips testID={`${testID}-focus-chips`} areas={focusAreas} />
+      ) : null}
+
+      {/* 4 — Personalized model text */}
+      <PersonalizedModelCard testID={`${testID}-personalized-model`} text={personalizedModelDe} />
 
       {/* 5 — Raw transcript (Sprechen only) */}
       {rawText ? (

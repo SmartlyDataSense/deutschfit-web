@@ -128,6 +128,10 @@
       "overline": "Points à aborder",
       "intro": "Aborde chacun de ces points pendant ta présentation : ils comptent dans la note."
     },
+    "betreuerObservation": {
+      "overline": "Conseil du Betreuer",
+      "body": "Structure ton monologue en trois temps : une introduction, un développement avec un exemple concret, puis une conclusion."
+    },
     "micCheck": {
       "title": "Tester micro et haut-parleur",
       "intro": "5 secondes d'enregistrement, puis lecture pour vérifier que tout fonctionne.",
@@ -185,6 +189,11 @@
     "fallbackBanner": "Retour de secours · la correction IA est momentanément indisponible."
   },
   "session": {
+    "topicNotFound": {
+      "title": "Thème introuvable",
+      "body": "Ce thème n'est plus disponible. Choisis-en un autre dans le catalogue.",
+      "action": "Retour au catalogue"
+    },
     "awaitingInline": "Le Betreuer corrige ton enregistrement…",
     "submittedToast": "Reçu · ta correction arrive dans ~3 min",
     "failedToast": "Ce module n'est pas encore noté. Aucun de tes efforts n'est perdu — essaie un autre sujet en attendant.",

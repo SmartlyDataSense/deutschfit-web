@@ -118,7 +118,7 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     expect(screen.queryByTestId("practice-hub-loading")).not.toBeInTheDocument();
   });
 
-  it("adjudicated addition B — clicking the lesen/sprachbausteine/hoeren/schreiben rows navigates each to its own destination", async () => {
+  it("adjudicated addition B — clicking the lesen/sprachbausteine/hoeren/schreiben/sprechen rows navigates each to its own destination", async () => {
     listMock.mockResolvedValue([]);
     renderWithI18n(<PracticeHubScreen />);
 
@@ -142,7 +142,24 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     fireEvent.click(screen.getByTestId("practice-hub-row-schreiben"));
     expect(pushMock).toHaveBeenCalledWith("/fr/app/schreiben?board=telc-b1");
 
-    expect(pushMock).toHaveBeenCalledTimes(4);
+    // Task 7.6 — sprechen flips from a disabled "coming soon" row to an
+    // enabled one too, routing straight to the topic picker (`/sprechen`,
+    // no Übungstest picker, same shape as schreiben's own gap).
+    fireEvent.click(screen.getByTestId("practice-hub-row-sprechen"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/sprechen");
+
+    expect(pushMock).toHaveBeenCalledTimes(5);
+  });
+
+  it("Task 7.6 — sprechen row has no comingSoon pill and its chip always reads «À faire» (sprechen_submissions isn't practice_progress)", async () => {
+    listMock.mockResolvedValue([]);
+    renderWithI18n(<PracticeHubScreen />);
+
+    const sprechenRow = await waitFor(() => screen.getByTestId("practice-hub-row-sprechen"));
+    expect(sprechenRow.textContent).toContain("À faire");
+    expect(sprechenRow.textContent).not.toContain("Bientôt disponible");
+    expect(sprechenRow.getAttribute("aria-disabled")).toBeNull();
+    expect(sprechenRow.tagName).toBe("BUTTON");
   });
 
   it("Task 5.5 — hoeren row has no comingSoon pill and its chip always reads «À faire» (P13: no practice_progress row is ever derived for it)", async () => {

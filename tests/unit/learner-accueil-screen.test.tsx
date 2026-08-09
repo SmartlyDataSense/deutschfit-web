@@ -141,10 +141,9 @@ describe("AccueilScreen", () => {
     await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toBeInTheDocument());
   });
 
-  // P17 (S6 Task 6.9) — StatusStrip's ready-tap deep-links straight to the
-  // Schreiben feedback screen (closes the loop `acknowledgeReadiness`
-  // needs); Sprechen has no feedback screen yet (S7) and keeps the S3
-  // history fallback.
+  // P17 — StatusStrip's ready-tap deep-links straight to the module's
+  // feedback screen (closes the loop `acknowledgeReadiness` needs) for
+  // both Schreiben (S6 Task 6.9) and Sprechen (S7 Task 7.9).
   describe("StatusStrip ready-tap (P17 handleOpenReady)", () => {
     it("a schreiben ready signal pushes the feedback route", async () => {
       __hydrateForBoot(
@@ -158,7 +157,7 @@ describe("AccueilScreen", () => {
       expect(push).toHaveBeenCalledWith("/fr/app/schreiben/feedback/s1");
     });
 
-    it("a sprechen ready signal still pushes /history (no Sprechen feedback screen until S7)", async () => {
+    it("a sprechen ready signal pushes the sprechen feedback route", async () => {
       __hydrateForBoot(
         { submissionId: "s2", module: "sprechen", state: "ready", startedAt: 0 },
         true
@@ -167,7 +166,7 @@ describe("AccueilScreen", () => {
       ui();
       await waitFor(() => expect(screen.getByTestId("accueil-greeting")).toBeInTheDocument());
       fireEvent.click(screen.getByTestId("accueil-status-strip-press"));
-      expect(push).toHaveBeenCalledWith("/fr/app/history");
+      expect(push).toHaveBeenCalledWith("/fr/app/sprechen/feedback/s2");
     });
   });
 });

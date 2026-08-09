@@ -208,7 +208,16 @@ export function FeedbackScreen({ submissionId }: FeedbackScreenProps) {
         // Title/badge are nice-to-haves; a missing prompt (or a fetch
         // failure) must not break the graded card stack. Leave the
         // cards hidden — same degrade as mobile.
-        if (!cancelled) setPromptInfo(null);
+        if (!cancelled) {
+          setPromptInfo(null);
+          // S7 Task 7.9 fix (Constraint 9 carry-in c): reset the one-shot
+          // guard on failure. Without this, a transient `listPrompts`
+          // error permanently sticks `fetchedPromptIdRef.current` to
+          // `promptId`, so no later dependency change can ever retry the
+          // fetch — the badge/prompt card stays hidden forever instead of
+          // just for the duration of the outage.
+          fetchedPromptIdRef.current = null;
+        }
       }
     })();
     return () => {

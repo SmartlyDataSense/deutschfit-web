@@ -32,7 +32,20 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // S7 Sprechen (task 7.12) — fake mic device + auto-playing fake
+        // audio, so the recorder/mic-check flows run headlessly against
+        // the real dev backend without a physical microphone. No-op for
+        // every pre-existing spec (none of them touch `getUserMedia`).
+        launchOptions: {
+          args: [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            "--autoplay-policy=no-user-gesture-required",
+          ],
+        },
+      },
     },
   ],
   webServer: {
