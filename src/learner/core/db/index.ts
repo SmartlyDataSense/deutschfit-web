@@ -21,6 +21,7 @@ import {
   LEARNER_TABLE_PRIMARY_KEYS,
   type LearnerTableName,
 } from "./schema";
+import type { ContentCacheRow } from "./types";
 
 /** Minimal per-table surface both the real Dexie backend and the fallback implement. */
 export interface LearnerTableApi<T = Record<string, unknown>> {
@@ -31,10 +32,25 @@ export interface LearnerTableApi<T = Record<string, unknown>> {
   toArray(): Promise<T[]>;
 }
 
+/**
+ * Row-type overrides for tables whose consumers benefit from a typed
+ * `LearnerTableApi<Row>` instead of the untyped `Record<string, unknown>`
+ * default. Only `contentCache` is threaded through today (needed by
+ * `core/content/loadContent.ts`); other tables keep the untyped default and
+ * their call sites cast explicitly (see `core/readiness/hydrate.ts`).
+ */
+interface LearnerTableRowOverrides {
+  contentCache: ContentCacheRow;
+}
+
+type LearnerTableRow<K extends LearnerTableName> = K extends keyof LearnerTableRowOverrides
+  ? LearnerTableRowOverrides[K]
+  : Record<string, unknown>;
+
 export type LearnerDbHandle = {
   /** `false` when this handle is the in-memory fallback — nothing written to it survives a reload. */
   readonly isPersistent: boolean;
-} & { readonly [K in LearnerTableName]: LearnerTableApi };
+} & { readonly [K in LearnerTableName]: LearnerTableApi<LearnerTableRow<K>> };
 
 function wrapDexieTable(table: Table): LearnerTableApi {
   return {
@@ -94,7 +110,9 @@ function createFallbackDb(): LearnerDbHandle {
     LEARNER_TABLE_NAMES.map((name) => [name, createFallbackTable(LEARNER_TABLE_PRIMARY_KEYS[name])])
   ) as Record<LearnerTableName, LearnerTableApi>;
 
-  return { isPersistent: false, ...tables };
+  // `tables` is built generically (see `LearnerTableRowOverrides` above) —
+  // the per-table row-type overrides are asserted here, not derived.
+  return { isPersistent: false, ...tables } as unknown as LearnerDbHandle;
 }
 
 async function openLearnerDb(): Promise<LearnerDbHandle> {
@@ -114,7 +132,9 @@ async function openLearnerDb(): Promise<LearnerDbHandle> {
     LEARNER_TABLE_NAMES.map((name) => [name, wrapDexieTable(dexieDb.table(name))])
   ) as Record<LearnerTableName, LearnerTableApi>;
 
-  return { isPersistent: true, ...tables };
+  // `tables` is built generically (see `LearnerTableRowOverrides` above) —
+  // the per-table row-type overrides are asserted here, not derived.
+  return { isPersistent: true, ...tables } as unknown as LearnerDbHandle;
 }
 
 let dbPromise: Promise<LearnerDbHandle> | null = null;
