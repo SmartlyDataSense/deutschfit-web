@@ -64,6 +64,11 @@
     },
     "submittedToast": "Reçu · ta correction arrive dans ~3 min",
     "submitError": "Envoi impossible. Vérifie ta connexion.",
+    "promptNotFound": {
+      "title": "Sujet introuvable",
+      "body": "Ce sujet n'est plus disponible. Retourne à la liste pour en choisir un autre.",
+      "cta": "Retour aux sujets"
+    },
     "errors": {
       "offline": "Connexion échouée. Brouillon enregistré — réessaie.",
       "tooShort": "Trop court — il faut au moins {{min}} mots.",
