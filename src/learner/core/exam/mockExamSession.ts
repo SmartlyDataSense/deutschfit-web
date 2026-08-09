@@ -117,6 +117,14 @@ async function upsertCacheRow(record: MockExamCacheRecord): Promise<void> {
   await db.mockExamCache.put(toRow(record) as unknown as Record<string, unknown>);
 }
 
+/**
+ * Read the local composite-key cache row for one user × modelltest. Used
+ * internally by `resumeSession` below. S4–S7 shipped this with no external
+ * caller (`resumeSession` itself had none) — **activated S8**: Task 8.5/8.6
+ * wire the simulation orchestrator's resume boot path through
+ * `resumeSession`, which reads this row before falling back to the
+ * start-409 `getMockAttempt` path.
+ */
 export async function readCacheRow(
   userId: string,
   examSlug: string
@@ -129,10 +137,15 @@ export async function readCacheRow(
 
 /**
  * Hub-side lookup. Returns the single non-terminal (`in_progress` or a
- * module-complete intermediate) cache row for this user, if any — used to
- * surface a "Resume mock exam" CTA on cold start. The server still
- * enforces the single-in-progress rule; this query is read-only UI sugar
- * so the hub doesn't have to iterate over every published modelltest.
+ * module-complete intermediate) cache row for this user, if any. The
+ * server still enforces the single-in-progress rule; this query is
+ * read-only UI sugar so the hub doesn't have to iterate over every
+ * published modelltest.
+ *
+ * Shipped S4 with no caller (dormant) — **activated S8**: Task 8.3 wires
+ * this into the Examen home's "Resume mock exam" CTA (`examen:resume.*`
+ * copy, `testID examHome.resume`), the surface this lookup was always
+ * meant for.
  */
 export async function readPendingMockExam(userId: string): Promise<MockExamCacheRecord | null> {
   const db = await getLearnerDb();
