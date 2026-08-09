@@ -42,25 +42,14 @@ import { minutesToMs, useExamTimer } from "@/learner/core/exam/useExamTimer";
 import { AppText, EmptyState, ProgressBar, Skeleton, TimerPill } from "@/learner/ui/primitives";
 
 import { useLesenSession } from "../hooks/useLesenSession";
-import { useLesenResultsStore, type SkillModuleKey, type SkillScore } from "../resultsStore";
-import type { CompetenceSkills } from "@/learner/core/api/mockExam";
+import { useLesenResultsStore, type SkillScore } from "../resultsStore";
+import { toSkillScores } from "@/learner/core/exam/skillScores";
 
 export interface LesenSessionScreenProps {
   readonly examSlug?: string;
   readonly attemptId?: string;
   readonly mockAttemptId?: string;
   readonly moduleFilter?: string;
-}
-
-const SKILL_ORDER: readonly SkillModuleKey[] = ["lesen", "hoeren", "schreiben", "sprechen"];
-
-function toSkillScores(report: CompetenceSkills): readonly SkillScore[] {
-  return SKILL_ORDER.map((key) => ({
-    key,
-    status: report[key].status,
-    score: report[key].score,
-    max: report[key].max,
-  }));
 }
 
 interface OptionRowProps {

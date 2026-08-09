@@ -21,14 +21,15 @@
  * inside a graded mock-exam run.
  *
  * `skills` is a type-only import of `SkillScore` from
- * `@/learner/lesen/resultsStore` — deliberately reused rather than
+ * `@/learner/core/exam/skillScores` (Task 6.1 — re-homed from
+ * `@/learner/lesen/resultsStore`) — deliberately reused rather than
  * redeclared, since it is already a web-local (S4) type, not mobile's
  * richer `SkillScore` (see that module's doc comment).
  */
 import { create } from "zustand";
 
 import type { SessionScore } from "@/learner/core/exam/engine/scoring";
-import type { SkillScore } from "@/learner/lesen/resultsStore";
+import type { SkillScore } from "@/learner/core/exam/skillScores";
 
 /** Which flow produced this hand-off — graded mock exam or Apprendre practice. */
 export type HoerenResultsMode = "practice" | "graded";

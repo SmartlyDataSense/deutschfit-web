@@ -24,8 +24,8 @@
  * the request body when not provided (deployed back-compat). The 201
  * response carries no `status` key regardless of `module`; the client
  * fills in the per-module starting status via `defaultStatusForModule`
- * (LESEN → `in_progress`, HOEREN → `lesen_done`, mirroring the backend's
- * `STATUS_AT_START` table in `_shared/mock_exam.ts`).
+ * (exhaustive switch mirroring the backend's `STATUS_AT_START` table in
+ * `_shared/mock_exam.ts`; module omitted → `in_progress` full mock).
  *   - `mock-exam-advance`  (POST `{ mock_attempt_id, finished_module }`)
  *       → 200 `{ mock_attempt_id, exam_slug, next_module, <next>_attempt_id? }`
  *       → 409 `{ error: 'state_race' }`
@@ -160,15 +160,30 @@ interface RawStartResponse {
 /**
  * Per-module starting status for the 201 path, which never carries a
  * `status` key. Mirrors the backend's `STATUS_AT_START` table
- * (`_shared/mock_exam.ts:71–76`): a full mock (`module` omitted) always
- * begins `in_progress` (Lesen active); a Hören drill begins `lesen_done`
- * (Lesen sits in its default `missing` state, Hören is the active
- * module). Mobile's blanket `"in_progress"` default is a bug for the
- * HOEREN case — this client must not inherit it, since resume/finalize
- * logic keys off status.
+ * (`deutschfit-backend/supabase/functions/_shared/mock_exam.ts:70–75`):
+ * a full mock (`module` omitted) always begins `in_progress` (Lesen
+ * active); each single-module drill begins the status the state machine
+ * would reach just before that module's own submit endpoint expects it
+ * (LESEN → `in_progress`, HOEREN → `lesen_done`, SCHREIBEN →
+ * `hoeren_done`, SPRECHEN → `schreiben_done`). Mobile's blanket
+ * `"in_progress"` default is a bug for every non-LESEN case — this
+ * client must not inherit it, since resume/finalize logic keys off
+ * status. The switch below has no `default:` — adding a new
+ * `MockExamModule` member must fail this file's typecheck until this
+ * function (and the backend table it mirrors) account for it.
  */
 function defaultStatusForModule(module: MockExamModule | undefined): MockExamStatus {
-  return module === "HOEREN" ? "lesen_done" : "in_progress";
+  if (module === undefined) return "in_progress"; // full mock — starts at LESEN
+  switch (module) {
+    case "LESEN":
+      return "in_progress";
+    case "HOEREN":
+      return "lesen_done";
+    case "SCHREIBEN":
+      return "hoeren_done";
+    case "SPRECHEN":
+      return "schreiben_done";
+  }
 }
 
 interface RawAdvanceResponse {
