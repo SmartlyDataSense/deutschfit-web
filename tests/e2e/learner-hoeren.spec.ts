@@ -15,11 +15,15 @@ import { test, expect, type Page } from "@playwright/test";
 // `submitOnServer` → `examApi.submitHoeren`) — that DOES POST to
 // `/functions/v1/hoeren-submit`, just with a synthesized
 // `local-<sessionId>` attempt id (practice mode never has a real server
-// attempt). The server 404s on that synthetic id before touching the
-// rate-limit counter (`submitHoerenSession`'s own doc comment: "the server
-// 404s and local grading kicks in"), so the practice run burns zero
-// *quota* even though it does fire one `hoeren-submit` *request*. Both
-// tests capture their own `hoeren-submit` network count via
+// attempt). Traced server-side (`hoeren-submit/index.ts`): `hoeren_attempts.id`
+// is a `uuid` column, so a `local-<slug>` string fails the uuid cast on the
+// attempt lookup and 500s (`attErr`, index.ts:61) BEFORE the 404 null-check
+// and BEFORE the `can_submit_hoeren` quota RPC even runs — i.e. the request
+// fails server-side ahead of the rate-limit check, not necessarily with a
+// 404. The zero-quota conclusion is unchanged (the quota RPC never fires),
+// so the practice run burns zero *quota* even though it does fire one
+// `hoeren-submit` *request* that errors and falls back to local grading.
+// Both tests capture their own `hoeren-submit` network count via
 // `page.on("request")` and log/assert on it separately so this distinction
 // is visible in the run output rather than silently assumed.
 //
@@ -143,9 +147,21 @@ test.describe("Hören practice + graded drill (qa1, real backend)", () => {
     await expect(page.getByTestId("practice-hub-row-hoeren")).toBeVisible({ timeout: 20_000 });
     await page.getByTestId("practice-hub-row-hoeren").click();
 
-    // Either the multi-set picker (dev: 60 sets) or the auto-forwarded
-    // single-set session.
-    await page.waitForURL(/\/apprendre\/practice\/hoeren(\/session|$|\?)/, { timeout: 30_000 });
+    // Either the multi-set picker at /apprendre/practice/hoeren (dev: 60
+    // sets) or — if the learner's level ever resolves to exactly one
+    // published set — the auto-forwarded session. Unlike the text
+    // modalities (Lesen/Sprachbausteine), whose auto-forward stays under
+    // `/apprendre/practice/<modality>/session`, Hören's `sessionPath()`
+    // (`PracticeSetPickerScreen.tsx:66-70`) forwards to its OWN session
+    // surface at `/hoeren/session?slug=...` — structurally outside
+    // `/apprendre/practice/hoeren/...` entirely, so both disjoint
+    // destinations must be raced explicitly (a single "starts with
+    // /apprendre/practice/hoeren" regex, as the S4 Lesen template uses,
+    // would never match the auto-forward and would 30s-timeout instead of
+    // gracefully falling through).
+    await page.waitForURL(/\/apprendre\/practice\/hoeren(\?.*)?$|\/hoeren\/session\?slug=/, {
+      timeout: 30_000,
+    });
     const setCard = page
       .locator('[data-testid^="practice-set-"]:not([data-testid^="practice-set-picker-"])')
       .first();
