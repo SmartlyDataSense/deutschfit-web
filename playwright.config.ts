@@ -9,6 +9,15 @@ import { defineConfig, devices } from "@playwright/test";
  * against a production-mode build rather than the dev server (which would
  * use Turbopack and slow tests down).
  */
+// Port is configurable so e2e runs never collide with an already-running
+// dev server on the default port (`reuseExistingServer` would otherwise
+// happily attach to whatever is listening on 3000 and test the wrong code).
+// Node/config context — dynamic string composition is fine here; the
+// literal-dot-notation `process.env.NEXT_PUBLIC_*` rule applies to reads in
+// `src/`, not to this config file.
+const port = process.env.PLAYWRIGHT_PORT ?? "3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -17,7 +26,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -27,8 +36,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npm run start",
-    url: "http://localhost:3000",
+    command: `npm run build && npm run start -- --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
