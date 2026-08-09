@@ -22,26 +22,14 @@
  */
 import { prefetchContent } from "@/learner/core/content/loadContent";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
+import type { WritingPrompt } from "@/learner/core/api/writing";
 
-/**
- * `prompts-list` row shape, matching the `writing_prompts` backend columns.
- * Declared here (not imported from a features/writing module) because the
- * S6 Schreiben slice — the actual consumer of this cache key — hasn't
- * landed yet; S6 imports this type once it exists instead of duplicating it.
- */
-export type WritingPrompt = {
-  id: string;
-  exam_board: string;
-  teil: number;
-  slug: string;
-  title_de: string;
-  situation_de: string;
-  bullet_points: string[];
-  min_words: number;
-  max_words: number;
-  /** Provenance tag set by `prompts-list`. Optional so a pre-source cache payload still parses. */
-  source?: "official" | "community";
-};
+// `WritingPrompt` used to be declared locally here (pre-S6, before the S6
+// Schreiben slice — the actual consumer of this cache key — landed). Now
+// that `core/api/writing.ts` owns the type, it's imported instead of
+// duplicated (byte-compared identical member-for-member against the local
+// shape this replaced, per S6 Task 6.2 brief P12).
+export type { WritingPrompt };
 
 export interface PrefetchOnLoginOverrides {
   /** Override the exam track. Defaults to the live `useExamContextStore` snapshot. */
