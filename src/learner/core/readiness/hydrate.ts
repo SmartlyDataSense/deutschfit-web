@@ -225,16 +225,26 @@ function startedAtFromCreatedAt(createdAt: string): number {
 
 function applyMerge(local: ReadinessSignal | null, server: UnackResponse): void {
   if (local) {
-    // Boot-time hydrate: install local first so the in-memory slot
-    // matches the persisted row before any subscriber mounts. No
-    // notify (boot has no subscribers yet — see `__hydrateForBoot`).
-    __hydrateForBoot(local);
-
     // Server may have a terminal verdict the device never received
     // (push lost / offline when grader finished). Look up the matching
-    // row and flip to ready if the server says so.
+    // row up front so we know whether this install is a stepping stone
+    // (a `markCorrectionReady` call right below will notify with the
+    // final `ready` state) or the terminal signal for this hydrate pass.
     const match = findMatchingServerEntry(server, local.submissionId);
-    if (match && match.row.status === "graded" && local.state === "in-flight") {
+    const flipsToReady =
+      match !== null && match.row.status === "graded" && local.state === "in-flight";
+
+    // Install local so the in-memory slot matches the persisted row.
+    // `installPollingAdapter()` subscribes synchronously *before*
+    // `LearnerProviders` awaits `hydrateOnBoot()` (see LearnerProviders'
+    // effect + installPollingAdapter.ts), so by the time this async
+    // merge settles a subscriber is already listening. Notify here
+    // unless we're about to flip to `ready` below — that call notifies
+    // once, with the final state, so subscribers don't see a transient
+    // in-flight flicker before the ready transition.
+    __hydrateForBoot(local, !flipsToReady);
+
+    if (flipsToReady) {
       // markCorrectionReady notifies subscribers; it's intentional —
       // hydration that reveals a terminal state should wake the strip.
       markCorrectionReady(local.submissionId);
@@ -314,9 +324,12 @@ async function runHydrate(phase: "boot" | "foreground"): Promise<void> {
   if (server === null) {
     // Server fetch failed — install local (if any) so the strip still
     // works for the same-device cold-load case. Cross-device replay
-    // will retry on the next foreground transition.
+    // will retry on the next foreground transition. Notify: same
+    // subscriber-before-async-settle ordering as the `applyMerge`
+    // local branch above — a silent install would leave a boot-restored
+    // in-flight slot invisible to the poller adapter / StatusStrip.
     if (local) {
-      __hydrateForBoot(local);
+      __hydrateForBoot(local, true);
     }
     return;
   }

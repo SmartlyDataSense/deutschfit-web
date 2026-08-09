@@ -75,8 +75,17 @@ export function installPollingAdapter(): () => void {
     }
   };
 
-  // Pick up an already-in-flight slot at install time (boot hydration
-  // restores the row from `activeSubmission` before this runs).
+  // Pick up a slot that's synchronously active at install time — e.g. a
+  // second adapter install in the same session, after hydration already
+  // resolved earlier. This does NOT cover the common boot-restore case:
+  // `LearnerProviders` installs this adapter synchronously and only
+  // then kicks off `hydrateOnBoot()` without awaiting it (Dexie read +
+  // edge-fn fetch), so `getReadiness()` here is still `null` on a fresh
+  // load even when a persisted in-flight row is about to be restored.
+  // That case is covered below: `hydrateOnBoot()` notifies subscribers
+  // once its restore settles (see `readiness/hydrate.ts`'s
+  // `applyMerge`), and this `subscribeReadiness(sync)` is already
+  // registered by the time that notify fires.
   sync(getReadiness());
   const unsubscribe = subscribeReadiness(sync);
 

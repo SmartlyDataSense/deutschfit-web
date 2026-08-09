@@ -361,19 +361,36 @@ export function clearReadiness(): void {
 }
 
 /**
- * Boot-time hydration seam — a future hydrate-on-boot task reads
- * `activeSubmission` for the signed-in user and calls this with the
- * stored row so the in-memory slot is restored before any feature
- * code reads from the store. No notify on hydration — the boot path
- * has no subscribers yet, and we don't want to flash subscribers as
- * they mount.
+ * Boot-time hydration seam — `./hydrate.ts` reads `activeSubmission`
+ * for the signed-in user (plus a cross-device server fetch) and calls
+ * this with the merged row so the in-memory slot is restored.
+ *
+ * `notifySubscribers` defaults to `false` (install silently) for the
+ * case hydrate.ts still has — installing the slot as a stepping stone
+ * immediately before a follow-up call (`markCorrectionReady`,
+ * `markSubmissionInFlight`) that notifies with the *final* state, so
+ * subscribers don't see a transient flicker.
+ *
+ * Pass `notifySubscribers: true` when this call installs the terminal
+ * signal for this hydrate pass with no follow-up producer call after
+ * it. This matters because, unlike the old "boot has no subscribers
+ * yet" assumption, `LearnerProviders` installs `installPollingAdapter()`
+ * (which subscribes synchronously) *before* awaiting the async
+ * `hydrateOnBoot()` — by the time this function's caller resolves, a
+ * subscriber is already listening, so a silent restore of an in-flight
+ * (or failed) slot would leave the poller adapter and the StatusStrip
+ * blind for the rest of the session (web has no push channel to
+ * compensate, unlike `deutschfit-mobile/src/core/readiness/readinessStore.ts`).
  *
  * Pass `null` to clear the slot during hydration (e.g. the row exists
  * but is older than the staleness window — the predicate filter
  * decides; the hydrate task owns the policy).
  */
-export function __hydrateForBoot(signal: ReadinessSignal | null): void {
+export function __hydrateForBoot(signal: ReadinessSignal | null, notifySubscribers = false): void {
   active = signal;
+  if (notifySubscribers) {
+    notify();
+  }
 }
 
 /** Test-only: reset module state between tests. */
