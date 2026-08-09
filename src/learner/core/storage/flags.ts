@@ -36,6 +36,15 @@ const LEARNER_ONBOARDING_DONE_KEY_PREFIX = "@deutschfit/onboarding-done/";
 
 const LEARNER_COACH_OPENER_SEEN_KEY_PREFIX = "@deutschfit/coach-opener-seen/";
 
+/**
+ * Retry queue for `installAcknowledgeAdapter` — mirrors mobile's
+ * AsyncStorage `QUEUE_KEY` constant in
+ * `deutschfit-mobile/src/core/submissions/installAcknowledgeAdapter.ts`
+ * (`@deutschfit/server-ack-queue/v1`), read/written as `localStorage`
+ * here instead of `AsyncStorage`.
+ */
+export const SERVER_ACK_QUEUE_KEY = "@deutschfit/server-ack-queue/v1";
+
 /** Per-user onboarding-done key, mirroring mobile's `perUserStorageKey` in `useOnboardingFlag.ts`. */
 export function learnerOnboardingDoneKeyFor(userId: string): string {
   return `${LEARNER_ONBOARDING_DONE_KEY_PREFIX}${userId}`;

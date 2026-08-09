@@ -168,6 +168,19 @@ export function getReadiness(): ReadinessSignal | null {
   return active;
 }
 
+/**
+ * Read the resolver's current answer for "who is the active learner".
+ * Exposed (module-internal — not re-exported from the `readiness`
+ * barrel) so sibling modules that need to gate a network call on the
+ * same auth signal the store uses for persistence — currently
+ * `./hydrate.ts` — share exactly one resolution path and inherit the
+ * same `__setUserIdResolverForTest` test seam, instead of re-deriving
+ * the learner id independently from `useLearnerSession`.
+ */
+export function resolveActiveUserId(): string | null {
+  return resolveUserId();
+}
+
 export function subscribeReadiness(listener: Listener): () => void {
   listeners.add(listener);
   return () => {
