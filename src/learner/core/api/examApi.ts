@@ -92,6 +92,37 @@ export {
   fetchSprachbausteinePracticeSession,
 } from "./mockExam";
 
+// ---------------------------------------------------------------------------
+// Writing (S6 · Task 6.2) — re-exports canonical types + functions from
+// `./writing` and `./writingErrors`, same "one stable surface" rationale as
+// the mock-exam block above (Constraint 15: feature/screen code imports
+// wire fns ONLY from this facade).
+// ---------------------------------------------------------------------------
+
+export {
+  createPrompt,
+  getWritingSubmission,
+  listPrompts,
+  promptsCacheKey,
+  submitWriting,
+  type CreatePromptInput,
+  type CreateSubmissionResult,
+  type DimensionScoresJson,
+  type DimensionScoreWire,
+  type Feedback,
+  type PollingStatus,
+  type SubmitWritingResult,
+  type WritingPrompt,
+  type WritingSubmission,
+} from "./writing";
+
+export {
+  logSubmitError,
+  mapSubmissionError,
+  type SubmitError,
+  type SubmitErrorKind,
+} from "./writingErrors";
+
 export const listModelltests = mockExamListModelltests;
 export const startMockExam = mockExamStartMockExam;
 export const advanceMockExam = mockExamAdvanceMockExam;

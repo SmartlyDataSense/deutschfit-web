@@ -14,25 +14,26 @@
  *
  * `skills` carries the finalize branches' `per_competence_report`, folded
  * via `normaliseReport` into the 4-bar `CompetenceSkills` shape and then
- * flattened into `SkillScore[]` rows here (a narrower, S4-local type —
- * NOT mobile's richer `SkillScore` from
+ * flattened into `SkillScore[]` rows via `toSkillScores`
+ * (`@/learner/core/exam/skillScores` — a narrower, S4-local type — NOT
+ * mobile's richer `SkillScore` from
  * `deutschfit-mobile/src/features/exam/hooks/useSimulationResults.ts`,
  * which carries copy metadata this results screen doesn't render yet).
  * Absent on the local-fallback / non-finalize branches.
+ *
+ * `SkillModuleKey`/`SkillScore` re-homed to `core/exam/skillScores.ts`
+ * (Task 6.1, S5 final review carry-over) — re-exported here (not a bare
+ * re-declaration) because `LesenSessionScreen.tsx` and
+ * `HoerenResultsScreen.tsx` still import `SkillScore` from this path;
+ * `hoeren/resultsStore.ts` and `HoerenSessionScreen.tsx` now point at
+ * `core/exam/skillScores.ts` directly.
  */
 import { create } from "zustand";
 
-import type { CompetenceBar } from "@/learner/core/api/mockExam";
 import type { SessionScore } from "@/learner/core/exam/engine/scoring";
+import type { SkillModuleKey, SkillScore } from "@/learner/core/exam/skillScores";
 
-export type SkillModuleKey = "lesen" | "hoeren" | "schreiben" | "sprechen";
-
-export interface SkillScore {
-  readonly key: SkillModuleKey;
-  readonly status: CompetenceBar["status"];
-  readonly score: number | null;
-  readonly max: number | null;
-}
+export type { SkillModuleKey, SkillScore };
 
 export interface LesenResultsPayload {
   readonly submissionId: string;

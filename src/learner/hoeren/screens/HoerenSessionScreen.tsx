@@ -54,12 +54,13 @@ import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 
 import { normaliseReport, submitHoeren } from "@/learner/core/api/examApi";
-import type { CompetenceSkills } from "@/learner/core/api/examApi";
 import { trackEvent } from "@/learner/core/analytics/posthog";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import type { MockExamModule } from "@/learner/core/exam/mockExamSession";
 import { advanceSession, finalizeSession } from "@/learner/core/exam/mockExamSession";
 import type { SessionScore } from "@/learner/core/exam/engine/scoring";
+import { toSkillScores } from "@/learner/core/exam/skillScores";
+import type { SkillScore } from "@/learner/core/exam/skillScores";
 import { minutesToMs, useExamTimer } from "@/learner/core/exam/useExamTimer";
 import { AppText, EmptyState, ProgressBar, Skeleton, TimerPill } from "@/learner/ui/primitives";
 
@@ -67,7 +68,6 @@ import { HoerenAudioPlayer } from "../components/HoerenAudioPlayer";
 import { useHoerenSession } from "../hooks/useHoerenSession";
 import { submitHoerenSession } from "../api/submit";
 import { useHoerenResultsStore, type HoerenResultsMode } from "../resultsStore";
-import type { SkillModuleKey, SkillScore } from "@/learner/lesen/resultsStore";
 
 export interface HoerenSessionScreenProps {
   readonly attemptId?: string;
@@ -76,17 +76,6 @@ export interface HoerenSessionScreenProps {
   readonly moduleFilter?: string;
   /** Practice-set picker selection (P14, web delta — mobile has none). */
   readonly slug?: string;
-}
-
-const SKILL_ORDER: readonly SkillModuleKey[] = ["lesen", "hoeren", "schreiben", "sprechen"];
-
-function toSkillScores(report: CompetenceSkills): readonly SkillScore[] {
-  return SKILL_ORDER.map((key) => ({
-    key,
-    status: report[key].status,
-    score: report[key].score,
-    max: report[key].max,
-  }));
 }
 
 interface OptionRowProps {

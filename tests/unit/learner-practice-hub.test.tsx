@@ -118,7 +118,7 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     expect(screen.queryByTestId("practice-hub-loading")).not.toBeInTheDocument();
   });
 
-  it("adjudicated addition B — clicking the lesen/sprachbausteine/hoeren rows navigates to the picker route; schreiben stays non-interactive", async () => {
+  it("adjudicated addition B — clicking the lesen/sprachbausteine/hoeren/schreiben rows navigates each to its own destination", async () => {
     listMock.mockResolvedValue([]);
     renderWithI18n(<PracticeHubScreen />);
 
@@ -134,13 +134,15 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     // enabled one, exactly like lesen/sprachbausteine.
     fireEvent.click(screen.getByTestId("practice-hub-row-hoeren"));
     expect(pushMock).toHaveBeenCalledWith("/fr/app/apprendre/practice/hoeren");
-    expect(pushMock).toHaveBeenCalledTimes(3);
 
-    // schreiben still renders no button/link chrome to click — the
-    // wrapper stays a plain `aria-disabled` group, matching the "coming
-    // soon" row shipped before this fix.
-    const schreibenRow = screen.getByTestId("practice-hub-row-schreiben");
-    expect(schreibenRow.querySelector("button")).not.toBeInTheDocument();
+    // Task 6.6 — schreiben flips from a disabled "coming soon" row to an
+    // enabled one too, but its destination is the prompt list (not the
+    // Übungstest picker), seeded with the learner's exam track
+    // (`board:"telc"`, `level:"b1"` from `beforeEach`).
+    fireEvent.click(screen.getByTestId("practice-hub-row-schreiben"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/schreiben?board=telc-b1");
+
+    expect(pushMock).toHaveBeenCalledTimes(4);
   });
 
   it("Task 5.5 — hoeren row has no comingSoon pill and its chip always reads «À faire» (P13: no practice_progress row is ever derived for it)", async () => {
@@ -154,5 +156,19 @@ describe("PracticeHubScreen — chips from IndexedDB only", () => {
     expect(hoerenRow.textContent).toContain("À faire");
     expect(hoerenRow.textContent).not.toContain("Bientôt disponible");
     expect(hoerenRow.getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("Task 6.6 — schreiben row has no comingSoon pill and its chip always reads «À faire» (writing_submissions isn't practice_progress)", async () => {
+    listMock.mockResolvedValue([]);
+    renderWithI18n(<PracticeHubScreen />);
+
+    const schreibenRow = await waitFor(() => screen.getByTestId("practice-hub-row-schreiben"));
+    expect(schreibenRow.textContent).toContain("À faire");
+    expect(schreibenRow.textContent).not.toContain("Bientôt disponible");
+    expect(schreibenRow.getAttribute("aria-disabled")).toBeNull();
+    // The row itself is the clickable element (`Card` renders a `<button>`
+    // when given `onClick`) — no separate nested button, matching the
+    // lesen/sprachbausteine/hoeren row shape.
+    expect(schreibenRow.tagName).toBe("BUTTON");
   });
 });

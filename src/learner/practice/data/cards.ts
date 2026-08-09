@@ -10,11 +10,14 @@
  * as of S4 — Sprechen/Schreiben/Hören had no web surface yet — so those
  * three plus `srs` rendered as disabled "Bientôt" tiles.
  * Re-activating a card is the same one-line flip mobile documents: set
- * `active: true` once that skill's web slice ships. Task 5.5 does that
- * for `hoeren` — its practice hub row now routes through the same
+ * `active: true` once that skill's web slice ships. Task 5.5 did that
+ * for `hoeren` — its practice hub row routes through the same
  * `/{locale}/app/apprendre/practice` destination as `lesen`/
  * `sprachbausteine` (`ApprendreScreen.handlePress` doesn't branch on
- * card id).
+ * card id). Task 6.6 does the same for `schreiben`: the Apprendre card
+ * click still lands on the shared Übungen hub — `PracticeHubScreen` is
+ * where the schreiben row's own (different) destination
+ * (`/schreiben?board=<board>-<level>`) is wired.
  */
 export type SkillCard = {
   id: "schreiben" | "lesen" | "sprachbausteine" | "hoeren" | "sprechen" | "srs";
@@ -23,7 +26,7 @@ export type SkillCard = {
 
 export const skillCards: SkillCard[] = [
   { id: "sprechen", active: false },
-  { id: "schreiben", active: false },
+  { id: "schreiben", active: true },
   { id: "hoeren", active: true },
   { id: "lesen", active: true },
   { id: "sprachbausteine", active: true },

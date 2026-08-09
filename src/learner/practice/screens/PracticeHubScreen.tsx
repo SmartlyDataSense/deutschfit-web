@@ -7,11 +7,7 @@
  *
  * Chips (`lesen` + `sprachbausteine`) come exclusively from
  * `usePracticeHub` — Dexie `practice_progress` reads, zero network calls
- * (P12). `schreiben` still renders as a static row, disabled with the
- * `comingSoon` pill: mobile links it to the Writing stack, but that
- * surface has no web equivalent yet (`src/learner/schreiben` is still an
- * S0 placeholder directory) — a later slice wires it up and flips this
- * row active.
+ * (P12).
  *
  * `hoeren` (Task 5.5) is now an enabled row, same as `lesen`/
  * `sprachbausteine` — it routes to the same Übungstest picker
@@ -25,9 +21,16 @@
  * The `lesen`/`sprachbausteine`/`hoeren` rows route to the Übungstest
  * picker (`/apprendre/practice/<modality>`, Task 4.6/4.7/5.5 — mobile
  * parity: rows are tappable) since that surface exists for all three.
- * `schreiben` stays non-interactive, mirroring
- * `PerformanceHistoryScreen`'s precedent for rows whose tap-through
- * target hasn't shipped (`aria-disabled` placeholder, no `onClick`).
+ *
+ * `schreiben` (Task 6.6) is now an enabled row too, but its destination
+ * is NOT the Übungstest picker — Schreiben has no per-set picker, it has
+ * a single prompt list. The row routes straight to
+ * `/schreiben?board=<board>-<level>`, seeding `PromptListScreen`'s
+ * one-shot `initialBoardFilter` with the learner's current exam track so
+ * the list opens pre-filtered. Same as `hoeren`, its chip is hardcoded to
+ * `{ state: "todo" }` — Schreiben submissions persist to
+ * `writing_submissions`/`writing_drafts`, not `practice_progress`, so
+ * there is no local record `usePracticeHub` could derive a chip from.
  *
  * Progress chip tone: the `Chip` primitive (`@/learner/ui/primitives`)
  * has no per-instance tone — same constraint `StatusStrip` hit — so
@@ -110,6 +113,8 @@ export function PracticeHubScreen() {
   const router = useRouter();
   const locale = useLocale();
   const isExamContextLoaded = useExamContextStore((s) => s.isLoaded);
+  const board = useExamContextStore((s) => s.board);
+  const level = useExamContextStore((s) => s.level);
   const { supported, chips } = usePracticeHub();
 
   // This route has no ancestor that hydrates the exam-context store (see
@@ -122,6 +127,13 @@ export function PracticeHubScreen() {
 
   const openModality = (modality: PracticeModality): void => {
     router.push(`/${locale}/app/apprendre/practice/${modality}`);
+  };
+
+  // Schreiben has no Übungstest picker — it routes straight to the prompt
+  // list, seeded with the learner's current exam track via the one-shot
+  // `?board=` param `PromptListScreen` consumes (module doc comment).
+  const openSchreiben = (): void => {
+    router.push(`/${locale}/app/schreiben?board=${board}-${level}`);
   };
 
   const chipLabel = (chip: PracticeChip): string => {
@@ -139,7 +151,6 @@ export function PracticeHubScreen() {
   };
 
   const hubTitle = t("apprendre:practice.hubTitle");
-  const comingSoonLabel = t("apprendre:comingSoon");
 
   // Waiting on the exam-context store's first hydration pass (S3 idiom —
   // `AccueilScreen` guards the same way) so we never flash the default
@@ -217,26 +228,23 @@ export function PracticeHubScreen() {
             />
           </Card>
 
-          <div
-            role="group"
-            aria-disabled="true"
-            aria-label={`${t("apprendre:practice.rows.schreiben")} – ${comingSoonLabel}`}
-            data-testid="practice-hub-row-schreiben"
+          <Card
+            testID="practice-hub-row-schreiben"
+            onClick={openSchreiben}
+            className="flex items-center gap-3"
           >
-            <Card className="flex items-center gap-3 opacity-55">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
-                <Icon name="schreiben" size={24} />
-              </div>
-              <AppText family="serif" size="bodyLg" weight="semi" className="flex-1">
-                {t("apprendre:practice.rows.schreiben")}
-              </AppText>
-              <ChipPill
-                chip={{ state: "todo" }}
-                label={comingSoonLabel}
-                testID="practice-hub-row-schreiben-coming-soon"
-              />
-            </Card>
-          </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-bg-subtle">
+              <Icon name="schreiben" size={24} />
+            </div>
+            <AppText family="serif" size="bodyLg" weight="semi" className="flex-1">
+              {t("apprendre:practice.rows.schreiben")}
+            </AppText>
+            <ChipPill
+              chip={{ state: "todo" }}
+              label={chipLabel({ state: "todo" })}
+              testID="practice-hub-row-schreiben-chip"
+            />
+          </Card>
         </div>
       )}
     </div>

@@ -84,6 +84,44 @@ describe("mockExam wire client + session service", () => {
     });
   });
 
+  it('startMockExam({examSlug, module:"SCHREIBEN"}) on a 201 body without status defaults to "hoeren_done"', async () => {
+    invokeFnMock.mockResolvedValueOnce({
+      mock_attempt_id: "m3",
+      exam_slug: "t1",
+      next_module: null,
+    });
+    const res = await startMockExam({ examSlug: "t1", module: "SCHREIBEN" });
+    expect(invokeFnMock).toHaveBeenCalledWith("mock-exam-start", {
+      method: "POST",
+      body: { exam_slug: "t1", module: "SCHREIBEN" },
+    });
+    expect(res).toMatchObject({ mockAttemptId: "m3", status: "hoeren_done", created: true });
+  });
+
+  it('startMockExam({examSlug, module:"SPRECHEN"}) on a 201 body without status defaults to "schreiben_done"', async () => {
+    invokeFnMock.mockResolvedValueOnce({
+      mock_attempt_id: "m4",
+      exam_slug: "t1",
+      next_module: null,
+    });
+    const res = await startMockExam({ examSlug: "t1", module: "SPRECHEN" });
+    expect(res).toMatchObject({ mockAttemptId: "m4", status: "schreiben_done", created: true });
+  });
+
+  it('startMockExam({examSlug}) with module omitted (full-mock path, mockExam.ts:468) still defaults to "in_progress"', async () => {
+    invokeFnMock.mockResolvedValueOnce({
+      mock_attempt_id: "m5",
+      exam_slug: "t1",
+      next_module: "LESEN",
+    });
+    const res = await startMockExam({ examSlug: "t1" });
+    expect(invokeFnMock).toHaveBeenCalledWith("mock-exam-start", {
+      method: "POST",
+      body: { exam_slug: "t1" },
+    });
+    expect(res).toMatchObject({ mockAttemptId: "m5", status: "in_progress", created: true });
+  });
+
   it("startMockExam 409 mock_in_progress → typed MockExamInProgressError from bodyJson", async () => {
     invokeFnMock.mockRejectedValueOnce(inProgress409());
     await expect(startMockExam({ examSlug: "t1" })).rejects.toBeInstanceOf(MockExamInProgressError);

@@ -64,6 +64,11 @@
     },
     "submittedToast": "Got it · your correction arrives in ~3 min",
     "submitError": "Couldn't send. Check your connection.",
+    "promptNotFound": {
+      "title": "Prompt not found",
+      "body": "This prompt isn't available anymore. Go back to the list to pick another one.",
+      "cta": "Back to prompts"
+    },
     "errors": {
       "offline": "Couldn't connect. Draft saved — please try again.",
       "tooShort": "Too short — at least {{min}} words required.",

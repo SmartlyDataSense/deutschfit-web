@@ -29,8 +29,12 @@
  *     pull-to-refresh gesture on web; `refetch()` still runs on window
  *     `"focus"`, mirroring mobile's `useFocusEffect` #364 parity note).
  *   - Row tap-through (`handleOpenRow` → Schreiben/Sprechen feedback deep
- *     links) is deferred to S6/S7. Rows render `aria-disabled="true"`
- *     this slice — no `onClick`, no navigation.
+ *     links) — **half-resolved as of S6 Task 6.9**: `kind === "schreiben"`
+ *     rows (graded AND rejected) are now real `<button>`s navigating to
+ *     `/{locale}/app/schreiben/feedback/<id>` (row id IS the submission
+ *     id — `history.ts`). `kind === "sprechen"` rows still render
+ *     `aria-disabled="true"` — no `onClick`, no navigation — until the
+ *     Sprechen feedback screen lands in S7.
  *   - "Refaire" only pushes `/{locale}/app/onboarding/diagnostic?mode=retake`
  *     (the S2 deep link). Mobile threads `examLevel`/`examBoard`/
  *     `attemptId` params explicitly; the web diagnostic route
@@ -130,6 +134,18 @@ export function PerformanceHistoryScreen() {
   const handleRetakeDiagnostic = useCallback((): void => {
     router.push(`/${locale}/app/onboarding/diagnostic?mode=retake`);
   }, [router, locale]);
+
+  // P17 (S6 Task 6.9) — closes the loop `acknowledgeReadiness` needs: a
+  // Schreiben row's id IS its submission id (`history.ts`), so the deep
+  // link is a direct feedback-screen navigation. Sprechen has no feedback
+  // screen yet (S7) — its rows stay `aria-disabled`, this handler is never
+  // wired to them.
+  const handleOpenRow = useCallback(
+    (id: string): void => {
+      router.push(`/${locale}/app/schreiben/feedback/${id}`);
+    },
+    [router, locale]
+  );
 
   // `loadMore` has no re-entrancy guard of its own (mobile's
   // `handleEndReached` gates on `isLoadingMore` before calling — see
@@ -240,6 +256,11 @@ export function PerformanceHistoryScreen() {
     const kindLabel = t(`dashboard:performanceHistory.kind.${item.kind}`);
     const isRejected = item.status === "rejected";
     const levelLabel = (item.level || "").toUpperCase();
+    // P17 (S6 Task 6.9, Constraint 8) — Schreiben rows (id IS the
+    // submission id) become real, keyboard-reachable buttons; Sprechen
+    // rows keep the non-interactive `aria-disabled` group until S7.
+    const isSchreiben = item.kind === "schreiben";
+    const RowTag = isSchreiben ? "button" : "div";
 
     if (isRejected) {
       // F-045: backend duration gate emits two distinct codes
@@ -259,13 +280,15 @@ export function PerformanceHistoryScreen() {
         date: dateLabel,
       });
       return (
-        <div
+        <RowTag
           key={item.id}
-          role="group"
+          type={isSchreiben ? "button" : undefined}
+          role={isSchreiben ? undefined : "group"}
           aria-label={a11yLabel}
-          aria-disabled="true"
+          aria-disabled={isSchreiben ? undefined : "true"}
+          onClick={isSchreiben ? () => handleOpenRow(item.id) : undefined}
           data-testid={`performance-history-row-${item.id}`}
-          className="flex flex-col gap-1 rounded-[var(--radius-lg)] bg-bg-card p-4 shadow-sm opacity-80"
+          className="flex w-full flex-col gap-1 rounded-[var(--radius-lg)] bg-bg-card p-4 text-left shadow-sm opacity-80"
         >
           <div className="flex items-center gap-2">
             <Icon name={iconForKind(item.kind)} size={18} />
@@ -287,7 +310,7 @@ export function PerformanceHistoryScreen() {
               testID={`performance-history-row-rejected-pill-${item.id}`}
             />
           </div>
-        </div>
+        </RowTag>
       );
     }
 
@@ -304,13 +327,15 @@ export function PerformanceHistoryScreen() {
     const boardName = boardLabel(item.board);
 
     return (
-      <div
+      <RowTag
         key={item.id}
-        role="group"
+        type={isSchreiben ? "button" : undefined}
+        role={isSchreiben ? undefined : "group"}
         aria-label={a11yLabel}
-        aria-disabled="true"
+        aria-disabled={isSchreiben ? undefined : "true"}
+        onClick={isSchreiben ? () => handleOpenRow(item.id) : undefined}
         data-testid={`performance-history-row-${item.id}`}
-        className="flex flex-col gap-1 rounded-[var(--radius-lg)] bg-bg-card p-4 shadow-sm"
+        className="flex w-full flex-col gap-1 rounded-[var(--radius-lg)] bg-bg-card p-4 text-left shadow-sm"
       >
         <div className="flex items-center gap-2">
           <Icon name={iconForKind(item.kind)} size={18} />
@@ -346,7 +371,7 @@ export function PerformanceHistoryScreen() {
             ) : null}
           </div>
         </div>
-      </div>
+      </RowTag>
     );
   });
 
