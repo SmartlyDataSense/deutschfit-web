@@ -35,6 +35,18 @@ describe("SRSClozeCard", () => {
       "« Je reste à la maison parce qu'il pleut. »"
     );
   });
+
+  it("renders no due pill when dueLabel is absent", () => {
+    render(
+      <SRSClozeCard
+        testID="cloze"
+        subjectLabel="Connecteurs B1"
+        instructionLabel="Complétez"
+        clozeSentence={<span>Ich bleibe zu Hause, ____ es regnet.</span>}
+      />
+    );
+    expect(screen.queryByTestId("cloze-due")).toBeNull();
+  });
 });
 
 describe("SRSOptionChipRow", () => {
@@ -46,6 +58,16 @@ describe("SRSOptionChipRow", () => {
     expect(radios[0]).toHaveTextContent("weil ✓");
     fireEvent.click(radios[1]!);
     expect(onSelect).toHaveBeenCalledWith("o2");
+  });
+
+  it("marks a selected-but-wrong option amber when not revealed", () => {
+    const onSelect = vi.fn();
+    render(
+      <SRSOptionChipRow testID="opts" options={OPTIONS} selectedId="o2" onSelect={onSelect} />
+    );
+    const radios = screen.getAllByRole("radio");
+    expect(radios[1]).toHaveClass("border-priority-amber", "bg-priority-amber");
+    expect(radios[0]).not.toHaveClass("border-priority-amber", "bg-priority-amber");
   });
 });
 
