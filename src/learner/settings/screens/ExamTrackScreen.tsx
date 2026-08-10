@@ -154,7 +154,14 @@ export function ExamTrackScreen() {
         >
           <Icon name="back" size={18} label={t("profil:header.backA11y")} />
         </button>
-        <AppText as="h1" family="serif" size="h3" weight="bold" tone="primary" className="flex-1 text-center">
+        <AppText
+          as="h1"
+          family="serif"
+          size="h3"
+          weight="bold"
+          tone="primary"
+          className="flex-1 text-center"
+        >
           {t("settings:exam.title")}
         </AppText>
         <div className="h-9 w-9" aria-hidden="true" />
@@ -162,7 +169,9 @@ export function ExamTrackScreen() {
 
       {/* Mobile renders exam.subtitle (ExamTrackScreen.tsx:187) — the
           betaSubtitle key exists in the locale files but is dead on mobile. */}
-      <AppText size="body" tone="secondary">{t("settings:exam.subtitle")}</AppText>
+      <AppText size="body" tone="secondary">
+        {t("settings:exam.subtitle")}
+      </AppText>
 
       <SettingsPickerRow
         label={t("settings:exam.boardLabel")}

@@ -20,7 +20,11 @@ export interface IdentityCardProps {
   readonly testID?: string;
 }
 
-export function IdentityCard({ stats, examPill, testID = "profil-identity-card" }: IdentityCardProps) {
+export function IdentityCard({
+  stats,
+  examPill,
+  testID = "profil-identity-card",
+}: IdentityCardProps) {
   const { t } = useTranslation(["profil"]);
   const subtitle = `${stats.location}${
     stats.languages.length ? ` · ${stats.languages.join(" · ")}` : ""
@@ -59,7 +63,9 @@ export function IdentityCard({ stats, examPill, testID = "profil-identity-card" 
         data-testid={`${testID}-exam-pill`}
         className="shrink-0 rounded-full bg-bg-premium px-3 py-1"
       >
-        <AppText size="caption" weight="semi" tone="inverse">{examPill}</AppText>
+        <AppText size="caption" weight="semi" tone="inverse">
+          {examPill}
+        </AppText>
       </span>
     </div>
   );

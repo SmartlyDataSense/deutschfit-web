@@ -71,8 +71,12 @@ export function ConfirmExamChangeModal({
           <ul className="mt-4 flex flex-col gap-2">
             {bullets.map((bullet) => (
               <li key={bullet} className="flex gap-2">
-                <AppText size="body" tone="gold" aria-hidden="true">•</AppText>
-                <AppText size="small" tone="primary">{bullet}</AppText>
+                <AppText size="body" tone="gold" aria-hidden="true">
+                  •
+                </AppText>
+                <AppText size="small" tone="primary">
+                  {bullet}
+                </AppText>
               </li>
             ))}
           </ul>
@@ -86,7 +90,9 @@ export function ConfirmExamChangeModal({
                 variant === "board" ? "bg-warning-red" : "bg-text-primary"
               )}
             >
-              <AppText size="body" weight="semi" tone="inverse">{confirmLabel}</AppText>
+              <AppText size="body" weight="semi" tone="inverse">
+                {confirmLabel}
+              </AppText>
             </button>
             <button
               type="button"
@@ -94,7 +100,9 @@ export function ConfirmExamChangeModal({
               onClick={onCancel}
               className="min-h-11 rounded-full px-4 transition hover:bg-cream-deep"
             >
-              <AppText size="body" weight="medium" tone="primary">{cancelLabel}</AppText>
+              <AppText size="body" weight="medium" tone="primary">
+                {cancelLabel}
+              </AppText>
             </button>
           </div>
         </div>

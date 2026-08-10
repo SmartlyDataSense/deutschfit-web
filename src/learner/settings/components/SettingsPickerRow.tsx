@@ -60,12 +60,16 @@ export function SettingsPickerRow<T extends string>({
           disabled ? "cursor-not-allowed opacity-50" : "hover:opacity-90"
         )}
       >
-        <AppText size="small" tone="secondary">{label}</AppText>
+        <AppText size="small" tone="secondary">
+          {label}
+        </AppText>
         <span className="flex items-center gap-2">
           <AppText size="body" weight="medium" tone="primary">
             {selected?.label ?? value}
           </AppText>
-          <AppText size="small" tone="tertiary" aria-hidden="true">▾</AppText>
+          <AppText size="small" tone="tertiary" aria-hidden="true">
+            ▾
+          </AppText>
         </span>
       </button>
 
@@ -113,11 +117,15 @@ export function SettingsPickerRow<T extends string>({
                         {option.label}
                       </AppText>
                       {option.caveat ? (
-                        <AppText size="caption" tone="secondary">{option.caveat}</AppText>
+                        <AppText size="caption" tone="secondary">
+                          {option.caveat}
+                        </AppText>
                       ) : null}
                     </span>
                     {isSelected ? (
-                      <AppText size="body" tone="gold" aria-hidden="true">✓</AppText>
+                      <AppText size="body" tone="gold" aria-hidden="true">
+                        ✓
+                      </AppText>
                     ) : null}
                   </button>
                 );

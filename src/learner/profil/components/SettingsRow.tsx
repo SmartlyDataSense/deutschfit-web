@@ -54,7 +54,8 @@ export function SettingsRow({
   ariaLabel,
   testID,
 }: SettingsRowProps) {
-  const showChevron = tone !== "warning" && !disabled && (onClick !== undefined || href !== undefined);
+  const showChevron =
+    tone !== "warning" && !disabled && (onClick !== undefined || href !== undefined);
 
   const body = (
     <>
@@ -68,11 +69,15 @@ export function SettingsRow({
       </AppText>
       {comingSoon ? (
         <span className="rounded-full bg-bg-hero px-2 py-0.5">
-          <AppText size="caption" tone="tertiary">{comingSoon}</AppText>
+          <AppText size="caption" tone="tertiary">
+            {comingSoon}
+          </AppText>
         </span>
       ) : null}
       {value ? (
-        <AppText size="small" tone="secondary">{value}</AppText>
+        <AppText size="small" tone="secondary">
+          {value}
+        </AppText>
       ) : null}
       {trailing ?? null}
       {showChevron ? (

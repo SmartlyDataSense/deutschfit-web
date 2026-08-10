@@ -142,13 +142,22 @@ export function ExamSelectorScreen() {
         >
           <Icon name="back" size={18} label={t("profil:header.backA11y")} />
         </button>
-        <AppText as="h1" family="serif" size="h3" weight="bold" tone="primary" className="flex-1 text-center">
+        <AppText
+          as="h1"
+          family="serif"
+          size="h3"
+          weight="bold"
+          tone="primary"
+          className="flex-1 text-center"
+        >
           {t("settings:examSelector.title")}
         </AppText>
         <div className="h-9 w-9" aria-hidden="true" />
       </div>
 
-      <AppText size="body" tone="secondary">{t("settings:examSelector.subtitle")}</AppText>
+      <AppText size="body" tone="secondary">
+        {t("settings:examSelector.subtitle")}
+      </AppText>
 
       <SettingsPickerRow
         label={t("settings:exam.boardLabel")}
