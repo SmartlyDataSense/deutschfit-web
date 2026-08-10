@@ -306,14 +306,18 @@ describe("SimulationResultsScreen — S8 Task 8.8 Cycle B", () => {
     expect(screen.queryByText("Voir les corrections")).not.toBeInTheDocument();
   });
 
-  it("back CTA clears the run store and replaces to /fr/app/examen", () => {
+  it("back CTA clears the run store and replaces to /fr/app/examen exactly once — no competing second replace from the now-empty-store redirect effect (final-review I-1: without the leaving-ref guard, clear() nulls `result`, the redirect effect re-fires on the next render, and a second replace to /examen/simulation supersedes this one)", () => {
     seedFinalizedRun();
     renderWithI18n(<SimulationResultsScreen />);
 
     fireEvent.click(screen.getByTestId("simulation-back-cta"));
 
     expect(useSimulationRun.getState().result).toBeNull();
-    expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen");
+    // Pin the FULL call list, not just `toHaveBeenCalledWith` — a bare
+    // `toHaveBeenCalledWith` still passes even if a second, superseding
+    // `replace("/fr/app/examen/simulation")` call follows the intended one,
+    // which is exactly the bounce this guard prevents.
+    expect(replaceMock.mock.calls).toEqual([["/fr/app/examen"]]);
   });
 
   it("anti-synthesis lock (P8): the screen source renders rows exclusively from result.skills and contains none of mobile's synthesis constants", () => {

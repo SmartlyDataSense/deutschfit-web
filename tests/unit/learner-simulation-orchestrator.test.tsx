@@ -300,6 +300,96 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     warnSpy.mockRestore();
   });
 
+  it("resumed with getMockAttempt rejecting AND the fallback dispatch landing on the schreiben gate: run identity is set before dispatch, so the skip CTA calls advanceSession instead of hitting the defensive missing-identity error (final-review I-2 — beginRun hoisted above the getMockAttempt try)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    startSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "hoeren_done",
+      nextModule: "SCHREIBEN",
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    getMockAttemptMock.mockRejectedValue(new Error("mock_attempt_read_failed"));
+    advanceSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      nextModule: null,
+      finalizeRequired: true,
+    });
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // isolate to the skip-CTA identity check itself.
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-schreiben-gate")).toBeInTheDocument()
+    );
+    // Run identity must already be set by the time the gate renders — this
+    // is the assertion that would fail if `beginRun` were still called only
+    // from the (unreachable, on this path) row-success branch.
+    expect(useSimulationRun.getState().examSlug).toBe("goethe-b1-01");
+    expect(useSimulationRun.getState().mockAttemptId).toBe("mock-1");
+
+    fireEvent.click(screen.getByTestId("simulation-schreiben-skip"));
+
+    await waitFor(() =>
+      expect(advanceSessionMock).toHaveBeenCalledWith({
+        userId: "u1",
+        examSlug: "goethe-b1-01",
+        mockAttemptId: "mock-1",
+        finishedModule: "SCHREIBEN",
+      })
+    );
+    // The defensive missing-identity branch never fires: no inline gate
+    // error, and it never even reaches `advanceSession` on the broken path
+    // (a missing identity short-circuits before the call).
+    expect(screen.queryByTestId("simulation-schreiben-gate-error")).not.toBeInTheDocument();
+    warnSpy.mockRestore();
+  });
+
+  it("resumed with getMockAttempt returning no row AND the fallback dispatch landing on the schreiben gate: run identity is set before dispatch, so the skip CTA calls advanceSession instead of hitting the defensive missing-identity error (final-review I-2)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    startSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "hoeren_done",
+      nextModule: "SCHREIBEN",
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    getMockAttemptMock.mockResolvedValue(null);
+    advanceSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      nextModule: null,
+      finalizeRequired: true,
+    });
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // isolate to the skip-CTA identity check itself.
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-schreiben-gate")).toBeInTheDocument()
+    );
+    expect(useSimulationRun.getState().examSlug).toBe("goethe-b1-01");
+    expect(useSimulationRun.getState().mockAttemptId).toBe("mock-1");
+
+    fireEvent.click(screen.getByTestId("simulation-schreiben-skip"));
+
+    await waitFor(() =>
+      expect(advanceSessionMock).toHaveBeenCalledWith({
+        userId: "u1",
+        examSlug: "goethe-b1-01",
+        mockAttemptId: "mock-1",
+        finishedModule: "SCHREIBEN",
+      })
+    );
+    expect(screen.queryByTestId("simulation-schreiben-gate-error")).not.toBeInTheDocument();
+    warnSpy.mockRestore();
+  });
+
   it("no examSlug and no pending row: replaces to the examen hub", async () => {
     readPendingMockExamMock.mockResolvedValue(null);
 

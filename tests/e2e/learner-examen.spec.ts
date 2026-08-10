@@ -140,7 +140,6 @@ function trackFileMeteredRequests(page: Page): void {
  * FILE, `consume-trial` exactly 0 forever. `mock-exam-start` is logged
  * only — never asserted with an upper bound (P4, unmetered). */
 function assertFileMeteredDiscipline(tag: string): void {
-  // eslint-disable-next-line no-console
   console.log(
     `[examen e2e][${tag}] cumulative file totals — lesen-submit: ${fileMeteredRequests.lesenSubmit.length}, hoeren-submit: ${fileMeteredRequests.hoerenSubmit.length}, mock-exam-start: ${fileMeteredRequests.mockExamStart.length} (informational, unmetered), consume-trial: ${fileMeteredRequests.consumeTrial.length}`
   );
@@ -198,7 +197,6 @@ function skipOnWeb32DeadEnd(landing: Landing): void {
   if (landing !== "lesen_empty_dead_end") return;
   expect(fileMeteredRequests.lesenSubmit.length).toBe(0);
   expect(fileMeteredRequests.hoerenSubmit.length).toBe(0);
-  // eslint-disable-next-line no-console
   console.warn(`[examen e2e][c] LOUD SKIP: ${WEB32_LESEN_DEAD_END_SKIP_REASON}`);
   test.skip(true, WEB32_LESEN_DEAD_END_SKIP_REASON);
 }
@@ -302,7 +300,6 @@ async function resolveHoerenAudioBranch(page: Page): Promise<void> {
   const missingText = page.getByTestId("hoeren-audio-player-missing");
   await expect(playBtn.or(missingText).first()).toBeVisible({ timeout: 15_000 });
   const branch = (await playBtn.isVisible().catch(() => false)) ? "play" : "missing";
-  // eslint-disable-next-line no-console
   console.log(`[examen e2e][c] hoeren audio branch: ${branch}`);
 }
 
@@ -328,7 +325,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
     // both the resume card AND the plain three-card layout are pass states.
     const resume = page.getByTestId("examHome.resume");
     const hasResume = await resume.isVisible().catch(() => false);
-    // eslint-disable-next-line no-console
     console.log(
       `[examen e2e][a] resume card ${hasResume ? "rendered (P7 — lingering attempt)" : "absent (fresh)"} — both are pass states`
     );
@@ -374,7 +370,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
     }
 
     if (await empty.isVisible().catch(() => false)) {
-      // eslint-disable-next-line no-console
       console.log(
         "[examen e2e][b] modelltestsList.empty rendered — qa1's board/level has no published modelltest rows (pass, content gap)"
       );
@@ -407,7 +402,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
           url.searchParams.get("examSlug") === slug,
         { timeout: 15_000 }
       );
-      // eslint-disable-next-line no-console
       console.log(`[examen e2e][b] row → examSlug=${slug} only, no moduleFilter (P12)`);
     }
 
@@ -444,7 +438,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
     await rows.first().click(); // P14 — always the FIRST row (slot pinning)
 
     let landing = await detectLanding(page);
-    // eslint-disable-next-line no-console
     console.log(`[examen e2e][c] entry branch: landed on "${landing}"`);
 
     // web#32 — this single check, right after the initial `detectLanding`
@@ -470,7 +463,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
         sawLesen = true;
         landing = await completeLesenLeg(page);
         if (landing === "lesen_local_fallback") {
-          // eslint-disable-next-line no-console
           console.warn(
             "[examen e2e][c] LOUD: lesen-submit local-fallback (429 or other submit-time failure) — early-return PASS. The mock attempt lingers server-side and self-heals on the next run (P14)."
           );
@@ -490,7 +482,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
         sawHoeren = true;
         landing = await completeHoerenLeg(page);
         if (landing === "hoeren_local_fallback") {
-          // eslint-disable-next-line no-console
           console.warn(
             "[examen e2e][c] LOUD: hoeren-submit local-fallback (429 or other submit-time failure) — early-return PASS. The mock attempt lingers server-side and self-heals on the next run (P14)."
           );
@@ -516,7 +507,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
 
         const gateError = page.getByTestId("simulation-schreiben-gate-error");
         if (await gateError.isVisible().catch(() => false)) {
-          // eslint-disable-next-line no-console
           console.warn(
             "[examen e2e][c] LOUD: schreiben-gate advance previously failed — retrying the same skip CTA (re-entrancy ref resets on failure, gate is never abandoned)."
           );
@@ -557,7 +547,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
     }
 
     expect(landing).toBe("results");
-    // eslint-disable-next-line no-console
     console.log(
       `[examen e2e][c] chain terminally landed on results — legs exercised: lesen=${sawLesen} hoeren=${sawHoeren} schreibenGate=${sawGate}`
     );
@@ -602,7 +591,6 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
     await expect(list.or(empty).or(error).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.locator("text=/premium|abonnement|upgrade/i")).toHaveCount(0);
 
-    // eslint-disable-next-line no-console
     console.log(
       `[examen e2e][d] file-wide consume-trial requests: ${fileMeteredRequests.consumeTrial.length} (must be 0 — no in-app paywall, ever)`
     );

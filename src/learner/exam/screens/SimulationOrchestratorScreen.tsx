@@ -136,10 +136,12 @@
  *          `dispatch(handle.nextModule ?? "LESEN", handle.status, {…
  *          lesenAttemptId: handle.lesenAttemptId, hoerenAttemptId:
  *          handle.hoerenAttemptId})`.
- *        - `resumed: true` (409) → `getMockAttempt(handle.mockAttemptId)`:
- *            - resolves → `beginRun(examSlug, handle.mockAttemptId)`
- *              (no-op if it's the same attempt as before — StrictMode /
- *              re-boot safe) → `dispatch(nextModuleForStatus(row.status),
+ *        - `resumed: true` (409) → `beginRun(examSlug, handle.mockAttemptId)`
+ *          FIRST (no-op if it's the same attempt as before — StrictMode /
+ *          re-boot safe; final-review I-2 — hoisted above the re-read below
+ *          so EVERY resume branch, including both fallbacks, dispatches
+ *          with run identity already set) → `getMockAttempt(handle.mockAttemptId)`:
+ *            - resolves → `dispatch(nextModuleForStatus(row.status),
  *              row.status, {…lesenAttemptId: row.lesenAttemptId,
  *              hoerenAttemptId: row.hoerenAttemptId})` — P11, the whole
  *              point of this re-read.
@@ -325,6 +327,17 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
         return;
       }
 
+      // `beginRun` is hoisted ABOVE the `getMockAttempt` re-read (final-review
+      // I-2) so every resume branch — the row-success path below, AND both
+      // fallback branches (`getMockAttempt` rejects / returns no row) — sets
+      // run identity before `dispatch` can land on `"SCHREIBEN"`. Without
+      // this, a fallback dispatch onto the gate left `useSimulationRun`'s
+      // `examSlug`/`mockAttemptId` null, and `handleSchreibenSkip`'s
+      // "defensive only" identity check fired on every click with no
+      // recovery (the comment calling that branch "unreachable" was false).
+      // No-op on the same id, so the ordinary row-success path is unaffected.
+      useSimulationRun.getState().beginRun(slug, handle.mockAttemptId);
+
       // Resumed (409) — re-read the attempt row so dispatch derives from
       // the server-authoritative status (P11), not the 409 body's own
       // `handle.status` (which the service only echoes for the fallback
@@ -364,7 +377,6 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
         return;
       }
 
-      useSimulationRun.getState().beginRun(slug, handle.mockAttemptId);
       dispatch(nextModuleForStatus(row.status), row.status, {
         examSlug: slug,
         mockAttemptId: row.id,
@@ -430,9 +442,10 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
     setGateError(false);
 
     if (!userId || !runExamSlug || !runMockAttemptId) {
-      // Defensive only — the gate is unreachable without a beginRun-ed
-      // simulation run identity (dispatch only enters this phase after
-      // `beginRun` has already set both fields).
+      // Defensive only — every `runBoot` path (fresh start, row-success
+      // resume, AND both resume fallback branches, final-review I-2) calls
+      // `beginRun` before dispatching into this phase, so run identity
+      // should always be set by the time the gate renders.
       console.warn(
         "[SimulationOrchestratorScreen] schreiben-gate skip: missing run identity (userId/examSlug/mockAttemptId)."
       );

@@ -71,7 +71,7 @@
  * reading (the task brief's own inline derivations block states the same
  * `>= 0.6 → teal` rule), and is what this port implements.
  */
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useTranslation } from "react-i18next";
@@ -250,13 +250,25 @@ export function SimulationResultsScreen() {
   const board = useExamContextStore((s) => s.board);
   const level = useExamContextStore((s) => s.level);
 
+  // One-shot leaving-ref (same idiom as the orchestrator's `bootedRef`/
+  // `isMountedRef`): `handleBack` sets this synchronously BEFORE `clear()`
+  // so the empty-store redirect effect below — which would otherwise fire
+  // on the very next render once `clear()` nulls `result` — knows this
+  // unmount is an intentional back-navigation, not a hard-refresh/deep-link
+  // empty state, and skips its own competing `router.replace`. Without this
+  // guard the effect's `/examen/simulation` replace supersedes the back
+  // CTA's `/examen` replace, bouncing the user through the orchestrator on
+  // every completed simulation (final-review I-1).
+  const leavingRef = useRef(false);
+
   useEffect(() => {
-    if (!result) {
+    if (!result && !leavingRef.current) {
       router.replace(`/${locale}/app/examen/simulation`);
     }
   }, [result, locale, router]);
 
   const handleBack = useCallback(() => {
+    leavingRef.current = true;
     clear();
     router.replace(`/${locale}/app/examen`);
   }, [clear, locale, router]);
