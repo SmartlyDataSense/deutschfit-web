@@ -80,11 +80,17 @@ import { test, expect, type Page } from "@playwright/test";
 // web#32 SKIP BRANCH (resolution round, corrective re-run finding): dev
 // currently publishes ZERO full-simulation-capable Modelltests — every one
 // of the 60 visible telc rows (B1 + B2) has exactly one
-// `qb_modelltest_modules` row (HOEREN), no LESEN row at all. The orchestrator
-// dispatches module-blind (`handle.nextModule ?? "LESEN"` on fresh start,
-// same on resume) and always starts a fresh/resumed attempt on the LESEN
-// leg regardless of which modules the picked row actually has, so
-// `LesenSessionScreen`'s zero-item branch (`LesenSessionScreen.tsx:332-339`,
+// `qb_modelltest_modules` row (HOEREN), no LESEN row at all. Both
+// orchestrator entry paths are module-blind, though via DIFFERENT
+// mechanisms (`SimulationOrchestratorScreen.tsx:16-25,136,142-148`): a
+// fresh 201 start dispatches `handle.nextModule ?? "LESEN"` (the boot
+// response's own field, defaulting to LESEN); a 409-resume instead re-reads
+// the server-authoritative row status and dispatches via
+// `nextModuleForStatus(row.status)` (the P11 fix over mobile's hard-coded
+// resume) — but `nextModuleForStatus("in_progress")` ALSO resolves to
+// `"LESEN"`, so neither path ever consults the picked row's actual module
+// set, and the dead end is reached either way. So `LesenSessionScreen`'s
+// zero-item branch (`LesenSessionScreen.tsx:332-339`,
 // `player.current === null`) renders — literal, untranslated copy "Keine
 // Aufgaben in dieser Sitzung.", deliberately no `data-testid` and no
 // recovery CTA (unlike the sibling `status === "error"` branch a few lines
@@ -179,9 +185,19 @@ const WEB32_LESEN_DEAD_END_SKIP_REASON =
 /** Skips the test loudly when `landing` is the web#32 empty-Lesen dead end.
  * No-op for every other landing. Called from both the initial-landing site
  * (fresh/resumed entry) and the hop loop (defensive) so the skip is
- * reachable no matter which call site first observes it. */
+ * reachable no matter which call site first observes it.
+ *
+ * The zero-submit claim in `WEB32_LESEN_DEAD_END_SKIP_REASON` is made
+ * EXECUTABLE here, not just asserted in prose: both accumulators are
+ * asserted `toBe(0)` immediately before the `test.skip` call (reading the
+ * shared module-scope `fileMeteredRequests`, the same accumulator every
+ * other spec in this file uses). If a future hop-loop edit ever fires a
+ * `lesen-submit`/`hoeren-submit` before this dead end is detected, this
+ * throws loudly instead of silently skipping over a real metered call. */
 function skipOnWeb32DeadEnd(landing: Landing): void {
   if (landing !== "lesen_empty_dead_end") return;
+  expect(fileMeteredRequests.lesenSubmit.length).toBe(0);
+  expect(fileMeteredRequests.hoerenSubmit.length).toBe(0);
   // eslint-disable-next-line no-console
   console.warn(`[examen e2e][c] LOUD SKIP: ${WEB32_LESEN_DEAD_END_SKIP_REASON}`);
   test.skip(true, WEB32_LESEN_DEAD_END_SKIP_REASON);
@@ -377,10 +393,20 @@ test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, r
       // `moduleFilter` (unlike mobile's per-module drill contract).
       // Asserting via the URL TRANSITION itself (not a post-hoc
       // `page.url()` read) sidesteps the race against the orchestrator's
-      // own near-immediate `router.replace` once it boots/dispatches.
-      await page.waitForURL(new RegExp(`/examen/simulation\\?examSlug=${slug}(&|$)`), {
-        timeout: 15_000,
-      });
+      // own near-immediate `router.replace` once it boots/dispatches — a
+      // PREDICATE (not a regex) is the match condition itself, so
+      // Playwright only resolves once a URL satisfying the exact-one-param
+      // contract has actually been observed; a URL carrying an appended
+      // `&moduleFilter=...` would fail this predicate and the wait would
+      // time out instead of falsely passing (the prior regex was
+      // unanchored and would have matched that shape too).
+      await page.waitForURL(
+        (url) =>
+          url.pathname.endsWith("/examen/simulation") &&
+          url.searchParams.size === 1 &&
+          url.searchParams.get("examSlug") === slug,
+        { timeout: 15_000 }
+      );
       // eslint-disable-next-line no-console
       console.log(`[examen e2e][b] row → examSlug=${slug} only, no moduleFilter (P12)`);
     }
