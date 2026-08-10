@@ -40,9 +40,9 @@ vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
   };
 });
 
-import { initLearnerI18n } from "@/learner/core/i18n";
+import { initLearnerI18n, learnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
-import { EXAM_BOARDS } from "@/learner/core/exam/examTypes";
+import { EXAM_BOARDS, EXAM_LEVELS } from "@/learner/core/exam/examTypes";
 import { hydrateExamContext } from "@/learner/core/exam/examContext";
 import { ExamTrackScreen } from "@/learner/settings/screens/ExamTrackScreen";
 import { ExamSelectorScreen } from "@/learner/settings/screens/ExamSelectorScreen";
@@ -74,6 +74,30 @@ const selector = () =>
       <ExamSelectorScreen />
     </LearnerI18nProvider>
   );
+
+/**
+ * Pulls the interpolation object passed to the LAST `t(key, options)` call
+ * out of a `vi.spyOn(learnerI18n, "t")` spy. Used to pin the
+ * fromBoard/fromLevel/toBoard/toLevel mapping into the confirm-modal
+ * subtitle independently of what the active locale string happens to
+ * render — the fr/en `confirmExamChange.transition` strings only
+ * interpolate `{{fromLevel}}`/`{{toLevel}}` today, so a swap confined to
+ * the `fromBoard`/`toBoard` slots would never surface in rendered text.
+ *
+ * Must be the LAST call, not the first: the screen builds the subtitle
+ * prop on every render (it's passed into `ConfirmExamChangeModal`
+ * unconditionally, before that component's own `visible` gate), so the
+ * very first render already produces a `transition` call seeded from the
+ * unchanged from===to pair — grabbing the first match would silently pin
+ * that stale call instead of the one reflecting the learner's picks.
+ */
+function findLastTranslateCallArgs(
+  spy: ReturnType<typeof vi.spyOn>,
+  key: string
+): Record<string, unknown> | undefined {
+  const call = [...spy.mock.calls].reverse().find(([calledKey]) => calledKey === key);
+  return call?.[1] as Record<string, unknown> | undefined;
+}
 
 describe("ExamTrackScreen (S11.6)", () => {
   it("gates non-beta levels with the coming-soon caveat", () => {
@@ -141,6 +165,41 @@ describe("ExamTrackScreen (S11.6)", () => {
         source: "settings",
       })
     );
+  });
+
+  it("maps from/to correctly into the confirm-modal subtitle — board AND level both change, all four values distinguishable", () => {
+    // Deliberately pick a to-pair that shares NEITHER board nor level with
+    // the from-pair (ctx stays goethe/b1; the user picks OTHER_BOARD/b2) so
+    // a fromBoard<->toBoard, fromLevel<->toLevel, or fromBoard<->fromLevel
+    // (etc.) mapping swap is guaranteed to produce a different value than
+    // the correct one — S9's backwards-grade bug is the same failure class,
+    // and it shipped with green unit tests that pinned the wrong mapping.
+    const spy = vi.spyOn(learnerI18n, "t");
+    track();
+    fireEvent.click(screen.getByTestId("settings-exam-board-trigger"));
+    fireEvent.click(screen.getByTestId(`settings-exam-board-${OTHER_BOARD}`));
+    fireEvent.click(screen.getByTestId("settings-exam-level-trigger"));
+    fireEvent.click(screen.getByTestId("settings-exam-level-b2"));
+    fireEvent.click(screen.getByTestId("settings-exam-save"));
+
+    const args = findLastTranslateCallArgs(spy, "profil:confirmExamChange.transition");
+    expect(args).toMatchObject({
+      fromBoard: learnerI18n.t("common:examBoards.goethe"),
+      fromLevel: learnerI18n.t("common:examLevels.b1"),
+      toBoard: learnerI18n.t(`common:examBoards.${OTHER_BOARD}`),
+      toLevel: learnerI18n.t("common:examLevels.b2"),
+    });
+
+    // Also pin the rendered text for the two dimensions the fr string
+    // actually interpolates today (fromLevel/toLevel) — belt-and-braces
+    // with the arg-level assertion above, which is what actually catches a
+    // fromBoard/toBoard-only swap (invisible in rendered text since the
+    // template never interpolates board).
+    const subtitle = screen.getByTestId("settings-confirm-exam-change-modal-card").textContent ?? "";
+    expect(subtitle).toContain("B1");
+    expect(subtitle).toContain("B2");
+
+    spy.mockRestore();
   });
 
   it("seeds the baseline from the HYDRATED store — non-Goethe/B2 learner sees their own track, not goethe/b1", () => {
@@ -228,6 +287,55 @@ describe("ExamSelectorScreen (S11.6)", () => {
     // Mobile maps EXAM_LEVELS directly (ExamSelectorScreen.tsx:71) — even
     // c2 is offered and enabled; clamping happens inside setExamContext.
     expect(screen.getByTestId("settings-exam-selector-level-c2")).not.toBeDisabled();
+  });
+
+  it("offers ALL EXAM_LEVELS enabled for EVERY board — board-blind, no LEVELS_BY_BOARD-style filter", () => {
+    // The single-board check above (via OTHER_BOARD) can't discriminate: it
+    // resolves to "telc", which ships all 6 CEFR levels — same as goethe —
+    // so a `LEVELS_BY_BOARD`-style filter keyed on the selected board would
+    // escape it undetected. Boards like testdaf (b2/c1 only), pflege (b2
+    // only), or beruf_tourismus (a1-b2 only) are the ones that would
+    // actually expose such a filter, so sweep every board in EXAM_BOARDS.
+    for (const boardOption of EXAM_BOARDS) {
+      examState.board = "goethe";
+      examState.level = "b1";
+      const { unmount } = selector();
+      fireEvent.click(screen.getByTestId("settings-exam-selector-board-trigger"));
+      fireEvent.click(screen.getByTestId(`settings-exam-selector-board-${boardOption}`));
+      fireEvent.click(screen.getByTestId("settings-exam-selector-level-trigger"));
+      for (const levelOption of EXAM_LEVELS) {
+        expect(
+          screen.getByTestId(`settings-exam-selector-level-${levelOption}`),
+          `board=${boardOption} level=${levelOption} should be selectable`
+        ).not.toBeDisabled();
+      }
+      unmount();
+    }
+  });
+
+  it("maps from/to correctly into the confirm-modal subtitle — board AND level both change, all four values distinguishable", () => {
+    const spy = vi.spyOn(learnerI18n, "t");
+    selector();
+    fireEvent.click(screen.getByTestId("settings-exam-selector-board-trigger"));
+    fireEvent.click(screen.getByTestId(`settings-exam-selector-board-${OTHER_BOARD}`));
+    fireEvent.click(screen.getByTestId("settings-exam-selector-level-trigger"));
+    fireEvent.click(screen.getByTestId("settings-exam-selector-level-b2"));
+    fireEvent.click(screen.getByTestId("settings-exam-selector-save"));
+
+    const args = findLastTranslateCallArgs(spy, "profil:confirmExamChange.transition");
+    expect(args).toMatchObject({
+      fromBoard: learnerI18n.t("common:examBoards.goethe"),
+      fromLevel: learnerI18n.t("common:examLevels.b1"),
+      toBoard: learnerI18n.t(`common:examBoards.${OTHER_BOARD}`),
+      toLevel: learnerI18n.t("common:examLevels.b2"),
+    });
+
+    const subtitle =
+      screen.getByTestId("settings-exam-selector-confirm-modal-card").textContent ?? "";
+    expect(subtitle).toContain("B1");
+    expect(subtitle).toContain("B2");
+
+    spy.mockRestore();
   });
 
   it("calls hydrateExamContext on mount", () => {
