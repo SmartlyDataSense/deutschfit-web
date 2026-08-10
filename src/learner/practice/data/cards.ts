@@ -25,6 +25,10 @@
  * per-id branch routing it straight to `/{locale}/app/sprechen` (the
  * topic picker); `PracticeHubScreen` gets its own sprechen row wired to
  * the same destination.
+ *
+ * Task 10.6 flips `srs`: `ApprendreScreen.handlePress` gains a per-id
+ * branch to `/{locale}/app/srs`, mirroring mobile's
+ * `case "srs": navigation.navigate("SRS")`.
  */
 export type SkillCard = {
   id: "schreiben" | "lesen" | "sprachbausteine" | "hoeren" | "sprechen" | "srs";
@@ -37,5 +41,5 @@ export const skillCards: SkillCard[] = [
   { id: "hoeren", active: true },
   { id: "lesen", active: true },
   { id: "sprachbausteine", active: true },
-  { id: "srs", active: false },
+  { id: "srs", active: true },
 ];
