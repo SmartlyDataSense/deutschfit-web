@@ -253,6 +253,12 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
   }, []);
 
   useEffect(() => {
+    // Re-arm on every setup invocation: StrictMode runs setup → cleanup →
+    // setup on mount, and `bootedRef` (which persists across that cycle)
+    // blocks a second boot — so a cleanup-only effect leaves this ref
+    // permanently false and the in-flight boot's post-await guards
+    // silently swallow the dispatch (eternal skeleton in dev).
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
