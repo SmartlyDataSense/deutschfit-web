@@ -30,6 +30,7 @@ export interface LearnerTableApi<T = Record<string, unknown>> {
   delete(key: unknown): Promise<void>;
   whereEquals(field: string, value: unknown): Promise<T[]>;
   toArray(): Promise<T[]>;
+  clear(): Promise<void>;
 }
 
 /**
@@ -63,6 +64,7 @@ function wrapDexieTable(table: Table): LearnerTableApi {
         .equals(value as never)
         .toArray(),
     toArray: () => table.toArray(),
+    clear: () => table.clear(),
   };
 }
 
@@ -101,6 +103,9 @@ function createFallbackTable<T extends Record<string, unknown>>(
     },
     async toArray() {
       return Array.from(store.values());
+    },
+    async clear() {
+      store.clear();
     },
   };
 }
