@@ -11,10 +11,13 @@
  *
  * Row grouping (S11.4 decision, see `SettingsRow.tsx` docstring): rows
  * are flat and share one rounded `bg-bg-card` surface per section, split
- * by a hairline divider (`divide-y divide-line-soft`) — the pattern
- * mobile's SettingsScreen (`features/settings/screens/SettingsScreen.tsx`
- * `styles.card`) makes visible, rather than each `SettingsRow` carrying
- * its own card look.
+ * by a hairline divider (`divide-y divide-line-soft`). Mobile's own
+ * ProfilScreen groups rows in a container with no background at all
+ * (fully transparent on the hero background); the shared-card-with-
+ * dividers look here is borrowed from `SettingsScreen.tsx`'s pattern
+ * (`features/settings/screens/SettingsScreen.tsx`, its `styles.card` —
+ * a different mobile screen), not ported from anything ProfilScreen
+ * itself renders.
  */
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

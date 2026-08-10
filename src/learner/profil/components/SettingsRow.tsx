@@ -9,14 +9,18 @@
  * (`min-h-14`) matches mobile's touch target.
  *
  * Layout decision (S11.4, resolving the Task 3 open inference): the row
- * itself is FLAT — no own background or radius. Mobile's ProfilScreen
- * groups `SettingsRow`s inside a single container
- * (`styles.settingsList`), and mobile's SettingsScreen (the more fully
- * realized precedent — `features/settings/screens/SettingsScreen.tsx`,
- * its `styles.card`) makes that grouping visible: one shared
- * `bg-bg-card` / rounded surface per section, rows divided by a hairline
- * rather than each row being its own card. The caller (`ProfilScreen`)
- * owns that shared surface; this component only renders its content.
+ * itself is FLAT — no own background or radius. Mobile's own
+ * ProfilScreen groups `SettingsRow`s inside a single container
+ * (`styles.settingsList`), but that container has no `backgroundColor` —
+ * mobile's ProfilScreen list is fully flat/transparent on the hero
+ * background, and mobile's profil `SettingsRow` carries no card
+ * background either. The shared `bg-bg-card` / rounded-surface-with-
+ * hairline-dividers look applied here is **borrowed from
+ * `SettingsScreen.tsx`'s pattern** (`features/settings/screens/
+ * SettingsScreen.tsx`, its `styles.card` — the cog-reached screen, a
+ * different mobile screen from ProfilScreen), not something mobile's
+ * ProfilScreen itself renders. The caller (`ProfilScreen`) owns that
+ * shared surface; this component only renders its content.
  */
 import type { ReactNode } from "react";
 import clsx from "clsx";

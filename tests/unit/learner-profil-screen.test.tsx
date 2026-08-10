@@ -48,9 +48,17 @@ vi.mock("@/learner/profil/api", async (importOriginal) => {
 
 // Keep the real store but neuter the network/localStorage hydration the
 // screen fires on mount (pattern: tests/unit/learner-drill-session-screen.test.tsx:31-37).
+// `vi.hoisted` gives us an importable, assertable handle on the mock —
+// a plain `vi.fn()` created inline inside the factory below has no such
+// handle, so a test file that only drives `isLoaded`/`board`/`level`
+// via `useExamContextStore.setState(...)` (as this one does) would never
+// notice if the screen stopped calling `hydrateExamContext()` at all.
+const { hydrateExamContextMock } = vi.hoisted(() => ({
+  hydrateExamContextMock: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/exam/examContext")>();
-  return { ...actual, hydrateExamContext: vi.fn().mockResolvedValue(undefined) };
+  return { ...actual, hydrateExamContext: hydrateExamContextMock };
 });
 
 import { initLearnerI18n } from "@/learner/core/i18n";
@@ -95,6 +103,18 @@ const ui = () =>
   );
 
 describe("ProfilScreen (S11.4)", () => {
+  // Named invariant: the mount effect must actually call
+  // `hydrateExamContext()`. This is distinct from the "pill follows the
+  // hydrated store" tests below, which drive `isLoaded`/`board`/`level`
+  // directly via `useExamContextStore.setState(...)` and would stay
+  // green even if the screen never called the real hydration function —
+  // in the live app that would leave `isLoaded` false forever and the
+  // exam pill stuck on the unhydrated fallback.
+  it("hydrates the exam-context store on mount", async () => {
+    ui();
+    await waitFor(() => expect(hydrateExamContextMock).toHaveBeenCalled());
+  });
+
   it("renders identity card from user-stats and the settings rows", async () => {
     ui();
     await waitFor(() => expect(screen.getByText("Marie Dupont")).toBeInTheDocument());
@@ -222,14 +242,16 @@ describe("ProfilScreen (S11.4)", () => {
     expect(screen.getByTestId("profil-settings-change-exam")).toHaveTextContent("B2");
   });
 
-  // Named invariant: every user-visible label on this screen is sourced
-  // from the i18n catalog. Mobile hardcodes the Suggestions row's label +
-  // a11y string directly in the screen (S11-D6 promotes both to i18n);
-  // this test reads the same catalog object the screen renders from, so
-  // if a future edit reverts to a hardcoded literal, the two values
-  // silently diverge and this assertion goes red the next time either
-  // side is edited without the other.
-  it("suggestions row copy comes from the profil i18n catalog", async () => {
+  // Narrower guarantee than the test name might suggest: this reads the
+  // same catalog object the screen renders from and compares against it,
+  // so it does NOT prove the current values are wired through `t()`
+  // rather than a hardcoded literal that happens to equal today's fr
+  // copy (verified separately by mutation-testing — see task-4-report.md).
+  // What it *does* pin: a later edit to the fr catalog (mobile hardcodes
+  // the Suggestions row's label + a11y string directly in the screen;
+  // S11-D6 promotes both to i18n here) must show up on this row, or this
+  // assertion goes red.
+  it("suggestions row copy tracks the profil i18n catalog", async () => {
     ui();
     await waitFor(() => expect(screen.getByTestId("profil-settings-suggestions")).toBeInTheDocument());
     const row = screen.getByTestId("profil-settings-suggestions");
