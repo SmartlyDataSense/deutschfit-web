@@ -46,6 +46,14 @@ describe("queryDueCards", () => {
     expect(limited.map((c) => c.id)).toEqual(["due-1"]);
   });
 
+  it("includes a card whose next_due exactly equals now (inclusive boundary)", async () => {
+    const db = await getLearnerDb();
+    await db.srsCards.put(cardRow("due-exact", FIXED_NOW.getTime()) as never);
+
+    const cards = await queryDueCards({ now: () => FIXED_NOW });
+    expect(cards.map((c) => c.id)).toEqual(["due-exact"]);
+  });
+
   it("filters deck: undefined = all, null = deckless only, string = exact match", async () => {
     const db = await getLearnerDb();
     await db.srsCards.put(cardRow("no-deck", FIXED_NOW.getTime() - DAY_MS, null) as never);
@@ -132,5 +140,44 @@ describe("submitReview", () => {
     expect(result.intervalDaysAfter).toBe(1);
     expect(result.easeAfter).toBeCloseTo(2.3, 5);
     expect(result.id).toMatch(/^rev_/);
+  });
+
+  it("seeds from the truly latest prior review even when reviewed_at is out of insertion order", async () => {
+    const db = await getLearnerDb();
+    await db.srsCards.put(cardRow("card-multi", FIXED_NOW.getTime()) as never);
+    // Insert the OLDER review first, then the NEWER one second — insertion
+    // order (what a naive `priorReviews[0]` would read under the in-memory
+    // fallback's Map-backed whereEquals) disagrees with chronological order
+    // (what "latest prior review" must actually mean), so this pins the sort.
+    await db.srsReviews.put({
+      id: "rev-multi-old",
+      card_id: "card-multi",
+      reviewed_at: FIXED_NOW.getTime() - 20 * DAY_MS,
+      rating: "again",
+      ease_after: 1.5,
+      interval_days_after: 1,
+      next_due: FIXED_NOW.getTime() - 19 * DAY_MS,
+    } as never);
+    await db.srsReviews.put({
+      id: "rev-multi-new",
+      card_id: "card-multi",
+      reviewed_at: FIXED_NOW.getTime() - 5 * DAY_MS,
+      rating: "good",
+      ease_after: 2.2,
+      interval_days_after: 8,
+      next_due: FIXED_NOW.getTime(),
+    } as never);
+
+    const result = await submitReview({
+      cardId: "card-multi",
+      rating: "good",
+      now: FIXED_NOW,
+    });
+
+    // schedule({ ease: 2.2, intervalDays: 8 }, "good") -> easeAfter=2.2,
+    // intervalDaysAfter=round(8*2.2)=18. Seeding from the older row instead
+    // would yield easeAfter=1.5, intervalDaysAfter=round(1*1.5)=2.
+    expect(result.easeAfter).toBe(2.2);
+    expect(result.intervalDaysAfter).toBe(18);
   });
 });
