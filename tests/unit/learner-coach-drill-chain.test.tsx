@@ -208,6 +208,54 @@ describe("buildConnectorDrillChain", () => {
     });
     expect(chain.drills).toHaveLength(3);
   });
+
+  it("golden value: exact drill ids + option order for a fixed observation/nonce seed (review fix round 1 — pins the ported hash/LCG/rotatePool constants)", () => {
+    // Self-consistency checks above (determinism, nonce-variation) only
+    // assert the port is internally consistent with itself — they pass
+    // even if the LCG multiplier/increment or the `hash*31+code` mixer
+    // is transcribed wrong, as long as it's wrong *consistently*. This
+    // test pins the actual concrete output mobile's `data.ts` produces
+    // for this seed, so a silent constant drift (which would silently
+    // change which drills a learner sees for a given observation) fails
+    // loudly here instead. Values captured by running the real
+    // `buildConnectorDrillChain` against `STUB_TEMPLATES` with this
+    // exact seed — verified to fail when the LCG multiplier is mutated
+    // (`1103515245` -> `1103515246`); see task-9.5-report.md's "Fix
+    // round 1" section for the mutation-testing evidence.
+    const chain = buildConnectorDrillChain({
+      observationId: "obs-golden",
+      templates: STUB_TEMPLATES,
+      flaggedConnectors: ["deshalb", "trotzdem", "außerdem", "obwohl"],
+      size: 6,
+      nonce: "golden-nonce-1",
+    });
+
+    expect(chain.id).toBe("chain-obs-golden");
+    expect(chain.drills.map((d) => d.id)).toEqual([
+      "stub-außerdem-price",
+      "stub-obwohl-exam",
+      "stub-deshalb-late",
+      "stub-trotzdem-cold",
+      "stub-deshalb-tired",
+      "stub-trotzdem-rain",
+    ]);
+    expect(chain.drills.map((d) => d.answer)).toEqual([
+      "außerdem",
+      "obwohl",
+      "deshalb",
+      "trotzdem",
+      "deshalb",
+      "trotzdem",
+    ]);
+    expect(chain.drills.map((d) => d.options)).toEqual([
+      ["deshalb", "außerdem", "obwohl"],
+      ["deshalb", "trotzdem", "obwohl"],
+      ["trotzdem", "außerdem", "deshalb"],
+      ["obwohl", "trotzdem", "deshalb"],
+      ["und", "deshalb", "obwohl"],
+      ["deshalb", "außerdem", "trotzdem"],
+    ]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -218,10 +266,38 @@ function makeChain(): DrillChain {
     id: "chain-test",
     observationId: "obs-test",
     drills: [
-      { id: "d-1", before: "A ", after: " B", options: ["x", "y"], answer: "x", explanation: "because x" },
-      { id: "d-2", before: "C ", after: " D", options: ["p", "q"], answer: "p", explanation: "because p" },
-      { id: "d-3", before: "E ", after: " F", options: ["m", "n"], answer: "m", explanation: "because m" },
-      { id: "d-4", before: "G ", after: " H", options: ["s", "t"], answer: "s", explanation: "because s" },
+      {
+        id: "d-1",
+        before: "A ",
+        after: " B",
+        options: ["x", "y"],
+        answer: "x",
+        explanation: "because x",
+      },
+      {
+        id: "d-2",
+        before: "C ",
+        after: " D",
+        options: ["p", "q"],
+        answer: "p",
+        explanation: "because p",
+      },
+      {
+        id: "d-3",
+        before: "E ",
+        after: " F",
+        options: ["m", "n"],
+        answer: "m",
+        explanation: "because m",
+      },
+      {
+        id: "d-4",
+        before: "G ",
+        after: " H",
+        options: ["s", "t"],
+        answer: "s",
+        explanation: "because s",
+      },
     ],
   };
 }
@@ -274,7 +350,9 @@ describe("useDrillChain", () => {
       result.current.next();
     });
     expect(result.current.state.currentIndex).toBe(1);
-    expect(result.current.state.attempts).toEqual([{ drillId: "d-1", selected: "x", isCorrect: true }]);
+    expect(result.current.state.attempts).toEqual([
+      { drillId: "d-1", selected: "x", isCorrect: true },
+    ]);
     expect(result.current.state.pendingAttempt).toBeNull();
     expect(result.current.state.status).toBe("in_progress");
   });
@@ -410,7 +488,9 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
 
     renderWithI18n(<CoachDrillChainScreen />);
 
-    expect(screen.getByTestId("coach-drill-chain-header")).toHaveTextContent("Drill ciblé · connecteurs");
+    expect(screen.getByTestId("coach-drill-chain-header")).toHaveTextContent(
+      "Drill ciblé · connecteurs"
+    );
     expect(screen.getByTestId("drill-chain-progress")).toBeInTheDocument();
     expect(screen.getByTestId(`coach-drill-card-${firstDrill.id}`)).toBeInTheDocument();
 
@@ -431,7 +511,9 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
 
     fireEvent.click(screen.getByTestId(`drill-option-${firstDrill.answer}`));
 
-    expect(screen.getByTestId("coach-drill-feedback")).toHaveTextContent("Richtig ! Bon connecteur.");
+    expect(screen.getByTestId("coach-drill-feedback")).toHaveTextContent(
+      "Richtig ! Bon connecteur."
+    );
   });
 
   it("selecting a wrong option shows the wrong feedback copy interpolated with the answer", () => {
@@ -482,7 +564,54 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
     // answer, so the tally is a perfect score.
     expect(useDrillChainStore.getState().launch).toBeNull();
     const summary = useDrillChainStore.getState().pendingSummary;
-    expect(summary).toMatchObject({ correct: expectedChain.drills.length, total: expectedChain.drills.length });
+    expect(summary).toMatchObject({
+      correct: expectedChain.drills.length,
+      total: expectedChain.drills.length,
+    });
+  });
+
+  it("mixed correct/incorrect run — final tally reflects the exact count, not just a perfect-score boundary (review fix round 1)", async () => {
+    // No connector filter -> the full 6-template pool is in play, so the
+    // default `size: 4` chain has room for a genuine correct/incorrect
+    // mix (the completion test above deliberately narrows to a single
+    // flagged connector, which yields only 2 drills here).
+    const launch = sampleLaunch();
+    useDrillChainStore.getState().setLaunch(launch);
+    const expectedChain = computeExpectedChain(launch);
+    expect(expectedChain.drills.length).toBeGreaterThanOrEqual(3);
+
+    renderWithI18n(<CoachDrillChainScreen />);
+
+    // Alternate correct/wrong picks (even index -> correct, odd -> a
+    // distractor) so the final tally is neither 0 nor a perfect score —
+    // this exercises the `finalCorrect` arithmetic in `handleContinue`
+    // at a non-boundary value, including its `pendingAttempt?.isCorrect`
+    // fold-in on the very last drill.
+    let expectedCorrect = 0;
+    for (let i = 0; i < expectedChain.drills.length; i++) {
+      const drill = expectedChain.drills[i];
+      if (!drill) throw new Error(`expected drill at index ${i}`);
+      const pickCorrect = i % 2 === 0;
+      if (pickCorrect) {
+        expectedCorrect += 1;
+        fireEvent.click(screen.getByTestId(`drill-option-${drill.answer}`));
+      } else {
+        const wrongOption = drill.options.find((o) => o !== drill.answer);
+        if (!wrongOption) throw new Error(`expected a distractor at index ${i}`);
+        fireEvent.click(screen.getByTestId(`drill-option-${wrongOption}`));
+      }
+      fireEvent.click(screen.getByTestId("coach-drill-continue"));
+    }
+
+    expect(expectedCorrect).toBeGreaterThan(0);
+    expect(expectedCorrect).toBeLessThan(expectedChain.drills.length);
+
+    await waitFor(() =>
+      expect(pushMock).toHaveBeenCalledWith(`/fr/app/coach/chat/${launch.threadId}`)
+    );
+
+    const summary = useDrillChainStore.getState().pendingSummary;
+    expect(summary).toMatchObject({ correct: expectedCorrect, total: expectedChain.drills.length });
   });
 
   it("with launch === null, redirects back to the chat root", () => {
