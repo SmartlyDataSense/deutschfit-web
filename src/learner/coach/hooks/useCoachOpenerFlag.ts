@@ -25,6 +25,17 @@
  * safety — mirrors mobile's self-hydrating `useCoachOpenerFlag(userId)`
  * hook exactly (unlike `useOnboardingFlag`'s centralized
  * `LearnerProviders` hydration).
+ *
+ * Single-bound-consumer constraint: `useCoachOpenerFlagStore` tracks one
+ * `userId` at a time, so `useCoachOpenerFlag(userId)` must be mounted
+ * from exactly one place at a time. Mounting it from two components
+ * simultaneously with *different* `userId`s makes each one's rehydrate
+ * effect perpetually "correct" the store's `userId` back to its own —
+ * an infinite rehydrate loop (verified: reliably OOMs). If a second
+ * consumer (e.g. a side-menu component) needs `seen`/`hydrated`, read
+ * them via `useCoachOpenerFlagStore((s) => s.seen)` directly instead of
+ * calling the hook again with the same `userId` — or lift a single
+ * `useCoachOpenerFlag(userId)` call and pass its result down.
  */
 import { useEffect } from "react";
 import { create } from "zustand";
@@ -64,7 +75,10 @@ type CoachOpenerFlagStore = {
    * Re-read localStorage scoped to the given user. Pass `null` when the
    * auth state goes back to unauthenticated — the flag flips to `false`
    * so the next signed-in user gets a fresh cold-start opener on their
-   * first thread.
+   * first thread. Only one `userId` can be bound at a time — do not call
+   * this (directly, or via a second mounted `useCoachOpenerFlag` with a
+   * different `userId`) from two places concurrently, or the two callers
+   * will fight over `userId` forever (infinite rehydrate loop, OOMs).
    */
   hydrateFor: (userId: string | null) => Promise<void>;
   /** Persist `seen=true` for the currently-bound user. No-op if signed-out. */
@@ -116,7 +130,10 @@ export type UseCoachOpenerFlagResult = {
 /**
  * Hook variant that auto-rehydrates whenever the bound user id changes.
  * Mirrors the read shape of `useOnboardingFlag` so callers pattern-match
- * the same way.
+ * the same way. Mount this from exactly one component at a time (see the
+ * single-bound-consumer constraint on `useCoachOpenerFlagStore` above) —
+ * a second simultaneous caller with a different `userId` will infinite-
+ * loop rehydrating against the other.
  */
 export function useCoachOpenerFlag(userId: string | null | undefined): UseCoachOpenerFlagResult {
   const seen = useCoachOpenerFlagStore((s) => s.seen);
