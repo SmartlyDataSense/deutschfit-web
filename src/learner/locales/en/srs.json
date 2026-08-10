@@ -18,7 +18,8 @@
     "title": "Answer",
     "explanationOverline": "Why?",
     "missingTitle": "Card not found",
-    "missingBody": "This card is no longer available. Returning to revision."
+    "missingBody": "This card is no longer available. Returning to revision.",
+    "backToRevision": "Back to revision"
   },
   "difficulty": {
     "again": "Again",
