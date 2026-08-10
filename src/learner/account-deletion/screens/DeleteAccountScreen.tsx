@@ -112,10 +112,23 @@ export function DeleteAccountScreen() {
       // server-side at this point, so a rejection here must never be
       // reported as a deletion failure (that would invite the user to
       // retry a delete that already succeeded, which just 401s on a
-      // now-nonexistent account — see review C1/I3). Log it distinctly
-      // and fall through to sign-out + redirect regardless.
+      // now-nonexistent account — see review C1/I3). Each step gets its
+      // OWN try/catch (review round-2 finding #1) — `wipeLocalState` and
+      // `resetAnalyticsUser` used to share one `try`, so a
+      // `wipeLocalState` rejection (private browsing, IndexedDB quota, a
+      // blocked version-change upgrade) silently skipped
+      // `resetAnalyticsUser` too, leaving PostHog identified to the
+      // deleted user's `distinct_id` for whoever signs in next on that
+      // browser. Every step logs `account_delete_cleanup_failed`
+      // independently and execution always falls through to sign-out +
+      // redirect.
       try {
         await wipeLocalState(session?.user.id ?? null);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : "unknown_error";
+        trackEvent("account_delete_cleanup_failed", { source: "web", reason });
+      }
+      try {
         resetAnalyticsUser();
       } catch (err) {
         const reason = err instanceof Error ? err.message : "unknown_error";

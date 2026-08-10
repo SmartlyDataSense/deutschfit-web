@@ -221,6 +221,44 @@ describe("learner API client", () => {
     await expect(invokeFn("submissions-post", { method: "POST" })).resolves.toBeUndefined();
   });
 
+  // Review round 2, finding #2: the empty-body guard must run AFTER the
+  // `!res.ok` check, not before. An empty-bodied non-2xx (a gateway
+  // 502/504, a killed edge worker — infra-level, distinct from
+  // Supabase's own error path which always returns a JSON body) must
+  // still reject as an ApiError, never silently resolve `undefined` as
+  // if it were a success. Hoisting the guard above `!res.ok` survives
+  // the rest of the suite (every other empty-body case in this file is
+  // a genuine 2xx), so it needs its own pin.
+  it("an empty-bodied non-2xx (e.g. a bare gateway 500/503) still rejects — never resolves as success", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
+
+    await expect(invokeFn("account-delete", { method: "POST" })).rejects.toMatchObject({
+      status: 500,
+    });
+  });
+
+  it("an empty-bodied non-2xx with an explicit content-length: 0 still rejects — never resolves as success", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 503, headers: { "content-length": "0" } })
+    );
+
+    await expect(invokeFn("account-delete", { method: "POST" })).rejects.toMatchObject({
+      status: 503,
+    });
+  });
+
+  // Review round 2, finding #3: a malformed (non-empty, non-JSON) 2xx
+  // body must still surface as a rejection, not be silently swallowed
+  // into `undefined` by whatever wraps the 204/empty-body guard.
+  it("a malformed non-empty 2xx body still rejects", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(new Response("not json", { status: 200 }));
+
+    await expect(invokeFn("submissions-get")).rejects.toThrow();
+  });
+
   it("carries the parsed error body through as ApiError.bodyJson (S4 — mock-exam 409)", async () => {
     const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValueOnce(

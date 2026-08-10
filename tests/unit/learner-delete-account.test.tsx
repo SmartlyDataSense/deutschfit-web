@@ -75,7 +75,21 @@ import { DeleteAccountScreen } from "@/learner/account-deletion/screens/DeleteAc
 afterEach(cleanup);
 beforeAll(() => initLearnerI18n("fr"));
 beforeEach(() => {
-  vi.clearAllMocks();
+  // `vi.clearAllMocks()` alone only clears call history — it does NOT
+  // reset a mock's IMPLEMENTATION, so a non-`Once` override set by one
+  // test (e.g. `invokeFn.mockRejectedValue(...)` in the failure test)
+  // silently becomes the fallback for every later test unless that test
+  // explicitly re-sets it. Every test in this file happens to do that
+  // today, but it's a footgun under reordering — `mockReset()` each mock
+  // and re-seed the sane defaults here so no test can inherit another
+  // test's implementation by accident.
+  invokeFn.mockReset();
+  wipeLocalState.mockReset().mockResolvedValue(undefined);
+  trackEvent.mockReset();
+  resetAnalyticsUser.mockReset();
+  signOut.mockReset().mockResolvedValue(undefined);
+  replace.mockReset();
+  back.mockReset();
 });
 
 const ui = () =>
@@ -307,6 +321,41 @@ describe("DeleteAccountScreen (S11.8)", () => {
         reason: "indexeddb blocked",
       })
     );
+    // Review round-2 finding #1: wipeLocalState and resetAnalyticsUser each
+    // get their OWN try/catch now — a wipeLocalState rejection must not
+    // skip resetAnalyticsUser (that would leave PostHog identified to the
+    // deleted user's distinct_id for whoever signs in next on this browser).
+    expect(resetAnalyticsUser).toHaveBeenCalled();
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+
+    expect(screen.queryByTestId("delete-account-error")).toBeNull();
+    expect(trackEvent).not.toHaveBeenCalledWith(
+      "account_delete_failed",
+      expect.objectContaining({ source: "web" })
+    );
+  });
+
+  // Review round-2 finding #1 (other direction): a resetAnalyticsUser
+  // failure must not prevent wipeLocalState from having already run, and
+  // must still fall through to sign-out + redirect. Pins the second
+  // independent try/catch symmetrically to the test above.
+  it("a resetAnalyticsUser failure AFTER a successful server delete still wiped local state, signs out, and redirects — no failure card", async () => {
+    invokeFn.mockResolvedValue({ ok: true });
+    resetAnalyticsUser.mockImplementationOnce(() => {
+      throw new Error("posthog not initialized");
+    });
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("account_delete_cleanup_failed", {
+        source: "web",
+        reason: "posthog not initialized",
+      })
+    );
+    expect(wipeLocalState).toHaveBeenCalledWith("u1");
     await waitFor(() => expect(signOut).toHaveBeenCalled());
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
 
@@ -365,5 +414,74 @@ describe("DeleteAccountScreen (S11.8)", () => {
     await waitFor(() => expect(confirmInput()).toBeDisabled());
     resolveInvoke({ ok: true });
     await waitFor(() => expect(signOut).toHaveBeenCalled());
+  });
+
+  // Review round-2 finding #4: close/cancel must be genuinely inert while a
+  // delete is in-flight, not just visually dimmed — a click landing on
+  // either mid-flight must not navigate back out from under the pending
+  // request (which would strand the user on the previous screen while a
+  // delete they can no longer see is still resolving).
+  it("cancel is inert while a delete is in-flight — clicking it mid-flight does not navigate back", async () => {
+    let resolveInvoke!: (v: unknown) => void;
+    invokeFn.mockReturnValue(
+      new Promise((resolve) => {
+        resolveInvoke = resolve;
+      })
+    );
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+    await waitFor(() => expect(screen.getByTestId("delete-account-cancel")).toBeDisabled());
+    fireEvent.click(screen.getByTestId("delete-account-cancel"));
+    expect(back).not.toHaveBeenCalled();
+    resolveInvoke({ ok: true });
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+  });
+
+  it("close is inert while a delete is in-flight — clicking it mid-flight does not navigate back", async () => {
+    let resolveInvoke!: (v: unknown) => void;
+    invokeFn.mockReturnValue(
+      new Promise((resolve) => {
+        resolveInvoke = resolve;
+      })
+    );
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+    await waitFor(() => expect(screen.getByTestId("delete-account-close")).toBeDisabled());
+    fireEvent.click(screen.getByTestId("delete-account-close"));
+    expect(back).not.toHaveBeenCalled();
+    resolveInvoke({ ok: true });
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+  });
+
+  // Review round-2 finding #5: `invocationCallOrder`-based ordering tests
+  // only prove signOut was CALLED before replace, not that its promise was
+  // AWAITED before replace fires — `void signOut().catch(...)` (no await)
+  // would call signOut first and then synchronously call replace() without
+  // waiting, and invocationCallOrder alone cannot tell the two apart. This
+  // pins the actual settlement-timing dependency: replace must not fire
+  // until the signOut promise has resolved.
+  it("redirect waits for signOut to actually settle — replace does not fire while signOut is still pending", async () => {
+    invokeFn.mockResolvedValue({ ok: true });
+    let resolveSignOut!: () => void;
+    signOut.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveSignOut = resolve;
+      })
+    );
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    // Give any pending microtasks a chance to flush — if `signOut()` were
+    // fired without `await`, `replace` would already have been called here.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(replace).not.toHaveBeenCalled();
+
+    resolveSignOut();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
   });
 });
