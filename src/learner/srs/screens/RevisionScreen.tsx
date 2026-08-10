@@ -126,10 +126,10 @@ export function RevisionScreen() {
           />
           <SRSProgressFooter
             testID="srs-revision-footer"
-            currentIndex={currentCard ? 1 : 0}
+            currentIndex={1}
             total={total}
             positionLabel={t("srs:revision.positionLabel", {
-              current: currentCard ? 1 : 0,
+              current: 1,
               total,
             })}
             remainingLabel={`${total} ${t("srs:revision.remainingLabel")}`}

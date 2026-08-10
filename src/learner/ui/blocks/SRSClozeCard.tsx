@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { AppButton, AppText, Card } from "@/learner/ui/primitives";
+import { AppText, Card } from "@/learner/ui/primitives";
 
 /**
  * `SRSClozeCard` block — ports `deutschfit-mobile/src/ui/blocks/SRSClozeCard.tsx`.
@@ -14,10 +14,13 @@ import { AppButton, AppText, Card } from "@/learner/ui/primitives";
  *   - the cloze sentence (caller supplies a `ReactNode` so the blank can
  *     be styled inline)
  *   - a tertiary-italic translation quote
- *   - an optional "Révéler" `AppButton` (caller-driven)
  *
- * S10-D1: every mobile-defaulted label (`instructionLabel`, `revealLabel`)
- * is a REQUIRED-or-absent prop here — no hardcoded French fallback.
+ * S10-D1: every mobile-defaulted label (`instructionLabel`) is a
+ * REQUIRED-or-absent prop here — no hardcoded French fallback.
+ *
+ * The reveal CTA is not part of this block: `RevisionScreen` renders its
+ * own standalone `AppButton` (S10 fix round T1) so it can wire a testID
+ * and `variant="solid"` that this card's internal slot never supported.
  */
 export interface SRSClozeCardProps {
   readonly dueLabel?: string;
@@ -25,8 +28,6 @@ export interface SRSClozeCardProps {
   readonly clozeSentence: ReactNode;
   readonly translation?: string;
   readonly instructionLabel: string;
-  readonly revealLabel?: string;
-  readonly onReveal?: () => void;
   readonly testID?: string;
 }
 
@@ -36,8 +37,6 @@ export function SRSClozeCard({
   clozeSentence,
   translation,
   instructionLabel,
-  revealLabel,
-  onReveal,
   testID,
 }: SRSClozeCardProps) {
   return (
@@ -77,9 +76,6 @@ export function SRSClozeCard({
         <AppText tone="tertiary" size="small" className="mt-2 italic">
           {`« ${translation} »`}
         </AppText>
-      ) : null}
-      {revealLabel && onReveal ? (
-        <AppButton label={revealLabel} onClick={onReveal} variant="outline" className="mt-4" />
       ) : null}
     </Card>
   );

@@ -95,4 +95,55 @@ describe("RevealScreen", () => {
     fireEvent.click(screen.getByTestId("srs-reveal-back"));
     expect(replaceMock).toHaveBeenCalledWith("/fr/app/srs");
   });
+
+  it("does not flash the missing-card state while the due-queue query is still in flight", async () => {
+    await seedDueCard("card-1", 2);
+    const db = await getLearnerDb();
+    const realToArray = db.srsCards.toArray.bind(db.srsCards);
+    let resolvePending: (rows: unknown[]) => void = () => {};
+    const pending = new Promise<unknown[]>((resolve) => {
+      resolvePending = resolve;
+    });
+    vi.spyOn(db.srsCards, "toArray").mockReturnValueOnce(pending as Promise<never[]>);
+
+    renderWithI18n(<RevealScreen cardId="card-1" />);
+
+    // The due-queue query hasn't resolved yet (`cards` is still `[]`), so
+    // without the `if (loading) return <Skeleton/>` guard `card` would be
+    // `undefined` and the missing-card branch would render prematurely.
+    expect(screen.queryByTestId("srs-reveal-missing")).not.toBeInTheDocument();
+    expect(screen.getByTestId("srs-reveal-screen")).toBeInTheDocument();
+
+    resolvePending(await realToArray());
+
+    await waitFor(() => {
+      expect(screen.getByTestId("srs-reveal-options")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("srs-reveal-missing")).not.toBeInTheDocument();
+  });
+
+  it("persists the review before navigating away — the review row exists by the time router.replace fires", async () => {
+    await seedDueCard("card-1", 2);
+    renderWithI18n(<RevealScreen cardId="card-1" />);
+    await waitFor(() => {
+      expect(screen.getByTestId("srs-reveal-difficulty")).toBeInTheDocument();
+    });
+
+    const db = await getLearnerDb();
+    const putSpy = vi.spyOn(db.srsReviews, "put");
+    let putCallsAtNavigate = -1;
+    replaceMock.mockImplementationOnce(() => {
+      putCallsAtNavigate = putSpy.mock.calls.length;
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Bien/ }));
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/srs");
+    });
+    // If `submit(...)` were fire-and-forget (`void submit(...)`) instead of
+    // awaited, `router.replace` would fire before the review row is
+    // written — this pins the ordering, not just the eventual outcome.
+    expect(putCallsAtNavigate).toBe(1);
+  });
 });
