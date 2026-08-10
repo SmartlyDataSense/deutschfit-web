@@ -17,6 +17,7 @@ import {
   type DimensionScoreEntry,
   type ModuleResultLayoutProps,
 } from "@/learner/ui/blocks/ModuleResultLayout";
+import { CompetenceBarRow } from "@/learner/ui/blocks/CompetenceBarRow";
 import { resultTypeFromScoreMax } from "@/learner/core/api/resultType";
 import type { DimensionScoresJson } from "@/learner/core/api/examApi";
 import { renderWithI18n } from "./helpers/renderWithI18n";
@@ -238,6 +239,75 @@ describe("ModuleResultLayout — ScoreHeaderCard composed aria-label carry-in", 
       "aria-label",
       "31 sur 45 points."
     );
+  });
+});
+
+describe("CompetenceBarRow — nullable score/max (S8 Task 8.8 Cycle A, B3 sub-step)", () => {
+  it("renders an em-dash with NO digit characters when score is null (missing/deferred presentation)", () => {
+    renderWithI18n(
+      <CompetenceBarRow
+        label="Schreiben"
+        italicSubtitle="Production écrite"
+        score={null}
+        max={null}
+        tone="amber"
+        state="priorite"
+        testID="row-schreiben"
+      />
+    );
+
+    const row = screen.getByTestId("row-schreiben");
+    expect(row).toHaveTextContent("—");
+    expect(row.textContent).not.toMatch(/\d/);
+    expect(row).toHaveAttribute("aria-label", "Schreiben: —, Priorité");
+
+    const fill = within(row).getByRole("progressbar").firstElementChild;
+    expect(fill).toHaveStyle({ width: "0%" });
+  });
+
+  it("composes the em-dash aria without a trailing state clause when state is absent", () => {
+    renderWithI18n(
+      <CompetenceBarRow label="Sprechen" score={null} max={null} testID="row-sprechen" />
+    );
+
+    const row = screen.getByTestId("row-sprechen");
+    expect(row).toHaveAttribute("aria-label", "Sprechen: —");
+    expect(row.textContent).not.toMatch(/\d/);
+  });
+
+  it("REGRESSION LOCK: numeric props still render the byte-identical X/N fraction + aria (S6/S7 non-regression)", () => {
+    renderWithI18n(
+      <CompetenceBarRow
+        label="Lesen"
+        italicSubtitle="Compréhension écrite"
+        score={5}
+        max={10}
+        tone="teal"
+        testID="row-lesen"
+      />
+    );
+
+    const row = screen.getByTestId("row-lesen");
+    expect(row).toHaveTextContent("5/10");
+    expect(row).toHaveAttribute("aria-label", "Lesen: 5 sur 10");
+  });
+
+  it("REGRESSION LOCK: numeric props with a state chip still compose the exact 'X sur Y, <État>' aria (S6/S7 non-regression)", () => {
+    renderWithI18n(
+      <CompetenceBarRow
+        label="Hören"
+        score={3}
+        max={10}
+        tone="amber"
+        state="priorite"
+        testID="row-hoeren"
+      />
+    );
+
+    const row = screen.getByTestId("row-hoeren");
+    expect(row).toHaveTextContent("3/10");
+    expect(row).toHaveAttribute("aria-label", "Hören: 3 sur 10, Priorité");
+    expect(screen.getByText("Priorité")).toBeInTheDocument();
   });
 });
 

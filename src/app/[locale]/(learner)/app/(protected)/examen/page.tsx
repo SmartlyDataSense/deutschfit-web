@@ -1,26 +1,13 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-
-import { AppText, EmptyState } from "@/learner/ui/primitives";
+import { ExamHomeScreen } from "@/learner/exam/screens/ExamHomeScreen";
 
 /**
- * Examen tab placeholder — see `apprendre/page.tsx` for the rationale on
- * `"use client"` + why this only wires the nav shell.
+ * Examen tab root route (S8 · Task 8.3). Placeholder replaced —
+ * `"use client"` for the same reason as every other `(protected)` route
+ * (see `apprendre/page.tsx`): client-only providers, no server-side data
+ * fetching under this segment.
  */
 export default function ExamenPage() {
-  const { t } = useTranslation(["examen", "common"]);
-
-  return (
-    <div className="flex flex-col gap-6 px-4 py-10 md:px-8">
-      <AppText as="h1" size="h1" weight="bold" family="serif">
-        {t("examen:title")}
-      </AppText>
-      <EmptyState
-        testID="examen-empty-state"
-        title={t("common:empty.genericTitle")}
-        description={t("common:empty.genericBody")}
-      />
-    </div>
-  );
+  return <ExamHomeScreen />;
 }

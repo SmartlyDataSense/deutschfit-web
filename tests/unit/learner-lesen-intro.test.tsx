@@ -12,7 +12,11 @@ const { listModelltestsMock, startSessionMock, pushMock, hydrateMock } = vi.hois
   hydrateMock: vi.fn(),
 }));
 
-vi.mock("@/learner/core/api/mockExam", () => ({
+// S8 · Task 8.1 facade-hygiene: `useAvailableLesenModelltests` now imports
+// `listModelltests` from the `examApi` facade (not `mockExam` directly) —
+// this mock target tracks that, same "mock the boundary the code actually
+// imports" idiom as `learner-dialogue-api.test.ts`.
+vi.mock("@/learner/core/api/examApi", () => ({
   listModelltests: (...args: unknown[]) => listModelltestsMock(...args),
 }));
 vi.mock("@/learner/core/exam/mockExamSession", () => ({
@@ -34,7 +38,7 @@ vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
 
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { useExamContextStore } from "@/learner/core/exam/examContext";
-import type { ModelltestRow } from "@/learner/core/api/mockExam";
+import type { ModelltestRow } from "@/learner/core/api/examApi";
 import { LesenIntroScreen } from "@/learner/lesen/screens/LesenIntroScreen";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 

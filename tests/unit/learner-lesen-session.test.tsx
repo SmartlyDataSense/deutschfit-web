@@ -36,9 +36,18 @@ vi.mock("@/learner/core/api/mockExam", async (importOriginal) => {
     fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
   };
 });
-vi.mock("@/learner/core/api/examApi", () => ({
-  submitLesen: (...args: unknown[]) => submitLesenMock(...args),
-}));
+// Partial mock (S8 · Task 8.1 facade-hygiene): `LesenSessionScreen` now
+// imports `normaliseReport` from the `examApi` facade too (not `mockExam`
+// directly) — keep the real `normaliseReport` (pure — no reason to fake
+// it, same rationale as the `mockExam` partial mock above) and stub only
+// `submitLesen`.
+vi.mock("@/learner/core/api/examApi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/learner/core/api/examApi")>();
+  return {
+    ...actual,
+    submitLesen: (...args: unknown[]) => submitLesenMock(...args),
+  };
+});
 vi.mock("@/learner/core/exam/mockExamSession", () => ({
   advanceSession: (...args: unknown[]) => advanceSessionMock(...args),
   finalizeSession: (...args: unknown[]) => finalizeSessionMock(...args),
@@ -56,6 +65,7 @@ import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { LesenResultsScreen } from "@/learner/lesen/screens/LesenResultsScreen";
 import { LesenSessionScreen } from "@/learner/lesen/screens/LesenSessionScreen";
 import { useLesenResultsStore } from "@/learner/lesen/resultsStore";
+import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 
 // Task 4.2 fixture shapes — `manifest`/`module` are SIBLING keys on the
@@ -157,6 +167,7 @@ describe("LesenSessionScreen — live drill submit flow", () => {
       session: { user: { id: "u1" } },
     } as never);
     useLesenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
   });
   afterEach(cleanup);
 
@@ -365,6 +376,163 @@ describe("LesenSessionScreen — live drill submit flow", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("LesenSessionScreen — full-simulation branch (Task 8.5)", () => {
+  beforeEach(() => {
+    fetchLesenSessionMock.mockReset();
+    submitLesenMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
+    trackEventMock.mockReset();
+    pushMock.mockReset();
+    replaceMock.mockReset();
+    backMock.mockReset();
+    fetchLesenSessionMock.mockResolvedValue(readyPayload);
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
+    useLesenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
+  });
+  afterEach(cleanup);
+
+  it("(a) submit records raw/total/unanswered + duration into the simulation run store before advancing", async () => {
+    submitLesenMock.mockResolvedValue({ attempt_id: "lesen-1", raw_score: 1 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: "HOEREN" });
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+
+    await waitFor(() => expect(screen.getByTestId("lesen-option-a")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("lesen-option-a")); // item 1 answered
+    fireEvent.click(screen.getByTestId("lesen-session-next"));
+    await waitFor(() => expect(screen.getByTestId("lesen-session-submit")).toBeInTheDocument());
+    // item 2 left unanswered — proves `unanswered` comes from the real
+    // fixture/player state, not a hardcoded 0.
+    fireEvent.click(screen.getByTestId("lesen-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=b1-01")
+    );
+
+    expect(useSimulationRun.getState().outcomes.lesen).toEqual({
+      raw: 1,
+      total: 2,
+      unanswered: 1,
+    });
+    // Fixture manifest module duration is 20 minutes.
+    expect(useSimulationRun.getState().durationMinutesTotal).toBe(20);
+  });
+
+  it('(b) advanceSession resolving nextModule:"HOEREN" redirects to the orchestrator (P6) and writes no results store/route', async () => {
+    submitLesenMock.mockResolvedValue({ attempt_id: "lesen-1", raw_score: 2 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: "HOEREN" });
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+    await goToLastItem();
+    fireEvent.click(screen.getByTestId("lesen-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=b1-01")
+    );
+
+    expect(finalizeSessionMock).not.toHaveBeenCalled();
+    expect(pushMock).not.toHaveBeenCalled();
+    expect(useLesenResultsStore.getState().payload).toBeNull();
+    expect(useSimulationRun.getState().result).toBeNull();
+  });
+
+  it("(c') DEFENSIVE PARITY ONLY: advanceSession resolving nextModule:null finalizes into the run store and routes to /examen/simulation/results (backend can never return this for a leg)", async () => {
+    submitLesenMock.mockResolvedValue({ attempt_id: "lesen-1", raw_score: 2 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: null });
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T00:00:00.000Z",
+      perCompetenceReport: { lesen: { status: "scored", raw_score: 2, max_score: 2 } },
+      replay: false,
+    });
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+    await goToLastItem();
+    fireEvent.click(screen.getByTestId("lesen-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation/results")
+    );
+    expect(finalizeSessionMock).toHaveBeenCalledWith({
+      userId: "u1",
+      examSlug: "b1-01",
+      mockAttemptId: "mock-1",
+      answers: { i1: "a", i2: "b" },
+    });
+    expect(trackEventMock).toHaveBeenCalledWith("exam_finalized", {
+      attempt_id: "mock-1",
+      duration_ms: expect.any(Number),
+    });
+
+    const result = useSimulationRun.getState().result;
+    expect(result?.finalizedAt).toBe("2026-08-09T00:00:00.000Z");
+    expect(result?.report).toEqual({
+      lesen: { status: "scored", raw_score: 2, max_score: 2 },
+    });
+    expect(result?.skills).toEqual([
+      { key: "lesen", status: "scored", score: 2, max: 2 },
+      { key: "hoeren", status: "missing", score: null, max: null },
+      { key: "schreiben", status: "missing", score: null, max: null },
+      { key: "sprechen", status: "missing", score: null, max: null },
+    ]);
+  });
+
+  it("(d) drill regression lock: moduleFilter:LESEN never touches recordOutcome or the simulation routes", async () => {
+    submitLesenMock.mockResolvedValue({ attempt_id: "lesen-1", raw_score: 2 });
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T00:00:00.000Z",
+      perCompetenceReport: { lesen: { status: "scored", raw_score: 2, max_score: 2 } },
+      replay: false,
+    });
+
+    renderWithI18n(
+      <LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" moduleFilter="LESEN" />
+    );
+    await goToLastItem();
+    fireEvent.click(screen.getByTestId("lesen-session-submit"));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/lesen/results"));
+
+    expect(advanceSessionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(useSimulationRun.getState().outcomes.lesen).toBeUndefined();
+    expect(useSimulationRun.getState().result).toBeNull();
+  });
+
+  it("(e) advance rejection in the full-sim branch: shipped local-fallback catch still navigates to per-module results", async () => {
+    submitLesenMock.mockResolvedValue({ attempt_id: "lesen-1", raw_score: 2 });
+    advanceSessionMock.mockRejectedValue(new Error("network_error"));
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+    await goToLastItem();
+    fireEvent.click(screen.getByTestId("lesen-session-submit"));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/lesen/results"));
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(finalizeSessionMock).not.toHaveBeenCalled();
+
+    const payload = useLesenResultsStore.getState().payload;
+    expect(payload?.submissionId).toMatch(/^local-/);
+    // `recordOutcome` already ran (before the rejecting `advanceSession`
+    // call) — this is the shipped ordering (brief interface note (a) runs
+    // BEFORE `advanceSession`), so the outcome is still recorded even
+    // though the chain-continuation redirect never fires.
+    expect(useSimulationRun.getState().outcomes.lesen).toEqual({
+      raw: 2,
+      total: 2,
+      unanswered: 0,
+    });
   });
 });
 

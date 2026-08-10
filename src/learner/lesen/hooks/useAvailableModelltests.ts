@@ -38,7 +38,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 
-import { listModelltests, type ModelltestRow } from "@/learner/core/api/mockExam";
+import { listModelltests, type ModelltestRow } from "@/learner/core/api/examApi";
 
 export interface UseAvailableLesenModelltestsResult {
   readonly data: ModelltestRow[] | null;

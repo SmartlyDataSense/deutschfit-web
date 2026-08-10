@@ -35,6 +35,20 @@
  *     finalize a mock attempt straight from `lesen_done` (P6; same
  *     session-service routing and `normaliseReport` → `SkillScore[]` fold
  *     as Lesen's own drill branch).
+ *   - **Full-simulation branch** (any other `moduleFilter`, S8 · Task 8.5
+ *     — activated; dormant since S5): `submitHoeren` → records the
+ *     module's raw/total/unanswered outcome into `useSimulationRun` (P10)
+ *     → `advanceSession` → `nextModule !== null` hands the route back to
+ *     the orchestrator (P6: `router.replace('/examen/simulation?
+ *     examSlug=...')`, mirroring mobile's parent-owned chain-continuation
+ *     intent — mobile `LesenSessionScreen.tsx:237–241`, same citation
+ *     Lesen's own branch uses). The real backend always answers a
+ *     finished HÖREN with `next_module:"SCHREIBEN"`
+ *     (`mock-exam-advance/index.ts:128–133`) — this is branch (c) in the
+ *     test suite. `nextModule === null` finalizes into
+ *     `useSimulationRun.setResult` and routes to
+ *     `/examen/simulation/results`; this is DEFENSIVE PARITY ONLY (branch
+ *     c′) and can only fire against a misbehaving server.
  *
  * Both modes fetch from the server, so the loading / error / unsupported /
  * empty gates key off `status` (from `useHoerenSession`), not the mode.
@@ -68,6 +82,7 @@ import { HoerenAudioPlayer } from "../components/HoerenAudioPlayer";
 import { useHoerenSession } from "../hooks/useHoerenSession";
 import { submitHoerenSession } from "../api/submit";
 import { useHoerenResultsStore, type HoerenResultsMode } from "../resultsStore";
+import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 
 export interface HoerenSessionScreenProps {
   readonly attemptId?: string;
@@ -260,7 +275,20 @@ export function HoerenSessionScreen({
           module: "HOEREN",
           duration_ms: Date.now() - startMs,
         });
-        await submitHoeren({ attemptId, answers: player.answers });
+        const submitResponse = await submitHoeren({ attemptId, answers: player.answers });
+        // Web delta (P10): feeds the results donut with real counts —
+        // `raw` is the server-authoritative score, `total`/`unanswered`
+        // come from the same local `SessionScore` derivation this branch
+        // already computes for the (unused-here) drill result.
+        useSimulationRun.getState().recordOutcome(
+          "hoeren",
+          {
+            raw: submitResponse.raw_score,
+            total: localScore.total,
+            unanswered: localScore.unanswered,
+          },
+          player.session.totalDurationMinutes
+        );
         const finishedModule: MockExamModule = "HOEREN";
         const advanced = await advanceSession({
           userId,
@@ -273,7 +301,19 @@ export function HoerenSessionScreen({
           finished_module: "HOEREN",
           next_module: advanced.nextModule,
         });
-        if (advanced.nextModule === null) {
+        if (advanced.nextModule !== null) {
+          // Web delta (P6): parent-owned chain continuation — mobile drops
+          // onto per-module results and documents the parent as the
+          // intended owner (mobile LesenSessionScreen.tsx:237–241). Branch
+          // (c): the real backend always answers a finished HÖREN with
+          // `next_module:"SCHREIBEN"`.
+          router.replace(`/${locale}/app/examen/simulation?examSlug=${player.session.examSlug}`);
+        } else {
+          // DEFENSIVE PARITY ONLY (branch c′) — the real backend never
+          // returns `next_module:null` for a finished HÖREN (advance
+          // always answers "SCHREIBEN"; see the doc comment above). Kept
+          // as shipped S4/S5 dormant parity, edited here only for target
+          // consistency.
           const finalized = await finalizeSession({
             userId,
             examSlug: player.session.examSlug,
@@ -285,9 +325,12 @@ export function HoerenSessionScreen({
             duration_ms: Date.now() - startMs,
           });
           const skills = toSkillScores(normaliseReport(finalized.perCompetenceReport));
-          goToResults(finalized.mockAttemptId, localScore, "graded", skills);
-        } else {
-          goToResults(attemptId, localScore, "graded");
+          useSimulationRun.getState().setResult({
+            report: finalized.perCompetenceReport,
+            skills,
+            finalizedAt: finalized.finalizedAt,
+          });
+          router.replace(`/${locale}/app/examen/simulation/results`);
         }
       } catch {
         goToResults(`local-${sessionId}-${Date.now()}`, localScore, "graded");
@@ -317,7 +360,17 @@ export function HoerenSessionScreen({
     } finally {
       finishSubmitting();
     }
-  }, [isSessionReady, player, attemptId, mockAttemptId, moduleFilter, startMs, goToResults]);
+  }, [
+    isSessionReady,
+    player,
+    attemptId,
+    mockAttemptId,
+    moduleFilter,
+    startMs,
+    goToResults,
+    router,
+    locale,
+  ]);
 
   const onExpire = useCallback(() => {
     void handleSubmit();

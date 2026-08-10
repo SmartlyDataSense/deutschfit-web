@@ -16,9 +16,18 @@
  *      `examApi.finalizeMockExam` directly — the stated web deviation)
  *      → skills derived via `normaliseReport` → results.
  *   2. `attemptId && mockAttemptId`, any other `moduleFilter` — the
- *      full-simulation path. `submitLesen` → `advanceSession` →
- *      `nextModule === null` finalizes now; otherwise hands back local
- *      results with the live `attemptId` (dormant until S5 wires HÖREN).
+ *      full-simulation path (S8 · Task 8.5 — activated; dormant since
+ *      S4/S5). `submitLesen` → records the module's raw/total/unanswered
+ *      outcome into `useSimulationRun` (P10) → `advanceSession` →
+ *      `nextModule !== null` hands the route back to the orchestrator
+ *      (P6: `router.replace('/examen/simulation?examSlug=...')`, mirroring
+ *      mobile's parent-owned chain-continuation intent — mobile
+ *      `LesenSessionScreen.tsx:237–241`); `nextModule === null` finalizes
+ *      into `useSimulationRun.setResult` and routes to
+ *      `/examen/simulation/results` — DEFENSIVE PARITY ONLY, the real
+ *      backend always answers a finished LESEN with `next_module:"HOEREN"`
+ *      (`mock-exam-advance/index.ts:128–133`), so this branch can only
+ *      fire against a misbehaving server.
  *   3. Missing either id — results are local-only, no network call.
  *
  * Every `catch` in branches 1–2 falls through to a local-graded result
@@ -31,8 +40,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import clsx from "clsx";
 
-import { submitLesen } from "@/learner/core/api/examApi";
-import { normaliseReport } from "@/learner/core/api/mockExam";
+import { normaliseReport, submitLesen } from "@/learner/core/api/examApi";
 import { trackEvent } from "@/learner/core/analytics/posthog";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import type { MockExamModule } from "@/learner/core/exam/mockExamSession";
@@ -44,6 +52,7 @@ import { AppText, EmptyState, ProgressBar, Skeleton, TimerPill } from "@/learner
 import { useLesenSession } from "../hooks/useLesenSession";
 import { useLesenResultsStore, type SkillScore } from "../resultsStore";
 import { toSkillScores } from "@/learner/core/exam/skillScores";
+import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 
 export interface LesenSessionScreenProps {
   readonly examSlug?: string;
@@ -202,7 +211,20 @@ export function LesenSessionScreen({
           module: "LESEN",
           duration_ms: Date.now() - startMs,
         });
-        await submitLesen({ attemptId, answers: player.answers });
+        const submitResponse = await submitLesen({ attemptId, answers: player.answers });
+        // Web delta (P10): feeds the results donut with real counts —
+        // `raw` is the server-authoritative score, `total`/`unanswered`
+        // come from the same local `SessionScore` derivation this branch
+        // already computes for the (unused-here) drill result.
+        useSimulationRun.getState().recordOutcome(
+          "lesen",
+          {
+            raw: submitResponse.raw_score,
+            total: localScore.total,
+            unanswered: localScore.unanswered,
+          },
+          player.session.totalDurationMinutes
+        );
         const finishedModule: MockExamModule = "LESEN";
         const advanced = await advanceSession({
           userId,
@@ -215,7 +237,16 @@ export function LesenSessionScreen({
           finished_module: "LESEN",
           next_module: advanced.nextModule,
         });
-        if (advanced.nextModule === null) {
+        if (advanced.nextModule !== null) {
+          // Web delta (P6): parent-owned chain continuation — mobile drops
+          // onto per-module results and documents the parent as the
+          // intended owner (mobile LesenSessionScreen.tsx:237–241).
+          router.replace(`/${locale}/app/examen/simulation?examSlug=${player.session.examSlug}`);
+        } else {
+          // DEFENSIVE PARITY ONLY — the real backend never returns
+          // `next_module:null` for a finished LESEN (advance always answers
+          // "HOEREN"; see the doc comment above). Kept as shipped S4/S5
+          // dormant parity, edited here only for target consistency.
           const finalized = await finalizeSession({
             userId,
             examSlug: player.session.examSlug,
@@ -227,9 +258,12 @@ export function LesenSessionScreen({
             duration_ms: Date.now() - startMs,
           });
           const skills = toSkillScores(normaliseReport(finalized.perCompetenceReport));
-          goToResults(finalized.mockAttemptId, localScore, skills);
-        } else {
-          goToResults(attemptId, localScore);
+          useSimulationRun.getState().setResult({
+            report: finalized.perCompetenceReport,
+            skills,
+            finalizedAt: finalized.finalizedAt,
+          });
+          router.replace(`/${locale}/app/examen/simulation/results`);
         }
       } catch {
         goToResults(`local-${sessionId}-${Date.now()}`, localScore);
@@ -243,7 +277,17 @@ export function LesenSessionScreen({
     // local-only — no network call is attempted (brief P1/P3).
     goToResults(`local-${sessionId}-${Date.now()}`, localScore);
     finishSubmitting();
-  }, [isSessionReady, player, attemptId, mockAttemptId, moduleFilter, startMs, goToResults]);
+  }, [
+    isSessionReady,
+    player,
+    attemptId,
+    mockAttemptId,
+    moduleFilter,
+    startMs,
+    goToResults,
+    router,
+    locale,
+  ]);
 
   const onExpire = useCallback(() => {
     void handleSubmit();
