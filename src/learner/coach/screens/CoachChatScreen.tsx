@@ -30,9 +30,13 @@
  *     prop), the store is consumed exactly once on mount and there is
  *     no separate "clear on thread switch" effect to write — the
  *     remount itself is the clear.
- *   - `DrillChainStartCTA` is not a separate file this task (not listed
- *     in the task-9.4 brief's Files section) — it's a small local
- *     component below, same visual contract as mobile's.
+ *   - `DrillChainStartCTA` was a small local component here in the
+ *     original 9.4 cut (not listed in the task-9.4 brief's Files
+ *     section). Task 9.5 extracted it into `../components/DrillChainStartCTA`
+ *     (its `Produces` contract lists that file explicitly), matching
+ *     mobile's layout — this screen now imports the shared component
+ *     instead of redeclaring it. Visual contract + the inner button's
+ *     `drill-chain-start-cta` testID are unchanged.
  *   - The mobile transcript also computes a scripted-fallback
  *     observation body/connectors pair, but mobile's `buildEmptyTranscript`
  *     only ever pushes the observation item when `hasObservationSignal`
@@ -50,7 +54,7 @@ import { useTranslation } from "react-i18next";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { trackEvent } from "@/learner/core/analytics/posthog";
 import { useOnlineStatus } from "@/learner/ui/chrome/OfflineBanner";
-import { AppButton, AppText } from "@/learner/ui/primitives";
+import { AppText } from "@/learner/ui/primitives";
 
 import { listCoachThreads, loadCoachThreadHistory } from "../api";
 import { CoachBubble } from "../components/CoachBubble";
@@ -58,6 +62,7 @@ import { CoachChatComposer } from "../components/CoachChatComposer";
 import { CoachThreadHeader } from "../components/CoachThreadHeader";
 import { CoachThreadPanel } from "../components/CoachThreadPanel";
 import { CoachTypingIndicator } from "../components/CoachTypingIndicator";
+import { DrillChainStartCTA } from "../components/DrillChainStartCTA";
 import { ObservationCard } from "../components/ObservationCard";
 import { useDrillChainStore, type PendingDrillSummary } from "../drillChainStore";
 import { generateThreadId, useCoachChat, type CoachSendOutcome } from "../hooks/useCoachChat";
@@ -604,51 +609,5 @@ function TranscriptItemView({
       timestampLabel={item.timestampLabel}
       testID={`coach-message-${item.id}`}
     />
-  );
-}
-
-/**
- * `DrillChainStartCTA` — the "Démarrer le drill" card rendered between
- * the observation event and the composer. Not a separate file this
- * task (not listed in the task-9.4 brief's Files section) — colocated
- * here, same visual contract as
- * `deutschfit-mobile/src/features/coach/components/DrillChainStartCTA.tsx`
- * (cream card, teal rail, title + subtitle + CTA button).
- */
-function DrillChainStartCTA({
-  title,
-  subtitle,
-  ctaLabel,
-  onStart,
-  testID,
-}: {
-  readonly title: string;
-  readonly subtitle: string;
-  readonly ctaLabel: string;
-  readonly onStart: () => void;
-  readonly testID?: string;
-}) {
-  return (
-    <div
-      data-testid={testID}
-      className="mx-4 mb-2 flex gap-3 rounded-[var(--radius-md)] bg-bg-card p-4"
-    >
-      <span aria-hidden="true" className="w-0.5 shrink-0 self-stretch rounded-full bg-coach" />
-      <div className="flex flex-1 flex-col gap-2">
-        <AppText family="serif" size="h3" weight="bold" className="truncate">
-          {title}
-        </AppText>
-        <AppText tone="secondary" size="body">
-          {subtitle}
-        </AppText>
-        <AppButton
-          label={ctaLabel}
-          onClick={onStart}
-          variant="solid"
-          testID="drill-chain-start-cta"
-          className="mt-1 self-start"
-        />
-      </div>
-    </div>
   );
 }
