@@ -63,11 +63,11 @@ describe("PriorityTaskCard", () => {
     subtitle: "4 exercices ciblés", body: "corps", ctaLabel: "Commencer", durationLabel: "10 min",
     onCtaPress: vi.fn(),
   };
-  it("active branch composes 'CTA · duration' and is disabled in S3", () => {
+  it("active branch composes 'CTA · duration' and is enabled (S9 Task 9.6 wired the drill session)", () => {
     ui(<PriorityTaskCard {...props} testID="pt" />);
     const cta = screen.getByTestId("pt-cta");
     expect(cta).toHaveTextContent("Commencer · 10 min");
-    expect(cta).toBeDisabled(); // drills land in S9
+    expect(cta).not.toBeDisabled();
   });
   it("empty branch renders the calm placeholder with a disabled CTA", () => {
     ui(<PriorityTaskCard {...props} empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }} testID="pt" />);

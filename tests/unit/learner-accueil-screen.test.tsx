@@ -103,6 +103,18 @@ describe("AccueilScreen", () => {
     await waitFor(() => expect(screen.getByTestId("accueil-priority-task")).toBeInTheDocument());
   });
 
+  // S9 Task 9.6 — the drill card's active-branch CTA is no longer
+  // disabled/noop (S3); it pushes the adaptive drill session route.
+  it("drill card CTA (active branch) pushes the adaptive drill session route", async () => {
+    fetchAccueilHome.mockResolvedValue(homeWithDate);
+    ui();
+    await waitFor(() => expect(screen.getByTestId("accueil-priority-task")).toBeInTheDocument());
+    const cta = screen.getByTestId("accueil-priority-task-cta");
+    expect(cta).not.toBeDisabled();
+    fireEvent.click(cta);
+    expect(push).toHaveBeenCalledWith("/fr/app/drill/session");
+  });
+
   it("no-date payload renders the inline exam-date picker instead of the hero; select saves + refetches", async () => {
     fetchAccueilHome.mockResolvedValue({
       ...homeWithDate,

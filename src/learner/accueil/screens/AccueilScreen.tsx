@@ -27,6 +27,11 @@
  *     modules. Any other/unknown module still falls back to
  *     `/{locale}/app/history`.
  *   - `StatusStrip`'s `onRetry` is a noop stub (mobile: "wired in P6").
+ *   - The drill `PriorityTaskCard`'s active-branch CTA landed in S9
+ *     (Task 9.6): it now pushes `/{locale}/app/drill/session` instead
+ *     of the S3-era `noop` stub. The empty-branch CTA still has
+ *     nothing to navigate to, so it stays wired to `noop` (and the
+ *     card itself keeps that button `disabled`).
  *   - Mobile persists the exam-date save result as a toast
  *     (`useToast().show(...)`); the web learner app has no toast system
  *     yet, so this screen renders an inline `accueil-exam-date-status`
@@ -155,6 +160,13 @@ export function AccueilScreen() {
     },
     [router, locale]
   );
+
+  // S9 Task 9.6 — the drill card's active-branch CTA now launches the
+  // adaptive drill session (System A). The empty-branch CTA still has
+  // no destination and stays wired to `noop` below.
+  const handleOpenDrillSession = useCallback((): void => {
+    router.push(`/${locale}/app/drill/session`);
+  }, [router, locale]);
 
   const handleSelectExamDate = useCallback(
     (isoDate: string): void => {
@@ -356,7 +368,7 @@ export function AccueilScreen() {
           body={t("dashboard:dailyDrill.body")}
           ctaLabel={t("dashboard:dailyDrill.ctaLabel")}
           durationLabel={t("dashboard:dailyDrill.duration")}
-          onCtaPress={noop}
+          onCtaPress={handleOpenDrillSession}
           testID="accueil-priority-task"
         />
       ) : (
