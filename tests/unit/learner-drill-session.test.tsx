@@ -146,6 +146,61 @@ describe("mount", () => {
   });
 });
 
+describe("retry", () => {
+  it("is a pure re-fetch — does NOT call flushOutbox (exactly two flush call sites: mount + post-success answer)", async () => {
+    // Error branch: redo empty -> daily fetch also fires and fails.
+    fetchDrillRecommendationMock.mockResolvedValueOnce({ items: [], reason: "ok" });
+    fetchDrillRecommendationMock.mockResolvedValueOnce({
+      items: [],
+      reason: "error" satisfies DrillReason,
+    });
+
+    const { result } = renderHook(() => useDrillSession());
+    await waitFor(() => expect(result.current.status).toBe("in_progress"));
+    expect(result.current.reason).toBe("error");
+    flushOutboxMock.mockClear(); // drop the mount-time call
+
+    mockFullRedoSession(items(5, "redo")); // the retry itself succeeds
+
+    await act(async () => {
+      await result.current.retry();
+    });
+
+    expect(result.current.status).toBe("in_progress");
+    expect(result.current.items).toHaveLength(5);
+    expect(flushOutboxMock).not.toHaveBeenCalled();
+  });
+
+  it("re-fetches redo-first/home_daily-top-up and resets index/selected", async () => {
+    fetchDrillRecommendationMock.mockResolvedValueOnce({ items: [], reason: "ok" });
+    fetchDrillRecommendationMock.mockResolvedValueOnce({ items: [], reason: "error" });
+
+    const { result } = renderHook(() => useDrillSession());
+    await waitFor(() => expect(result.current.status).toBe("in_progress"));
+    fetchDrillRecommendationMock.mockClear();
+
+    fetchDrillRecommendationMock.mockResolvedValueOnce({ items: items(2, "redo"), reason: "ok" });
+    fetchDrillRecommendationMock.mockResolvedValueOnce({ items: items(3, "daily"), reason: "ok" });
+
+    await act(async () => {
+      await result.current.retry();
+    });
+
+    expect(fetchDrillRecommendationMock).toHaveBeenNthCalledWith(1, {
+      surface: "redo",
+      max_items: 5,
+    });
+    expect(fetchDrillRecommendationMock).toHaveBeenNthCalledWith(2, {
+      surface: "home_daily",
+      max_items: 3,
+    });
+    expect(result.current.items).toHaveLength(5);
+    expect(result.current.index).toBe(0);
+    expect(result.current.selected).toBeUndefined();
+    expect(result.current.status).toBe("in_progress");
+  });
+});
+
 describe("answer", () => {
   it("posts the exact body (never is_correct) and flushes the outbox again on success", async () => {
     mockFullRedoSession(items(5, "redo"));

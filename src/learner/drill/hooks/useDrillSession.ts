@@ -21,6 +21,14 @@
  * stray extra `next()` call after `results`, cannot double-write).
  * Unmounting mid-session writes nothing.
  *
+ * Exactly two `flushOutbox()` call sites — session bootstrap (the mount
+ * effect) and post-success in `answer()`. `retry()` deliberately does
+ * NOT flush: by the time its "Réessayer" button is visible the mount
+ * flush has already resolved, and a pure re-fetch is what keeps it a
+ * pixel-for-pixel mirror of mobile's `useDrillRecommendation.reload`
+ * (review fix round 2 — round 1's `retry()` added a third flush call
+ * site, an undisclosed invariant change).
+ *
  * The mount effect's `cancelled` flag is declared *inside* the effect
  * body (fresh per setup — StrictMode double-invoke re-runs the whole
  * effect against a fresh closure, so there is no stale-ref leak).
@@ -33,13 +41,14 @@
  * `DrillEmptyState` for that case (task-9.6-brief.md D6), which needs a
  * reason to render *before* a summary exists.
  *
- * This hook also returns `retry` — a real re-fetch (mirrors mobile's
- * `useDrillRecommendation.reload`), NOT a dismiss/navigate-away. It
- * shares the composition logic (`fetchSessionItems`) with the mount
- * effect so a `reason: "error"` empty state's "Réessayer" button
- * genuinely retries the recommendation fetch (review fix round 1 —
- * the first cut mis-wired `DrillEmptyState`'s `onRetry` to
- * `router.back()`, silently exiting instead of retrying).
+ * This hook also returns `retry` — a real, pure re-fetch (mirrors
+ * mobile's `useDrillRecommendation.reload` exactly: no outbox flush)
+ * NOT a dismiss/navigate-away. It shares the composition logic
+ * (`fetchSessionItems`) with the mount effect so a `reason: "error"`
+ * empty state's "Réessayer" button genuinely retries the recommendation
+ * fetch (review fix round 1 — the first cut mis-wired
+ * `DrillEmptyState`'s `onRetry` to `router.back()`, silently exiting
+ * instead of retrying).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -177,7 +186,9 @@ export function useDrillSession(): UseDrillSessionResult {
     correctRef.current = 0;
     missedRef.current = [];
     completedRef.current = false;
-    await flushOutbox();
+    // Pure re-fetch — no flushOutbox() here. See module docstring:
+    // exactly two flush call sites (mount, post-success answer);
+    // mobile's `reload` this mirrors never flushes either.
     const { items: nextItems, reason: nextReason } = await fetchSessionItems();
     dailyReasonRef.current = nextReason;
     setReason(nextReason);
