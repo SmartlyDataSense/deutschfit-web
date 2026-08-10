@@ -327,8 +327,41 @@ test.describe.serial("Betreuer hub, chat, correction walkthrough (qa1, real back
           continue;
         }
         await expect(diff).toBeVisible();
-        await expect(page.getByTestId("correction-dimension-erfuellung")).toBeVisible();
-        await expect(page.getByTestId("correction-dimension-strukturen")).toBeVisible();
+
+        // Board-blind (PR #42): the schreiben walkthrough renders whatever
+        // dimension keys the grading payload carries, in the payload's own
+        // order — Goethe ships erfuellung/kohaerenz/wortschatz/strukturen,
+        // telc ships inhalt/formale_richtigkeit/kommunikative_gestaltung.
+        // Pinning either board's key set here is exactly the stale
+        // assertion that breaks on the other board, so this asserts on the
+        // SHAPE of what rendered (>=1 card, each with a non-empty name and
+        // a score line) instead — works for ANY board's dimension_scores.
+        const dimensionCards = page.locator('[data-testid^="correction-dimension-"]');
+        const dimensionCardCount = await dimensionCards.count();
+        expect(dimensionCardCount).toBeGreaterThan(0);
+        for (let i = 0; i < dimensionCardCount; i++) {
+          const dimCard = dimensionCards.nth(i);
+          const testId = await dimCard.getAttribute("data-testid");
+          const headerTexts = await dimCard
+            .locator("> div")
+            .first()
+            .locator("> *")
+            .allTextContents();
+          expect(
+            headerTexts.length,
+            `${testId} header should render a name and a score`
+          ).toBeGreaterThanOrEqual(2);
+          const nameText = headerTexts[0] ?? "";
+          const scoreText = headerTexts[1] ?? "";
+          expect(
+            nameText.trim().length,
+            `${testId} dimension name should be non-empty`
+          ).toBeGreaterThan(0);
+          expect(scoreText, `${testId} score line should carry a numeric score`).toMatch(/\d/);
+        }
+        console.log(
+          `[coach e2e][c] schreiben walkthrough rendered ${dimensionCardCount} board-blind dimension card(s) for submission ${candidate.id}`
+        );
 
         await page.setViewportSize({ width: 390, height: 844 });
         await page.screenshot({
