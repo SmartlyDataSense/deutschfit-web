@@ -31,15 +31,47 @@
  *     §17 — no spinner/percentage copy); also what's showing while a
  *     dispatched `router.replace` is in flight.
  *   - `"schreiben_gate"` — `nextModuleForStatus` resolved to `"SCHREIBEN"`.
- *     Task 8.7 builds the real gate UI; this task ships the placeholder
- *     region + testID only.
+ *     Task 8.7's honest skip: the simulation has no Schreiben leg (P2), so
+ *     this renders mobile's own `simulation:unsupportedDrill.{title,body}`
+ *     copy under the shipped `examen:modelltests.moduleHeader.schreiben`
+ *     section heading — never a fake score, never a text-entry surface.
+ *     The `common:actions.continue` CTA (testID `simulation-schreiben-skip`,
+ *     re-entrancy-ref-guarded) calls `advanceSession({finishedModule:
+ *     "SCHREIBEN"})`; the backend's SCHREIBEN branch always answers
+ *     `{next_module: null, finalize_required: true}` (never creates a
+ *     child attempt — `mock-exam-advance/index.ts:83-97`), so a 200 always
+ *     moves to `"finalizing"`. A 409 `state_mismatch` whose
+ *     `current_status` is `"schreiben_done"` or `"finalized"` (someone
+ *     already advanced this attempt — including the guarded-update race
+ *     `mock-exam-advance/index.ts:83-97,128-133` describes, where a lost
+ *     race silently replays 200 rather than raising) also falls forward to
+ *     `"finalizing"` rather than erroring (idempotent-forward rule). Any
+ *     other rejection renders an inline error under the card and resets
+ *     the re-entrancy ref so re-clicking the same CTA retries — the gate
+ *     itself is never abandoned for a transient failure. A permanent ghost
+ *     link back to `/examen` is always rendered (the attempt stays
+ *     pending; the resume card on the hub picks it back up — there is no
+ *     "abandon" action, anti-req 7).
  *   - `"finalizing"`     — any dispatch that means "the chain is done
  *     playing legs, go finalize": `nextModuleForStatus` resolved to
  *     `"SPRECHEN"` (P3 — the chain has no Sprechen leg; this is the
  *     refresh/reboot-after-schreiben-gate-advance recovery state) OR a
  *     `sprechen_done`/`finalized` status (`nextModuleForStatus` maps both,
  *     along with `abandoned`, to `null` — see the dispatch table below for
- *     how those three are told apart).
+ *     how those three are told apart). A one-shot effect (StrictMode-safe
+ *     ref, mirrors `bootedRef`) calls `finalizeSession`; on 200 (including
+ *     a `replay: true` idempotent replay — identically shaped, same path)
+ *     the server's `per_competence_report` is written verbatim into
+ *     `useSimulationRun.setResult` (schreiben reports `missing`, sprechen
+ *     `deferred` — never invented) and the screen `router.replace`s to the
+ *     results route. Any rejection (including the defensive-only 409
+ *     `not_ready_for_finalize` — unreachable for a FINALIZABLE status)
+ *     flips to `"error"` and resets both the finalize ref AND `bootedRef`,
+ *     so the shared retry CTA re-runs the full boot — which resumes,
+ *     re-reads the now-`schreiben_done` row, redispatches to
+ *     `"finalizing"`, and the finalize effect fires again. A permanent
+ *     ghost link back to `/examen` is rendered here too while finalizing
+ *     is in flight (same anti-req 7 rationale as the gate).
  *   - `"error"`          — `abandoned` status, an `getMockAttempt`-failure
  *     without a usable fallback, or an unexpected boot rejection.
  *     `EmptyState` + explicit retry (re-runs boot; the one-shot ref resets
@@ -134,20 +166,28 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, EmptyState, Skeleton } from "@/learner/ui/primitives";
+import { AppButton, AppText, Card, EmptyState, Skeleton } from "@/learner/ui/primitives";
 
 import {
   getMockAttempt,
   nextModuleForStatus,
+  normaliseReport,
   type MockAttemptRow,
   type MockExamModule,
   type MockExamStatus,
 } from "@/learner/core/api/examApi";
+import { ApiError } from "@/learner/core/api/client";
 import { trackEvent, type ExamBoardTag } from "@/learner/core/analytics/posthog";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import type { ExamBoard } from "@/learner/core/exam/examTypes";
-import { readPendingMockExam, startSession } from "@/learner/core/exam/mockExamSession";
+import {
+  advanceSession,
+  finalizeSession,
+  readPendingMockExam,
+  startSession,
+} from "@/learner/core/exam/mockExamSession";
+import { toSkillScores } from "@/learner/core/exam/skillScores";
 import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 
 export interface SimulationOrchestratorScreenProps {
@@ -181,15 +221,30 @@ function buildLegUrl(base: string, ids: DispatchIds, childId: string | null): st
 export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestratorScreenProps) {
   const router = useRouter();
   const locale = useLocale();
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["examen", "simulation", "common"]);
 
   const isExamContextLoaded = useExamContextStore((s) => s.isLoaded);
   const userId = useLearnerSession((s) => s.session?.user.id ?? null);
 
   const [phase, setPhase] = useState<Phase>("booting");
+  const [gateError, setGateError] = useState(false);
 
   const bootedRef = useRef(false);
   const isMountedRef = useRef(true);
+  // Re-entrancy ref for the Schreiben-gate skip CTA — checked synchronously
+  // inside the click handler (not via AppButton's `disabled` prop, which
+  // only takes effect on the NEXT render) so a double-click under test
+  // (two synchronous `fireEvent.click` calls) still only calls
+  // `advanceSession` once.
+  const gateAdvancingRef = useRef(false);
+  // One-shot ref for the finalize effect — same StrictMode-safe shape as
+  // `bootedRef`. Reset (alongside `bootedRef`) on failure so the shared
+  // error-phase retry CTA re-runs the whole boot, which resumes the
+  // attempt, re-dispatches to `"finalizing"`, and re-arms this ref.
+  const finalizingRef = useRef(false);
+
+  const runExamSlug = useSimulationRun((s) => s.examSlug);
+  const runMockAttemptId = useSimulationRun((s) => s.mockAttemptId);
 
   useEffect(() => {
     void hydrateExamContext();
@@ -358,6 +413,125 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
     router.push(`/${locale}/app/examen`);
   }, [router, locale]);
 
+  // Schreiben-gate CTA (P2, the honest skip): advances the terminal
+  // transition. The backend's SCHREIBEN branch never creates a child
+  // attempt — it always answers `{next_module: null, finalize_required:
+  // true}` — so a 200 unconditionally moves to `"finalizing"`. A 409
+  // `state_mismatch` whose `current_status` already reads
+  // `"schreiben_done"`/`"finalized"` means someone else (or a lost-race
+  // replay on the backend's guarded update, N6) already advanced this
+  // attempt — that's not an error, it's the idempotent-forward case, so it
+  // ALSO moves to `"finalizing"`. Any other rejection stays on the gate
+  // with an inline error; the ref resets so re-clicking the same CTA
+  // retries.
+  const handleSchreibenSkip = useCallback(async (): Promise<void> => {
+    if (gateAdvancingRef.current) return;
+    gateAdvancingRef.current = true;
+    setGateError(false);
+
+    if (!userId || !runExamSlug || !runMockAttemptId) {
+      // Defensive only — the gate is unreachable without a beginRun-ed
+      // simulation run identity (dispatch only enters this phase after
+      // `beginRun` has already set both fields).
+      console.warn(
+        "[SimulationOrchestratorScreen] schreiben-gate skip: missing run identity (userId/examSlug/mockAttemptId)."
+      );
+      if (isMountedRef.current) setGateError(true);
+      gateAdvancingRef.current = false;
+      return;
+    }
+
+    try {
+      const advanced = await advanceSession({
+        userId,
+        examSlug: runExamSlug,
+        mockAttemptId: runMockAttemptId,
+        finishedModule: "SCHREIBEN",
+      });
+      if (!isMountedRef.current) return;
+      trackEvent("exam_advance", {
+        attempt_id: runMockAttemptId,
+        finished_module: "SCHREIBEN",
+        next_module: advanced.nextModule,
+      });
+      setPhase("finalizing");
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      if (err instanceof ApiError && err.status === 409) {
+        const body = err.bodyJson as { error?: string; current_status?: string } | undefined;
+        if (
+          body?.error === "state_mismatch" &&
+          (body.current_status === "schreiben_done" || body.current_status === "finalized")
+        ) {
+          setPhase("finalizing");
+          return;
+        }
+      }
+      console.warn("[SimulationOrchestratorScreen] schreiben-gate advance failed:", err);
+      setGateError(true);
+      gateAdvancingRef.current = false;
+    }
+  }, [runExamSlug, runMockAttemptId, userId]);
+
+  // Finalize (one-shot, StrictMode-safe — mirrors `bootedRef`). Writes the
+  // server's report verbatim into `useSimulationRun` (schreiben `missing`,
+  // sprechen `deferred` — never a pretend grade) then hands off to the
+  // results route. `replay: true` responses are identically shaped —
+  // same path. Any failure (including the defensive-only 409
+  // `not_ready_for_finalize`) flips to the shared error phase and resets
+  // BOTH this ref and `bootedRef`, so the shared retry CTA re-runs the
+  // full boot — which resumes, re-reads the row, redispatches back to
+  // `"finalizing"`, and re-arms this effect.
+  const runFinalize = useCallback(async (): Promise<void> => {
+    if (!userId || !runExamSlug || !runMockAttemptId) {
+      console.warn(
+        "[SimulationOrchestratorScreen] finalize: missing run identity (userId/examSlug/mockAttemptId)."
+      );
+      if (isMountedRef.current) {
+        setPhase("error");
+        finalizingRef.current = false;
+        bootedRef.current = false;
+      }
+      return;
+    }
+    try {
+      const result = await finalizeSession({
+        userId,
+        examSlug: runExamSlug,
+        mockAttemptId: runMockAttemptId,
+      });
+      if (!isMountedRef.current) return;
+      trackEvent("exam_finalized", { attempt_id: result.mockAttemptId });
+      const skills = toSkillScores(normaliseReport(result.perCompetenceReport));
+      useSimulationRun.getState().setResult({
+        report: result.perCompetenceReport,
+        skills,
+        finalizedAt: result.finalizedAt,
+      });
+      router.replace(`/${locale}/app/examen/simulation/results`);
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.warn("[SimulationOrchestratorScreen] finalize failed:", err);
+      setPhase("error");
+      finalizingRef.current = false;
+      bootedRef.current = false;
+    }
+  }, [locale, router, runExamSlug, runMockAttemptId, userId]);
+
+  useEffect(() => {
+    if (phase !== "finalizing") return;
+    if (finalizingRef.current) return;
+    finalizingRef.current = true;
+    void runFinalize();
+    // `runFinalize` intentionally excluded from deps for the same reason
+    // `runBoot` is excluded from the boot effect above: `router`/`t` are
+    // not referentially stable across renders in every test-mock shape
+    // this suite uses, and this effect's only job is the ONE-SHOT finalize
+    // call gated on `finalizingRef` — re-arming it on every recreation of
+    // `runFinalize` would defeat that guard.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   return (
     <div
       className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8 lg:px-8"
@@ -372,18 +546,56 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
       ) : null}
 
       {phase === "schreiben_gate" ? (
-        // Task 8.7 builds the real Schreiben gate UI. This region is a
-        // deliberate placeholder — the phase transition (the part this
-        // task owns) is what's under test; the rendered content is not.
-        <div data-testid="simulation-orchestrator-schreiben-gate">
-          <Skeleton.Card />
+        <div className="flex flex-col gap-4" data-testid="simulation-schreiben-gate">
+          <div className="flex flex-col gap-1">
+            <AppText size="h2" weight="bold">
+              {t("examen:modelltests.moduleHeader.schreiben.title")}
+            </AppText>
+            <AppText tone="secondary">
+              {t("examen:modelltests.moduleHeader.schreiben.subtitle")}
+            </AppText>
+          </div>
+
+          <Card>
+            <AppText size="h3" weight="semi">
+              {t("simulation:unsupportedDrill.title")}
+            </AppText>
+            <AppText tone="secondary" className="mt-2">
+              {t("simulation:unsupportedDrill.body")}
+            </AppText>
+          </Card>
+
+          {gateError ? (
+            <AppText tone="warning" size="small" testID="simulation-schreiben-gate-error">
+              {t("common:error.genericBody")}
+            </AppText>
+          ) : null}
+
+          <AppButton
+            testID="simulation-schreiben-skip"
+            label={t("common:actions.continue")}
+            onClick={() => void handleSchreibenSkip()}
+            variant="solid"
+          />
+          <AppButton
+            testID="simulation-schreiben-gate-back"
+            label={t("common:actions.back")}
+            onClick={handleBackToExamen}
+            variant="ghost"
+          />
         </div>
       ) : null}
 
       {phase === "finalizing" ? (
-        <div className="flex flex-col gap-4" data-testid="simulation-orchestrator-finalizing">
+        <div className="flex flex-col gap-4" data-testid="simulation-finalizing">
           <Skeleton.Block width="60%" height={24} />
           <Skeleton.Card />
+          <AppButton
+            testID="simulation-finalizing-back"
+            label={t("common:actions.back")}
+            onClick={handleBackToExamen}
+            variant="ghost"
+          />
         </div>
       ) : null}
 

@@ -11,6 +11,8 @@ const {
   startSessionMock,
   readPendingMockExamMock,
   getMockAttemptMock,
+  advanceSessionMock,
+  finalizeSessionMock,
   trackEventMock,
   pushMock,
   replaceMock,
@@ -20,6 +22,8 @@ const {
   startSessionMock: vi.fn(),
   readPendingMockExamMock: vi.fn(),
   getMockAttemptMock: vi.fn(),
+  advanceSessionMock: vi.fn(),
+  finalizeSessionMock: vi.fn(),
   trackEventMock: vi.fn(),
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -43,6 +47,8 @@ vi.mock("@/learner/core/exam/mockExamSession", async (importOriginal) => {
     ...actual,
     startSession: (...args: unknown[]) => startSessionMock(...args),
     readPendingMockExam: (...args: unknown[]) => readPendingMockExamMock(...args),
+    advanceSession: (...args: unknown[]) => advanceSessionMock(...args),
+    finalizeSession: (...args: unknown[]) => finalizeSessionMock(...args),
   };
 });
 vi.mock("@/learner/core/analytics/posthog", async (importOriginal) => {
@@ -68,6 +74,7 @@ import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 import { SimulationOrchestratorScreen } from "@/learner/exam/screens/SimulationOrchestratorScreen";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 import type { MockAttemptRow } from "@/learner/core/api/examApi";
+import { ApiError } from "@/learner/core/api/client";
 
 function attemptRow(
   overrides: Partial<MockAttemptRow> & { status: MockAttemptRow["status"] }
@@ -91,6 +98,8 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     startSessionMock.mockReset();
     readPendingMockExamMock.mockReset();
     getMockAttemptMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
     trackEventMock.mockReset();
     pushMock.mockReset();
     replaceMock.mockReset();
@@ -186,7 +195,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     expect(trackEventMock.mock.calls.filter((c) => c[0] === "simulation_started")).toHaveLength(0);
   });
 
-  it("resumed at hoeren_done: dispatches to the schreiben gate phase (8.7 owns the real UI; this task ships the placeholder region)", async () => {
+  it("resumed at hoeren_done: dispatches to the schreiben gate phase (8.7 owns the real UI, shipped under testID simulation-schreiben-gate)", async () => {
     startSessionMock.mockResolvedValue({
       mockAttemptId: "mock-1",
       examSlug: "goethe-b1-01",
@@ -201,7 +210,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("simulation-orchestrator-schreiben-gate")).toBeInTheDocument()
+      expect(screen.getByTestId("simulation-schreiben-gate")).toBeInTheDocument()
     );
     expect(replaceMock).not.toHaveBeenCalled();
   });
@@ -217,11 +226,12 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
       resumed: true,
     });
     getMockAttemptMock.mockResolvedValue(attemptRow({ status: "schreiben_done" }));
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // hold — this test only asserts the phase transition, not finalize's outcome.
 
     renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("simulation-orchestrator-finalizing")).toBeInTheDocument()
+      expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument()
     );
     expect(screen.queryByTestId("simulation-orchestrator-error")).not.toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
@@ -238,11 +248,12 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
       resumed: true,
     });
     getMockAttemptMock.mockResolvedValue(attemptRow({ status: "sprechen_done" }));
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // hold — this test only asserts the phase transition, not finalize's outcome.
 
     renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("simulation-orchestrator-finalizing")).toBeInTheDocument()
+      expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument()
     );
   });
 
@@ -388,5 +399,262 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     });
 
     await waitFor(() => expect(startSessionMock).toHaveBeenCalledTimes(1));
+  });
+});
+
+// The exact backend default `per_competence_report` shape
+// (`mock-exam-finalize/index.ts:135-139`): schreiben has no linked
+// submission → "missing"; sprechen is always deferred (Phase 9, no
+// Sprechen leg exists yet) — never a pretend grade for either.
+const DEFAULT_FINALIZE_REPORT = {
+  lesen: { status: "missing" as const },
+  hoeren: { status: "missing" as const },
+  schreiben: { status: "missing" as const },
+  sprechen: { status: "deferred" as const },
+};
+
+async function bootToSchreibenGate(): Promise<void> {
+  startSessionMock.mockResolvedValue({
+    mockAttemptId: "mock-1",
+    examSlug: "goethe-b1-01",
+    status: "hoeren_done",
+    nextModule: "SCHREIBEN",
+    lesenAttemptId: null,
+    hoerenAttemptId: null,
+    resumed: true,
+  });
+  getMockAttemptMock.mockResolvedValue(attemptRow({ status: "hoeren_done" }));
+
+  renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+  await waitFor(() => expect(screen.getByTestId("simulation-schreiben-gate")).toBeInTheDocument());
+}
+
+describe("SimulationOrchestratorScreen — S8 Task 8.7 (schreiben gate + finalize)", () => {
+  beforeEach(() => {
+    startSessionMock.mockReset();
+    readPendingMockExamMock.mockReset();
+    getMockAttemptMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
+    trackEventMock.mockReset();
+    pushMock.mockReset();
+    replaceMock.mockReset();
+    backMock.mockReset();
+    hydrateMock.mockReset();
+    readPendingMockExamMock.mockResolvedValue(null);
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
+    useExamContextStore.setState({ board: "goethe", level: "b1", isLoaded: true } as never);
+    useSimulationRun.getState().clear();
+  });
+  afterEach(cleanup);
+
+  it("gate renders the unsupportedDrill copy + the schreiben module header, and NEVER a score or a text input (honesty)", async () => {
+    // Held pending — this test only asserts the gate's own DOM, not the
+    // finalize chain that a click would trigger.
+    finalizeSessionMock.mockReturnValue(new Promise(() => {}));
+
+    await bootToSchreibenGate();
+
+    expect(screen.getByText("Schreiben · Entraînement par module")).toBeInTheDocument();
+    expect(
+      screen.getByText("Choisis un modelltest pour t'entraîner uniquement sur l'expression écrite.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Bientôt disponible")).toBeInTheDocument();
+    expect(screen.getByText("Ce mode arrive bientôt pour ce module.")).toBeInTheDocument();
+
+    // Honesty assertions — no fake grade, no text-entry surface.
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(document.querySelector("textarea")).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+\s*\/\s*\d+/)).not.toBeInTheDocument();
+
+    expect(screen.getByTestId("simulation-schreiben-skip")).toHaveTextContent("Continuer");
+  });
+
+  it("skip CTA calls advanceSession with finishedModule SCHREIBEN exactly once under a synchronous double-click, then moves to finalizing", async () => {
+    const deferred = (() => {
+      let resolve!: (v: unknown) => void;
+      const promise = new Promise((r) => (resolve = r));
+      return { promise, resolve };
+    })();
+    advanceSessionMock.mockReturnValue(deferred.promise);
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // isolate this test to the advance call.
+
+    await bootToSchreibenGate();
+
+    const skip = screen.getByTestId("simulation-schreiben-skip");
+    fireEvent.click(skip);
+    fireEvent.click(skip); // second click while the first advance is still in flight (re-entrancy)
+
+    expect(advanceSessionMock).toHaveBeenCalledTimes(1);
+    expect(advanceSessionMock).toHaveBeenCalledWith({
+      userId: "u1",
+      examSlug: "goethe-b1-01",
+      mockAttemptId: "mock-1",
+      finishedModule: "SCHREIBEN",
+    });
+
+    await act(async () => {
+      deferred.resolve({
+        mockAttemptId: "mock-1",
+        examSlug: "goethe-b1-01",
+        nextModule: null,
+        finalizeRequired: true,
+      });
+    });
+
+    await waitFor(() => expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument());
+    expect(trackEventMock).toHaveBeenCalledWith("exam_advance", {
+      attempt_id: "mock-1",
+      finished_module: "SCHREIBEN",
+      next_module: null,
+    });
+  });
+
+  it("advanceSession rejecting with a state_mismatch 409 whose current_status is schreiben_done falls forward to finalizing without ever showing an error", async () => {
+    advanceSessionMock.mockRejectedValueOnce(
+      new ApiError(409, "state_mismatch", undefined, {
+        error: "state_mismatch",
+        current_status: "schreiben_done",
+      })
+    );
+    finalizeSessionMock.mockReturnValue(new Promise(() => {})); // isolate to the fall-forward transition itself.
+
+    await bootToSchreibenGate();
+
+    fireEvent.click(screen.getByTestId("simulation-schreiben-skip"));
+
+    await waitFor(() => expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument());
+    expect(screen.queryByTestId("simulation-orchestrator-error")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("simulation-schreiben-gate-error")).not.toBeInTheDocument();
+  });
+
+  it("finalizing calls finalizeSession exactly once even under StrictMode double-invoke, writes the server report verbatim into the run store (schreiben missing, sprechen deferred), and replaces to the results route", async () => {
+    startSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "schreiben_done",
+      nextModule: "SPRECHEN",
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    getMockAttemptMock.mockResolvedValue(attemptRow({ status: "schreiben_done" }));
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T12:00:00.000Z",
+      perCompetenceReport: DEFAULT_FINALIZE_REPORT,
+      replay: false,
+    });
+
+    const i18n = initLearnerI18n("fr");
+    render(
+      <I18nextProvider i18n={i18n}>
+        <StrictMode>
+          <SimulationOrchestratorScreen examSlug="goethe-b1-01" />
+        </StrictMode>
+      </I18nextProvider>
+    );
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation/results")
+    );
+    expect(finalizeSessionMock).toHaveBeenCalledTimes(1);
+    expect(finalizeSessionMock).toHaveBeenCalledWith({
+      userId: "u1",
+      examSlug: "goethe-b1-01",
+      mockAttemptId: "mock-1",
+    });
+    expect(trackEventMock).toHaveBeenCalledWith("exam_finalized", { attempt_id: "mock-1" });
+
+    const result = useSimulationRun.getState().result;
+    expect(result?.finalizedAt).toBe("2026-08-09T12:00:00.000Z");
+    expect(result?.skills).toHaveLength(4);
+    expect(result?.skills.find((s) => s.key === "schreiben")?.status).toBe("missing");
+    expect(result?.skills.find((s) => s.key === "sprechen")?.status).toBe("deferred");
+  });
+
+  it("finalizing accepts a replay:true response the same way as a fresh 200 (idempotent replay)", async () => {
+    startSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "sprechen_done",
+      nextModule: null,
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    getMockAttemptMock.mockResolvedValue(attemptRow({ status: "sprechen_done" }));
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T12:00:00.000Z",
+      perCompetenceReport: DEFAULT_FINALIZE_REPORT,
+      replay: true,
+    });
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation/results")
+    );
+    expect(useSimulationRun.getState().result?.skills).toHaveLength(4);
+  });
+
+  it("finalize rejection renders the shared error phase, and retry re-runs boot then finalize successfully", async () => {
+    startSessionMock.mockResolvedValueOnce({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "schreiben_done",
+      nextModule: "SPRECHEN",
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    getMockAttemptMock.mockResolvedValue(attemptRow({ status: "schreiben_done" }));
+    finalizeSessionMock.mockRejectedValueOnce(new Error("network_error"));
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-orchestrator-error")).toBeInTheDocument()
+    );
+    expect(finalizeSessionMock).toHaveBeenCalledTimes(1);
+
+    startSessionMock.mockResolvedValueOnce({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "schreiben_done",
+      nextModule: "SPRECHEN",
+      lesenAttemptId: null,
+      hoerenAttemptId: null,
+      resumed: true,
+    });
+    finalizeSessionMock.mockResolvedValueOnce({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T12:00:00.000Z",
+      perCompetenceReport: DEFAULT_FINALIZE_REPORT,
+      replay: false,
+    });
+
+    fireEvent.click(screen.getByTestId("simulation-orchestrator-error-retry"));
+
+    await waitFor(() => expect(finalizeSessionMock).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation/results")
+    );
+  });
+
+  it("gate and finalizing both render a back-to-/examen ghost link (escape hatch)", async () => {
+    finalizeSessionMock.mockReturnValue(new Promise(() => {}));
+    await bootToSchreibenGate();
+
+    fireEvent.click(screen.getByTestId("simulation-schreiben-gate-back"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen");
   });
 });
