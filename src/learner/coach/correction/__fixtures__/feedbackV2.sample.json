@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "grader_version": "monologue-v2.0.0",
+  "graded_at": "2026-05-05T14:32:11Z",
+  "submission_id": "1455dcc4-b3d1-4a3d-b8e7-93515d782782",
+  "cert_code": "GOETHE",
+  "level_code": "B1",
+  "monologue_type": "presentation_with_outline",
+  "overall_score": 67,
+  "band": "proche_du_seuil",
+  "band_downgrade_reason": null,
+  "feedback_blocked_reason": null,
+  "dimension_scores": {
+    "aufgabe": {
+      "score": 70,
+      "cap_applied": 80,
+      "cap_reason": "missed_bullet",
+      "justification_de": "Vier von fünf Folien werden angesprochen; die Situation im Heimatland fehlt. Die Einleitung wird klar gerahmt.",
+      "justification_fr": "Tu couvres 4 folies sur 5. Reprends la troisième — la situation au pays — la prochaine fois.",
+      "evidence_spans": [
+        {
+          "transcript_offset_start": 142,
+          "transcript_offset_end": 198,
+          "quote_de": "Heute möchte ich über die Vorteile",
+          "label": "intro_frame"
+        }
+      ]
+    },
+    "kohaerenz": {
+      "score": 65,
+      "cap_applied": null,
+      "cap_reason": null,
+      "justification_de": "Der Übergang zur Schlussfolgerung erfolgt abrupt; Signposting bleibt auf einfache Marker beschränkt.",
+      "justification_fr": "L'enchaînement tient, mais ta conclusion arrive sans transition. Pose un connecteur avant.",
+      "evidence_spans": []
+    },
+    "wortschatz": {
+      "score": 60,
+      "cap_applied": null,
+      "cap_reason": null,
+      "justification_de": "Wortschatz ist niveau-angemessen, jedoch wenig variiert.",
+      "justification_fr": "Vise *allerdings* et *außerdem* pour varier le lexique.",
+      "evidence_spans": []
+    },
+    "grammatik": {
+      "score": 65,
+      "cap_applied": null,
+      "cap_reason": null,
+      "justification_de": "Bei *ein Online-Kurs* fehlt der Akkusativ.",
+      "justification_fr": "Reprends l'accusatif après *haben*: *einen* Online-Kurs.",
+      "evidence_spans": [
+        {
+          "transcript_offset_start": 312,
+          "transcript_offset_end": 348,
+          "quote_de": "Ich habe ein Online-Kurs gemacht",
+          "label": "accusative_error"
+        }
+      ]
+    },
+    "aussprache": {
+      "score": 75,
+      "cap_applied": null,
+      "cap_reason": null,
+      "justification_de": "Verständlichkeit ist durchgehend gegeben; einzelne Hesitationen treten auf.",
+      "justification_fr": "Diction claire. Les hésitations restent ponctuelles.",
+      "evidence_spans": []
+    }
+  },
+  "asr_evidence": {
+    "transcript": "Heute möchte ich über die Vorteile von Online-Lernen sprechen. Zuerst spreche ich über meine Erfahrung. Ich habe ein Online-Kurs gemacht. Vielen Dank für eure Aufmerksamkeit.",
+    "duration_seconds": 178.4,
+    "intelligibility_score": 0.92,
+    "intelligibility_basis": "logprob_normalized",
+    "low_confidence_spans": [],
+    "provider": "whisper-1"
+  },
+  "summary": {
+    "headline_fr": "Tu couvres 4 folies sur 5 — reprends la troisième, le reste tient.",
+    "strengths_fr": [
+      "Tu cadres l'introduction proprement.",
+      "Ta diction reste claire sur toute la durée."
+    ],
+    "growth_areas_fr": [
+      "La folie 3 (situation au pays) manque.",
+      "Pose un connecteur avant la conclusion."
+    ],
+    "headline_de": "Vier von fünf Folien abgedeckt; der dritte Aspekt bleibt unbearbeitet.",
+    "strengths_de": [
+      "Einleitung wird klar gerahmt.",
+      "Verständlichkeit bleibt durchgehend stabil."
+    ],
+    "growth_areas_de": [
+      "Folie 3 (Situation im Heimatland) fehlt.",
+      "Übergang zur Schlussfolgerung sollte markiert werden."
+    ]
+  },
+  "next_steps": [
+    {
+      "id": "ns_1",
+      "label_fr": "Refais la même consigne en couvrant les 5 folies dans l'ordre.",
+      "label_de": "Wiederhole die Aufgabe und decke alle fünf Folien in der richtigen Reihenfolge ab.",
+      "linked_dimension": "aufgabe",
+      "drill_hint": null
+    },
+    {
+      "id": "ns_2",
+      "label_fr": "Place *deshalb* ou *allerdings* avant ta conclusion.",
+      "label_de": "Setze einen Konnektor wie 'deshalb' oder 'allerdings' vor die Schlussfolgerung.",
+      "linked_dimension": "kohaerenz",
+      "drill_hint": null
+    }
+  ],
+  "metadata": {
+    "prompt_brief_keys_used": ["instructions_de", "outline_steps_de"],
+    "weights_applied": {
+      "aufgabe": 0.3,
+      "kohaerenz": 0.2,
+      "wortschatz": 0.2,
+      "grammatik": 0.2,
+      "aussprache": 0.1
+    },
+    "rubric_descriptor_set": "B1",
+    "grader_latency_ms": 4250,
+    "model": "gpt-4.1-2026-04-15"
+  }
+}

@@ -1,26 +1,12 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-
-import { AppText, EmptyState } from "@/learner/ui/primitives";
+import { BetreuerHubScreen } from "@/learner/coach/screens/BetreuerHubScreen";
 
 /**
- * Coach (Betreuer tab) placeholder — see `apprendre/page.tsx` for the
- * rationale on `"use client"` + why this only wires the nav shell.
+ * Coach (Betreuer tab) route — S9 Task 9.3. Replaces the placeholder
+ * empty state with the real Betreuer hub (4 mode tiles). See
+ * `apprendre/page.tsx` for the rationale on `"use client"` here.
  */
 export default function CoachPage() {
-  const { t } = useTranslation(["coach", "common"]);
-
-  return (
-    <div className="flex flex-col gap-6 px-4 py-10 md:px-8">
-      <AppText as="h1" size="h1" weight="bold" family="serif">
-        {t("coach:home.title")}
-      </AppText>
-      <EmptyState
-        testID="coach-empty-state"
-        title={t("common:empty.genericTitle")}
-        description={t("common:empty.genericBody")}
-      />
-    </div>
-  );
+  return <BetreuerHubScreen />;
 }

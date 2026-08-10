@@ -13,10 +13,11 @@
  * Composes primitives from `@/learner/ui/primitives` only — no hex /
  * font-size / spacing literals.
  *
- * S3 · Task 3.8 parity note — the drill session lands in S9. Both the
- * active and the empty-branch CTA render `disabled` in this slice; no
- * navigation is wired yet. `onCtaPress` is still threaded through (and
- * still asserted in tests) so S9 only has to drop the `disabled` flag.
+ * S3 · Task 3.8 parity note — the drill session landed in S9 (Task
+ * 9.6). The active-branch CTA is enabled and wired to
+ * `router.push(.../drill/session)` by `AccueilScreen`; the empty-branch
+ * CTA stays `disabled` — there is still nothing to navigate to when no
+ * priority task exists.
  */
 import { AppButton, AppText, Card, Chip } from "@/learner/ui/primitives";
 
@@ -102,7 +103,6 @@ export function PriorityTaskCard({
           label={composedCta}
           onClick={onCtaPress}
           variant="premium"
-          disabled
           testID={testID ? `${testID}-cta` : undefined}
         />
       </div>
