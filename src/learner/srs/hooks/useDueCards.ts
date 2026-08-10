@@ -42,9 +42,7 @@ export function mapRowToCard(row: SRSCardRow): SRSCard {
   };
 }
 
-export async function queryDueCards(
-  options: UseDueCardsOptions = {}
-): Promise<readonly SRSCard[]> {
+export async function queryDueCards(options: UseDueCardsOptions = {}): Promise<readonly SRSCard[]> {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const nowMs = (options.now?.() ?? new Date()).getTime();
   const deckFilter = options.deck;
@@ -54,7 +52,11 @@ export async function queryDueCards(
   return rows
     .filter((row) => row.next_due <= nowMs)
     .filter((row) =>
-      deckFilter === undefined ? true : deckFilter === null ? row.deck === null : row.deck === deckFilter
+      deckFilter === undefined
+        ? true
+        : deckFilter === null
+          ? row.deck === null
+          : row.deck === deckFilter
     )
     .sort((a, b) => a.next_due - b.next_due)
     .slice(0, limit)

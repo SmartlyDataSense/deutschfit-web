@@ -65,7 +65,7 @@ function clampEase(value: number): number {
 export function schedule(
   state: SM2CardState,
   rating: SRSRating,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): SM2Result {
   const isNew = state.intervalDays <= 0;
   // Non-finite ease (NaN / ±Infinity) is treated as corrupt state and
@@ -89,16 +89,12 @@ export function schedule(
     }
     case "good": {
       easeAfter = currentEase;
-      intervalDaysAfter = isNew
-        ? 1
-        : Math.max(1, Math.round(state.intervalDays * currentEase));
+      intervalDaysAfter = isNew ? 1 : Math.max(1, Math.round(state.intervalDays * currentEase));
       break;
     }
     case "easy": {
       easeAfter = clampEase(currentEase + 0.15);
-      intervalDaysAfter = isNew
-        ? 4
-        : Math.max(1, Math.round(state.intervalDays * currentEase * 2));
+      intervalDaysAfter = isNew ? 4 : Math.max(1, Math.round(state.intervalDays * currentEase * 2));
       break;
     }
   }
