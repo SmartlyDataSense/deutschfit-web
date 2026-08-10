@@ -71,10 +71,28 @@ export function SettingsRow({
 
   const className = clsx(
     "flex min-h-14 w-full items-center gap-3 rounded-[var(--radius-md)] bg-bg-card px-4 py-3 text-left transition",
-    disabled ? "opacity-50" : "hover:opacity-90 active:opacity-70"
+    disabled ? "cursor-not-allowed opacity-50" : "hover:opacity-90 active:opacity-70"
   );
 
   if (href) {
+    // Mobile parity: a disabled row is never interactive regardless of
+    // whether it would otherwise be a link or a button (mobile's
+    // SettingsRow.tsx:130-141 renders a plain, non-Pressable View for
+    // any disabled row). A live `<a href>` here would stay clickable and
+    // navigable even while "disabled" — so disabled+href drops the
+    // anchor semantics entirely instead of just dimming it.
+    if (disabled) {
+      return (
+        <span
+          aria-disabled="true"
+          aria-label={ariaLabel}
+          data-testid={testID}
+          className={clsx(className, "pointer-events-none")}
+        >
+          {body}
+        </span>
+      );
+    }
     return (
       <a
         href={href}
@@ -96,7 +114,7 @@ export function SettingsRow({
       disabled={disabled}
       aria-label={ariaLabel}
       data-testid={testID}
-      className={clsx(className, disabled && "cursor-not-allowed")}
+      className={className}
     >
       {body}
     </button>

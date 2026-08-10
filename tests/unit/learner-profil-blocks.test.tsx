@@ -18,6 +18,7 @@ describe("SettingsRow (S11.3)", () => {
     render(<SettingsRow label="Parcours" value="B1" onClick={onClick} testID="row-x" />);
     fireEvent.click(screen.getByTestId("row-x"));
     expect(onClick).toHaveBeenCalledOnce();
+    expect(screen.getByText("Parcours")).toBeInTheDocument();
     expect(screen.getByText("B1")).toBeInTheDocument();
   });
 
@@ -29,6 +30,8 @@ describe("SettingsRow (S11.3)", () => {
         <SettingsRow label="Off" disabled onClick={onClick} testID="row-off" />
       </>
     );
+    expect(screen.getByText("Supprimer")).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
     expect(within(screen.getByTestId("row-warn")).queryByTestId("row-warn-chevron")).toBeNull();
     fireEvent.click(screen.getByTestId("row-off"));
     expect(onClick).not.toHaveBeenCalled();
@@ -40,6 +43,17 @@ describe("SettingsRow (S11.3)", () => {
     expect(anchor.tagName).toBe("A");
     expect(anchor).toHaveAttribute("target", "_blank");
     expect(anchor).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  });
+
+  it("href + disabled renders a non-navigable, non-interactive row (no live href)", () => {
+    render(
+      <SettingsRow label="Confidentialité" href="/fr/legal/privacy" disabled testID="row-disabled-link" />
+    );
+    const row = screen.getByTestId("row-disabled-link");
+    expect(row.tagName).not.toBe("A");
+    expect(row).not.toHaveAttribute("href");
+    expect(row).toHaveAttribute("aria-disabled", "true");
+    expect(row.className).toContain("pointer-events-none");
   });
 });
 
@@ -88,6 +102,22 @@ describe("SettingsPickerRow (S11.3)", () => {
     expect(screen.queryByTestId("picker-modal")).toBeNull(); // closes on select
   });
 
+  it("marks the selected option via aria-checked, highlight and check mark", () => {
+    const onChange = vi.fn();
+    render(
+      <SettingsPickerRow label="Niveau CECR" value="b1" options={options} onChange={onChange} testID="picker" />
+    );
+    fireEvent.click(screen.getByTestId("picker-trigger"));
+    const selectedOption = screen.getByTestId("picker-b1");
+    const unselectedOption = screen.getByTestId("picker-b2");
+    expect(selectedOption).toHaveAttribute("aria-checked", "true");
+    expect(unselectedOption).toHaveAttribute("aria-checked", "false");
+    expect(selectedOption.className).toContain("bg-bg-hero");
+    expect(unselectedOption.className).not.toContain("bg-bg-hero");
+    expect(within(selectedOption).getByText("✓")).toBeInTheDocument();
+    expect(within(unselectedOption).queryByText("✓")).toBeNull();
+  });
+
   it("disabled options do not fire onChange and show their caveat", () => {
     const onChange = vi.fn();
     render(
@@ -131,11 +161,32 @@ describe("ConfirmExamChangeModal (S11.3)", () => {
     );
     const modal = screen.getByTestId("settings-confirm-exam-change-modal");
     expect(modal).toHaveAttribute("role", "alertdialog");
+    expect(modal).toHaveAttribute("aria-modal", "true");
     expect(screen.getByText("Tu passes de B1 à B2.")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("settings-confirm-exam-change-modal-confirm"));
     expect(onConfirm).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByTestId("settings-confirm-exam-change-modal-cancel"));
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("board variant's confirm CTA uses bg-warning-red", () => {
+    render(<ConfirmExamChangeModal {...base} variant="board" />);
+    const confirmButton = screen.getByTestId("settings-confirm-exam-change-modal-confirm");
+    expect(confirmButton.className).toContain("bg-warning-red");
+    expect(confirmButton.className).not.toContain("bg-text-primary");
+  });
+
+  it("level variant's confirm CTA uses bg-text-primary", () => {
+    render(<ConfirmExamChangeModal {...base} variant="level" />);
+    const confirmButton = screen.getByTestId("settings-confirm-exam-change-modal-confirm");
+    expect(confirmButton.className).toContain("bg-text-primary");
+    expect(confirmButton.className).not.toContain("bg-warning-red");
+  });
+
+  it("moves focus to the dialog card on open", () => {
+    render(<ConfirmExamChangeModal {...base} variant="board" />);
+    const modal = screen.getByTestId("settings-confirm-exam-change-modal");
+    expect(modal).toHaveFocus();
   });
 
   it("renders nothing when not visible", () => {
