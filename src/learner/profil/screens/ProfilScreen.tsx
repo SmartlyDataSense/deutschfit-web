@@ -47,6 +47,12 @@ export function ProfilScreen() {
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const signOutDialogRef = useRef<HTMLDivElement | null>(null);
+  // Synchronous re-entrancy guard (M-2 review fix — same idiom as every
+  // other mutating screen in this slice, e.g. `DeleteAccountScreen.tsx`'s
+  // `inFlightRef`): `signingOut` (state) only takes effect on the next
+  // render, so a second click landing before that re-render would still
+  // see `disabled={false}` and fire a second `signOut()` call.
+  const signOutInFlightRef = useRef(false);
 
   // Focus-on-open (ConfirmExamChangeModal precedent). `AppButton` doesn't
   // forward refs, so focus lands on the dialog card div itself
@@ -68,12 +74,35 @@ export function ProfilScreen() {
   const go = (suffix: string) => () => router.push(`/${locale}${suffix}`);
 
   const handleSignOut = (): void => {
-    if (signingOut) return;
+    if (signOutInFlightRef.current) return;
+    signOutInFlightRef.current = true;
     setSigningOut(true);
     void (async () => {
-      await signOut();
+      // M-2 review fix: `.catch(() => undefined)` — same operation,
+      // same handling as `DeleteAccountScreen.tsx`'s leg-2 `signOut()`
+      // call. Before this fix, a rejection here (network drop) had no
+      // catch at all: it escaped as an unhandled rejection, `signingOut`
+      // stayed stranded `true` forever (no reset, no error surface), and
+      // — because the cancel/backdrop controls didn't check `signingOut`
+      // either — the dialog looked interactive but was actually stuck.
+      // `useLearnerSession.signOut()` only clears local state on success,
+      // but proceeding to the login redirect regardless is still correct
+      // here: the user's intent was to leave this screen, and a stale
+      // local session left behind by a failed network call gets caught by
+      // the next protected-route mount's freshness check
+      // (`bootstrapLearnerSession`'s `SESSION_FRESHNESS_THRESHOLD_SEC`
+      // gate), not by blocking the redirect.
+      await signOut().catch(() => undefined);
       router.replace(`/${locale}/app/login`);
     })();
+  };
+
+  // Shared by the backdrop click and the "Annuler" button — both must
+  // stop dismissing the dialog once sign-out is in flight (M-2 review
+  // fix: previously neither checked `signingOut` at all).
+  const dismissSignOutDialog = (): void => {
+    if (signingOut) return;
+    setConfirmingSignOut(false);
   };
 
   return (
@@ -176,7 +205,7 @@ export function ProfilScreen() {
       {confirmingSignOut ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-premium-black)]/60 p-4"
-          onClick={() => setConfirmingSignOut(false)}
+          onClick={dismissSignOutDialog}
         >
           <div
             ref={signOutDialogRef}
@@ -209,8 +238,9 @@ export function ProfilScreen() {
               <button
                 type="button"
                 data-testid="profil-signout-cancel"
-                onClick={() => setConfirmingSignOut(false)}
-                className="min-h-11 rounded-full px-4 transition hover:bg-cream-deep"
+                onClick={dismissSignOutDialog}
+                disabled={signingOut}
+                className="min-h-11 rounded-full px-4 transition hover:bg-cream-deep disabled:opacity-50"
               >
                 <AppText size="body" weight="medium" tone="primary">
                   {t("profil:account.signOutCancel")}

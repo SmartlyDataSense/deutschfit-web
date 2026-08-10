@@ -37,17 +37,25 @@ export async function readUserObjectives(): Promise<UserObjectivesRead | null> {
 }
 
 export async function updateUserObjectives(input: {
-  motivation: string;
-  schedule: string;
+  motivation: string | null;
+  schedule: string | null;
 }): Promise<void> {
   const supabase = getBrowserClient();
   const userId = await requireUserId();
-  const minutes = Number(input.schedule);
+  // Mobile parity (userObjectives.ts:60) — a null schedule (no bucket
+  // selected / row never written) passes straight through as
+  // `daily_minutes: null` rather than being coerced into a bucket. The
+  // `Number.isFinite` guard below additionally covers a non-numeric
+  // *non-null* string (this service's input type is `string`, wider than
+  // mobile's `OnboardingSchedule` literal union, so that case can occur
+  // here but not there).
+  const minutes = input.schedule != null ? Number(input.schedule) : null;
+  const dailyMinutes = minutes != null && Number.isFinite(minutes) ? minutes : null;
   const { error } = await supabase.from("user_objectives").upsert(
     {
       user_id: userId,
       motivation: input.motivation,
-      daily_minutes: Number.isFinite(minutes) ? minutes : null,
+      daily_minutes: dailyMinutes,
     },
     { onConflict: "user_id" }
   );

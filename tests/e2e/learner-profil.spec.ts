@@ -109,6 +109,10 @@ test.describe("S11 profil + settings", () => {
 
     await page.getByTestId("settings-exam-level-trigger").click();
     // c1 is outside the default beta set (b1,b2) → disabled with caveat.
+    // M-3: this pins the DEFAULT `getBetaLevels()` CSV ("b1,b2" —
+    // core/flags/betaLevels.ts) specifically. If the e2e host ever sets
+    // `NEXT_PUBLIC_BETA_LEVELS_ENABLED` (e.g. to widen the beta set),
+    // c1 may no longer be disabled here and this assertion breaks.
     await expect(page.getByTestId("settings-exam-level-c1")).toBeDisabled();
     // Pick a beta level different from qa1's current one. qa1's board is
     // goethe/b1 per fixture convention — pick b2, and if the save button

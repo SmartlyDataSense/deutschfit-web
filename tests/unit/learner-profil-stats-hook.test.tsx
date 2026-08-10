@@ -114,3 +114,28 @@ describe("useProfilStats mount effect — cancelled guard (S11.2 fix-round-1)", 
     expect(await db.userStats.get("u2")).toBeUndefined();
   });
 });
+
+describe("useProfilStats mount effect — hydrateFromCache rejection (M-1 review fix)", () => {
+  // Before the fix, `await hydrateFromCache(userId)` sat OUTSIDE the
+  // effect's try/catch. A Dexie rejection here (blocked upgrade,
+  // private-mode quota — the same failure classes the DeleteAccountScreen
+  // leg-2 comment enumerates) escaped as an unhandled rejection, skipped
+  // `fetchUserStats()` entirely, and pinned `loading` true forever, so the
+  // identity card stayed permanently empty on a corrupt cache. Mutating
+  // `useProfilStats.ts` back to pulling `hydrateFromCache` out of the
+  // try block reproduces exactly that: this test's
+  // `waitFor(() => loading === false)` times out and `invokeFn` is never
+  // called.
+  it("a hydrateFromCache rejection is swallowed — the server fetch still runs and loading resolves false", async () => {
+    invokeFn.mockResolvedValue(payload);
+    const db = await getLearnerDb();
+    vi.spyOn(db.userStats, "get").mockRejectedValueOnce(new Error("dexie blocked upgrade"));
+
+    const { result } = renderHook(() => useProfilStats("u3"));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(invokeFn).toHaveBeenCalledTimes(1);
+    expect(result.current.stats.fullName).toBe("Marie Dupont");
+    expect(result.current.error).toBeNull();
+  });
+});

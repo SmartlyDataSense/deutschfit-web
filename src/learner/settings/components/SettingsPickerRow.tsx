@@ -107,7 +107,7 @@ export function SettingsPickerRow<T extends string>({
                       setOpen(false);
                     }}
                     className={clsx(
-                      "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition",
+                      "flex w-full items-center justify-between gap-3 rounded-[var(--radius-sm)] px-3 py-3 text-left transition",
                       isSelected ? "bg-bg-hero" : "hover:bg-cream-deep",
                       option.disabled && "cursor-not-allowed opacity-40"
                     )}

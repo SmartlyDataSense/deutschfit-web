@@ -62,6 +62,30 @@ describe("updateUserObjectives upsert call (S11.2 fix-round-1)", () => {
       { onConflict: "user_id" }
     );
   });
+
+  // I-1 review fix: a null schedule (no bucket selected — unset row,
+  // NULL daily_minutes, or a non-bucket value) must pass straight
+  // through as `daily_minutes: null`, mirroring mobile
+  // (userObjectives.ts:60: `input.schedule != null ? Number(input.schedule)
+  // : null`) — NOT get coerced into a "10"-minute default. Mutating the
+  // service back to `Number(input.schedule)` unconditionally (dropping the
+  // `!= null` guard) turns `null` into `NaN` here, which fails this
+  // assertion (`daily_minutes: null` would become `daily_minutes: NaN`).
+  it("a null schedule upserts daily_minutes: null, not a default bucket (I-1, mobile parity)", async () => {
+    await updateUserObjectives({ motivation: "work", schedule: null });
+    expect(upsert).toHaveBeenCalledWith(
+      { user_id: "u1", motivation: "work", daily_minutes: null },
+      { onConflict: "user_id" }
+    );
+  });
+
+  it("a null motivation upserts motivation: null unchanged (I-1, mobile parity)", async () => {
+    await updateUserObjectives({ motivation: null, schedule: "20" });
+    expect(upsert).toHaveBeenCalledWith(
+      { user_id: "u1", motivation: null, daily_minutes: 20 },
+      { onConflict: "user_id" }
+    );
+  });
 });
 
 describe("PostgREST error wrapping (S11.2 fix-round-1, mobile parity)", () => {

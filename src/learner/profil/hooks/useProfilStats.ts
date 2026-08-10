@@ -117,13 +117,32 @@ export function useProfilStats(userId: string | null): {
       return;
     }
     void (async () => {
-      const cached = await hydrateFromCache(userId);
-      if (cancelled) return;
-      if (cached) {
-        setStats(cached.stats);
-        setUpdatedAt(cached.updatedAt);
-      }
+      // M-1 review fix: the whole body is wrapped in one try/catch/finally
+      // (idiom precedent: `useAccueilHome.ts:104-118`) — `hydrateFromCache`
+      // used to sit OUTSIDE the try, so a Dexie rejection (blocked
+      // upgrade, private-mode quota — see the leg-2 comment in
+      // `DeleteAccountScreen.tsx`) escaped as an unhandled rejection,
+      // skipped the server `fetchUserStats()` call entirely, and pinned
+      // `loading` true forever.
       try {
+        // Cache hydration gets its OWN try/catch, nested inside the outer
+        // one: a rejection here must be swallowed and fall through to the
+        // server fetch below (cache-first is an optimization, not a
+        // requirement — the server fetch is the source of truth), not
+        // abort the whole effect the way letting it escape unguarded did.
+        try {
+          const cached = await hydrateFromCache(userId);
+          if (cancelled) return;
+          if (cached) {
+            setStats(cached.stats);
+            setUpdatedAt(cached.updatedAt);
+          }
+        } catch {
+          if (cancelled) return;
+          // Swallowed on purpose — the empty `emptyProfilStats` seed
+          // already rendered stays on screen and the server fetch below
+          // still runs to populate real data.
+        }
         const payload = await fetchUserStats();
         if (cancelled) return;
         const now = Date.now();

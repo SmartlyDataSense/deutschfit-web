@@ -12,6 +12,7 @@
  *     promotes it to i18n; a locale-catalog mutation must show up here).
  */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
@@ -185,6 +186,77 @@ describe("ProfilScreen (S11.4)", () => {
     expect(screen.queryByTestId("profil-signout-dialog")).toBeNull();
     expect(signOut).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  // M-2 review fix: `signOut()` rejecting must be handled consistently
+  // with `DeleteAccountScreen.tsx`'s leg-2 `signOut().catch(() => undefined)`
+  // — the redirect still happens rather than an unhandled rejection
+  // stranding `signingOut` true forever. Mutating `handleSignOut` back to
+  // a bare `await signOut();` (no `.catch`) makes this go red: the
+  // `router.replace` assertion below times out because the async IIFE
+  // throws before reaching it.
+  it("a signOut rejection still redirects to login — consistent with DeleteAccountScreen's swallow-and-proceed", async () => {
+    signOut.mockRejectedValueOnce(new Error("network drop"));
+    ui();
+    await waitFor(() => expect(screen.getByTestId("profil-account-sign-out")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("profil-account-sign-out"));
+    fireEvent.click(screen.getByTestId("profil-signout-confirm"));
+    await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+  });
+
+  // M-2 review fix: same-tick re-entrancy guard, same technique as
+  // `learner-delete-account.test.tsx`'s "a same-tick double click does
+  // not fire a second account-delete call" — two native `click` events
+  // dispatched inside one shared `act()` callback so React batches the
+  // resulting `setSigningOut(true)` and does not re-render (and thus
+  // `disabled` stays stale) between them. `signOutInFlightRef` (a
+  // synchronous ref, not state) is the only thing that can close this
+  // race. Mutating `handleSignOut` back to checking only the `signingOut`
+  // state (dropping `signOutInFlightRef`) makes this go red: `signOut`
+  // would be called twice.
+  it("a same-tick double click on the sign-out confirm button does not call signOut twice", async () => {
+    let resolveSignOut!: () => void;
+    signOut.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveSignOut = resolve;
+      })
+    );
+    ui();
+    await waitFor(() => expect(screen.getByTestId("profil-account-sign-out")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("profil-account-sign-out"));
+    const confirm = screen.getByTestId("profil-signout-confirm");
+    act(() => {
+      confirm.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+      confirm.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+    expect(signOut).toHaveBeenCalledTimes(1);
+    resolveSignOut();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  // M-2 review fix: the cancel button AND the backdrop must both stop
+  // dismissing the dialog once sign-out is in flight — before this fix
+  // neither checked `signingOut` at all, so a click mid-sign-out silently
+  // closed the dialog while the request was still running. Mutating
+  // `dismissSignOutDialog` back to an unconditional `setConfirmingSignOut(false)`
+  // makes this go red (the dialog would disappear from both assertions).
+  it("cancel and backdrop clicks are no-ops while sign-out is in flight", async () => {
+    signOut.mockReturnValueOnce(new Promise<void>(() => {})); // never resolves — stays "in flight"
+    ui();
+    await waitFor(() => expect(screen.getByTestId("profil-account-sign-out")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("profil-account-sign-out"));
+    fireEvent.click(screen.getByTestId("profil-signout-confirm"));
+    await waitFor(() => expect(screen.getByTestId("profil-signout-cancel")).toBeDisabled());
+
+    fireEvent.click(screen.getByTestId("profil-signout-cancel"));
+    expect(screen.getByTestId("profil-signout-dialog")).toBeInTheDocument(); // still open
+
+    // The backdrop is the dialog's fixed-inset parent — click on it
+    // directly (not the dialog card, which stops propagation).
+    fireEvent.click(screen.getByTestId("profil-signout-dialog").parentElement as HTMLElement);
+    expect(screen.getByTestId("profil-signout-dialog")).toBeInTheDocument(); // still open
   });
 
   it("privacy row is a new-tab link to the legal page", async () => {

@@ -26,6 +26,7 @@ vi.mock("@/learner/settings/services/userObjectives", () => ({
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
 import { ObjectivesScreen, numericToSchedule } from "@/learner/settings/screens/ObjectivesScreen";
+import frOnboarding from "@/learner/locales/fr/onboarding.json";
 
 afterEach(cleanup);
 beforeAll(() => initLearnerI18n("fr"));
@@ -107,6 +108,42 @@ describe("ObjectivesScreen (S11.7)", () => {
     );
   });
 
+  // I-2 review fix: `SettingsPickerRow`'s option buttons must use the
+  // registered `--radius-sm` token, not Tailwind's bare `rounded-xl`
+  // built-in (deliberately unregistered under `@theme` — see
+  // `globals.css:57-63` — so any bare `rounded-*` utility here is
+  // off-token). Precedent: `ExamTypeScreen.tsx`'s `DropdownOption` uses
+  // `rounded-[var(--radius-sm)]`.
+  it("schedule picker option rows use the --radius-sm token, not a bare Tailwind radius (I-2)", async () => {
+    readUserObjectives.mockResolvedValue({ motivation: "work", dailyMinutes: 20 });
+    ui();
+    await waitHydrated();
+    fireEvent.click(screen.getByTestId("settings-objectives-schedule-trigger"));
+    const option = screen.getByTestId("settings-objectives-schedule-60");
+    expect(option.className).toContain("rounded-[var(--radius-sm)]");
+    // Bare Tailwind radius utility (e.g. `rounded-xl`) is a distinct
+    // substring from `rounded-[var(--radius-sm)]` — this only matches a
+    // stray off-token class, not the token usage just asserted above.
+    expect(option.className).not.toMatch(/\brounded-(sm|md|lg|xl|2xl|3xl)\b/);
+  });
+
+  // T7 (final-review fold-in): pin the "intensif" caveat to the "60"
+  // bucket SPECIFICALLY, not just "some option has a caveat" — moving the
+  // `value === "60"` check in the screen to `value === "45"` left the
+  // suite green before this test existed.
+  it("only the 60-minute schedule option carries the intensif caveat (T7)", async () => {
+    readUserObjectives.mockResolvedValue({ motivation: "work", dailyMinutes: 20 });
+    ui();
+    await waitHydrated();
+    fireEvent.click(screen.getByTestId("settings-objectives-schedule-trigger"));
+    expect(screen.getByTestId("settings-objectives-schedule-60")).toHaveTextContent(
+      frOnboarding.schedule.caveat.intensif
+    );
+    expect(screen.getByTestId("settings-objectives-schedule-45")).not.toHaveTextContent(
+      frOnboarding.schedule.caveat.intensif
+    );
+  });
+
   it("an unmatched stored daily_minutes value falls back to the 10-minute bucket", async () => {
     // dailyMinutes: 15 has no exact SCHEDULES match, so numericToSchedule
     // returns null and the screen must fall back to "10" — exercises the
@@ -159,6 +196,28 @@ describe("ObjectivesScreen (S11.7)", () => {
     const call = updateUserObjectives.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
     expect(Object.keys(call ?? {})).toEqual(["motivation", "schedule"]);
     await waitFor(() => expect(back).toHaveBeenCalled());
+  });
+
+  // I-1 review fix: a stored row with no matching schedule bucket (e.g.
+  // `daily_minutes: null`, or a non-bucket value that `numericToSchedule`
+  // can't map) leaves `schedule` state at null after hydration. Editing
+  // ONLY motivation must save that null through untouched — not fabricate
+  // the "10"-minute bucket the learner never picked. Mutating the screen's
+  // `handleSave` back to `schedule: schedule ?? "10"` makes this go red
+  // (asserts `schedule: null`, would receive `schedule: "10"`).
+  it("saving with an unset schedule persists null, not the 10-minute bucket (I-1)", async () => {
+    readUserObjectives.mockResolvedValue({ motivation: "travel", dailyMinutes: null });
+    updateUserObjectives.mockResolvedValue(undefined);
+    ui();
+    await waitHydrated();
+    fireEvent.click(screen.getByTestId("settings-objectives-motivation-trigger"));
+    fireEvent.click(screen.getByTestId("settings-objectives-motivation-work"));
+    const save = screen.getByTestId("settings-objectives-save");
+    expect(save).not.toBeDisabled();
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(updateUserObjectives).toHaveBeenCalledWith({ motivation: "work", schedule: null })
+    );
   });
 
   it("changing only motivation (schedule untouched) still saves the unchanged schedule value", async () => {

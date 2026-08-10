@@ -105,9 +105,19 @@ export function ObjectivesScreen() {
     setSaveError(false);
     void (async () => {
       try {
+        // Save the raw state, not a `??`-defaulted stand-in (I-1 review
+        // fix): `motivation`/`schedule` can each be null after hydration
+        // (no row yet, `daily_minutes` NULL, or a non-bucket value —
+        // `numericToSchedule` returns null). Defaulting an untouched null
+        // field to "other"/"10" here would fabricate a preference the
+        // learner never chose and invent `daily_minutes: 10` on the
+        // shared `user_objectives` row, which mobile then displays as a
+        // schedule the learner never picked. `updateUserObjectives` mirrors
+        // mobile's null handling (userObjectives.ts:60): a null schedule
+        // upserts `daily_minutes: null`, not a bucket.
         await updateUserObjectives({
-          motivation: motivation ?? "other",
-          schedule: schedule ?? "10",
+          motivation,
+          schedule,
         });
         router.back();
       } catch {
