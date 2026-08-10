@@ -374,6 +374,18 @@ export type AnalyticsEvent =
       properties: { source: "mobile" | "web"; reason: string };
     }
   | {
+      /**
+       * Server-side deletion already succeeded (`account-delete` returned
+       * 2xx) but a best-effort post-delete cleanup step (local wipe,
+       * analytics reset, or sign-out) rejected. Distinct from
+       * `account_delete_failed` — the account IS gone; this only signals
+       * a possibly-dirty client. Web-only for now (S11.8): mobile's
+       * `useAuth.deleteAccount()` has no equivalent split.
+       */
+      name: "account_delete_cleanup_failed";
+      properties: { source: "web"; reason: string };
+    }
+  | {
       name: "topic_picker_opened";
       properties: {
         subgenre: string;
