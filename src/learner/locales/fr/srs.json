@@ -11,7 +11,8 @@
     "emptyBody": "Tu es à jour. Reviens demain ou entraîne une autre compétence.",
     "errorTitle": "Erreur",
     "errorBody": "Impossible de charger les cartes. Réessaie.",
-    "remainingLabel": "restantes"
+    "remainingLabel": "restantes",
+    "positionLabel": "Carte {{current}} / {{total}}"
   },
   "reveal": {
     "title": "Réponse",
