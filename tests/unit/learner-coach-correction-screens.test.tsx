@@ -114,6 +114,8 @@ function schreibenCorrection(overrides: Partial<SchreibenCorrection> = {}): Schr
     prueferText: "Ich bin ins Kino gegangen.",
     betreuerText: "Attention à l'auxiliaire avec les verbes de mouvement.",
     overallScore: 58,
+    scoreMax: 100,
+    normalizedTotalPct: null,
     summaryFr: "",
     dimensionScores: {
       erfuellung: 60,
@@ -435,6 +437,114 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
 
     await screen.findByTestId("correction-diff");
     expect(screen.queryByTestId("correction-diff-betreuer")).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Issue #41 regression coverage — telc-shaped dims + points-vs-percentage
+  // band. Fixture mirrors the real dev row (76b2894d-8fc2-4789-80f5-
+  // 439838493973, exam_product = telc_deutsch_b1) named in the issue.
+  // -------------------------------------------------------------------------
+
+  it("telc-shaped dimension_scores (3 keys, zero Goethe overlap) render board-blind, in payload order, with authored FR labels (mutation guard: reintroducing a hardcoded key list must fail this)", async () => {
+    fetchCorrectionMock.mockResolvedValueOnce(
+      schreibenCorrection({
+        overallScore: 38,
+        scoreMax: 45,
+        normalizedTotalPct: 84.0,
+        dimensionScores: { inhalt: 13, formale_richtigkeit: 12, kommunikative_gestaltung: 13 },
+      })
+    );
+
+    const { container } = renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-telc-1" modality="schreiben" />
+    );
+
+    for (const key of ["inhalt", "formale_richtigkeit", "kommunikative_gestaltung"]) {
+      await waitFor(() =>
+        expect(screen.getByTestId(`correction-dimension-${key}`)).toBeInTheDocument()
+      );
+    }
+    // None of the Goethe-4 keys — a hardcoded SCHREIBEN_DIMS list would
+    // render these (all reading "0/100") instead of the telc keys above.
+    for (const key of ["erfuellung", "kohaerenz", "wortschatz", "strukturen"]) {
+      expect(screen.queryByTestId(`correction-dimension-${key}`)).not.toBeInTheDocument();
+    }
+
+    // Card order mirrors the payload's own key order (grader's canonical
+    // sequence), not an alphabetical resort.
+    const cards = Array.from(
+      container.querySelectorAll('[data-testid^="correction-dimension-"]')
+    ).map((el) => el.getAttribute("data-testid"));
+    expect(cards).toEqual([
+      "correction-dimension-inhalt",
+      "correction-dimension-formale_richtigkeit",
+      "correction-dimension-kommunikative_gestaltung",
+    ]);
+
+    // Authored FR labels (grounded in DIMENSION_LABEL_MAP / telc b1.md
+    // reference), not the raw snake_case key.
+    expect(within(screen.getByTestId("correction-dimension-inhalt")).getByText("Contenu")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("correction-dimension-formale_richtigkeit")).getByText(
+        "Correction de la langue"
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("correction-dimension-kommunikative_gestaltung")).getByText(
+        "Communication"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("band is derived from the percentage, not the raw points score (mutation guard: feeding scoreToBand the raw score must fail this)", async () => {
+    // 38/45 = 84.4% -> "solide". scoreToBand(38) directly would read 38 as
+    // a 0-100 percentage and return "a_retravailler" instead.
+    fetchCorrectionMock.mockResolvedValueOnce(
+      schreibenCorrection({ overallScore: 38, scoreMax: 45, normalizedTotalPct: 84.0 })
+    );
+
+    renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-telc-2" modality="schreiben" />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument()
+    );
+    expect(screen.queryByTestId("correction-band-a_retravailler")).not.toBeInTheDocument();
+    // The denominator is shown so the number is self-explanatory.
+    const scoreBlock = screen.getByTestId("correction-global-score");
+    expect(scoreBlock).toHaveTextContent("38");
+    expect(scoreBlock).toHaveTextContent("/ 45");
+  });
+
+  it("band falls back to score/scoreMax when normalizedTotalPct is absent", async () => {
+    // No normalizedTotalPct: 38/45 = 84.4% -> still "solide", not derived
+    // from the raw score.
+    fetchCorrectionMock.mockResolvedValueOnce(
+      schreibenCorrection({ overallScore: 38, scoreMax: 45, normalizedTotalPct: null })
+    );
+
+    renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-telc-3" modality="schreiben" />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument()
+    );
+  });
+
+  it("an unlabelled dimension key degrades to a humanized name, not a blank card or the raw key", async () => {
+    fetchCorrectionMock.mockResolvedValueOnce(
+      schreibenCorrection({ dimensionScores: { some_new_facet: 9 } })
+    );
+
+    renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-unknown-facet" modality="schreiben" />
+    );
+
+    const card = await screen.findByTestId("correction-dimension-some_new_facet");
+    expect(within(card).getByText("Some New Facet")).toBeInTheDocument();
+    expect(within(card).queryByText("coach:correction.dimensions.some_new_facet.name")).not.toBeInTheDocument();
   });
 });
 

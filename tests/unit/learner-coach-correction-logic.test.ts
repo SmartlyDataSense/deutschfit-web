@@ -194,6 +194,8 @@ describe("fetchCorrection — schreiben", () => {
       prueferText: "Ich bin gegangen.",
       betreuerText: "Achte auf das Perfekt mit 'sein'.",
       overallScore: 72,
+      scoreMax: null,
+      normalizedTotalPct: null,
       summaryFr: "",
       dimensionScores: { erfuellung: 80, kohaerenz: 70, wortschatz: 65, strukturen: 60 },
     });
@@ -208,5 +210,58 @@ describe("fetchCorrection — schreiben", () => {
   test("schema_version !== 2 throws correction_unavailable", async () => {
     getSubmissionMock.mockResolvedValue({ ...gradedRow, schema_version: 1 });
     await expect(fetchCorrection("sub-2", "schreiben")).rejects.toThrow("correction_unavailable");
+  });
+
+  // Regression coverage for issue #41: a real telc row
+  // (76b2894d-8fc2-4789-80f5-439838493973, exam_product = telc_deutsch_b1)
+  // has `dimension_scores = {"inhalt":13,"formale_richtigkeit":12,
+  // "kommunikative_gestaltung":13}` — none of the Goethe four hardcoded
+  // keys the old mapping pinned. Before the fix, every lookup here
+  // returned `undefined` -> `num()` coerced it to 0, and the walkthrough
+  // rendered four "0/100" cards for an 84% pass. This test would have
+  // caught it: a hardcoded Goethe-4 mapping produces
+  // `{erfuellung:0,kohaerenz:0,wortschatz:0,strukturen:0}`, not the telc
+  // keys asserted below.
+  test("telc-shaped dimension_scores (3 keys, no Goethe overlap) maps board-blind, in payload order", async () => {
+    getSubmissionMock.mockResolvedValue({
+      id: "sub-telc-1",
+      status: "graded",
+      schema_version: 2,
+      body_de: "Sehr geehrte Damen und Herren, ...",
+      pruefer_text: "Sehr geehrte Damen und Herren, ...",
+      betreuer_text: "Ton texte respecte les 4 points demandés.",
+      score: 38,
+      score_max: 45,
+      normalized_total_pct: 84.0,
+      dimension_scores: { inhalt: 13, formale_richtigkeit: 12, kommunikative_gestaltung: 13 },
+    });
+
+    const result = await fetchCorrection("sub-telc-1", "schreiben");
+
+    expect(result.modality).toBe("schreiben");
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.dimensionScores).toEqual({
+      inhalt: 13,
+      formale_richtigkeit: 12,
+      kommunikative_gestaltung: 13,
+    });
+    // Payload key order is preserved (mutation guard: a `sort()` or a
+    // `Object.entries` reimplementation that reorders keys must fail this).
+    expect(Object.keys(result.dimensionScores)).toEqual([
+      "inhalt",
+      "formale_richtigkeit",
+      "kommunikative_gestaltung",
+    ]);
+    expect(result.overallScore).toBe(38);
+    expect(result.scoreMax).toBe(45);
+    expect(result.normalizedTotalPct).toBe(84.0);
+  });
+
+  test("score_max / normalized_total_pct absent on legacy rows -> both null (not 0)", async () => {
+    getSubmissionMock.mockResolvedValue(gradedRow);
+    const result = await fetchCorrection("sub-2", "schreiben");
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.scoreMax).toBeNull();
+    expect(result.normalizedTotalPct).toBeNull();
   });
 });
