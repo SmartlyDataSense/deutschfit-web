@@ -42,12 +42,7 @@ export interface DimensionCardProps {
   readonly onDrill: () => void;
 }
 
-export function DimensionCard({
-  dimensionKey,
-  score,
-  justification,
-  onDrill,
-}: DimensionCardProps) {
+export function DimensionCard({ dimensionKey, score, justification, onDrill }: DimensionCardProps) {
   const { t } = useTranslation(["coach"]);
 
   const dimensionName = t(`coach:correction.dimensions.${dimensionKey}.name`);
