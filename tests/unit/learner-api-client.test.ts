@@ -198,6 +198,29 @@ describe("learner API client", () => {
     expect(result).toEqual({ hello: "world" });
   });
 
+  it("resolves (not throws) on a 204 No Content — account-delete's actual response shape", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    // A real 204 carries no body at all — `new Response(null, { status: 204 })`
+    // mirrors that exactly (not `jsonResponse`, which would still attach a
+    // parseable JSON body and mask the bug this test exists to catch:
+    // `res.json()` on an empty 204 body throws `SyntaxError: Unexpected
+    // end of JSON input`, which every caller's `catch` sees as a request
+    // failure even though the server succeeded).
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const result = await invokeFn<void>("account-delete", { method: "POST" });
+    expect(result).toBeUndefined();
+  });
+
+  it("resolves (not throws) on a 200 with an explicit content-length: 0", async () => {
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 200, headers: { "content-length": "0" } })
+    );
+
+    await expect(invokeFn("submissions-post", { method: "POST" })).resolves.toBeUndefined();
+  });
+
   it("carries the parsed error body through as ApiError.bodyJson (S4 — mock-exam 409)", async () => {
     const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValueOnce(

@@ -14,7 +14,15 @@
  *     appears in client code;
  *   - retry after failure only dismisses the error, keeping the typed
  *     token (intent gate preserved, mobile parity — mobile's
- *     `handleDismissError`, DeleteAccountScreen.tsx:87-89).
+ *     `handleDismissError`, DeleteAccountScreen.tsx:87-89);
+ *   - `handleConfirm` is split into two legs on purpose (review C1/I3):
+ *     leg 1 is the ONLY thing allowed to show the failure card — a
+ *     rejection there means the account genuinely still exists. Leg 2
+ *     (local wipe / analytics reset / sign-out) runs only after the
+ *     server has already deleted the account, so a rejection there is
+ *     logged (`account_delete_cleanup_failed`) but must never surface as
+ *     "Suppression impossible" — that would invite the user to retry a
+ *     deletion that already succeeded (which just 401s next).
  *
  * S11-D13: web orchestrates invoke → wipe → analytics reset → signOut →
  * redirect directly in this screen (mobile splits the same sequence
@@ -23,6 +31,11 @@
  * a `userId` (S11-D12 — web clears all learner tables, keyed per-user
  * flags too; see `core/storage/wipe.ts`), unlike mobile's no-arg version
  * (single-user device).
+ *
+ * `account-delete` returns 204 No Content on success — `invokeFn`'s
+ * underlying `request()` (`core/api/client.ts`) resolves `undefined` for
+ * any empty 2xx body rather than throwing on the empty-body JSON parse,
+ * so leg 1 above doesn't misreport a real success as a failure.
  *
  * PRODUCT LOCK: `settings:account.deleteSubsHint` (app-store subscription
  * copy) is NOT rendered on web — see `project_no_inapp_paywall_web_only`.
@@ -79,19 +92,37 @@ export function DeleteAccountScreen() {
     // funnel still counts attempts that die in transit.
     trackEvent("account_delete_confirmed", { source: "web" });
     void (async () => {
+      // Leg 1 — the actual server-side deletion. Only a rejection HERE
+      // means deletion genuinely failed and the account still exists;
+      // this is the only leg allowed to show the "Suppression
+      // impossible" error card and leave the typed token intact for a
+      // real retry.
       try {
-        await invokeFn("account-delete", { method: "POST", body: { source: "web" } });
-        await wipeLocalState(session?.user.id ?? null);
-        resetAnalyticsUser();
-        await signOut();
-        router.replace(`/${locale}/app/login`);
+        await invokeFn<void>("account-delete", { method: "POST", body: { source: "web" } });
       } catch (err) {
         const reason = err instanceof Error ? err.message : "unknown_error";
         trackEvent("account_delete_failed", { source: "web", reason });
         setFailed(true);
         setDeleting(false);
         inFlightRef.current = false;
+        return;
       }
+
+      // Leg 2 — best-effort local cleanup. The account is ALREADY gone
+      // server-side at this point, so a rejection here must never be
+      // reported as a deletion failure (that would invite the user to
+      // retry a delete that already succeeded, which just 401s on a
+      // now-nonexistent account — see review C1/I3). Log it distinctly
+      // and fall through to sign-out + redirect regardless.
+      try {
+        await wipeLocalState(session?.user.id ?? null);
+        resetAnalyticsUser();
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : "unknown_error";
+        trackEvent("account_delete_cleanup_failed", { source: "web", reason });
+      }
+      await signOut().catch(() => undefined);
+      router.replace(`/${locale}/app/login`);
     })();
   };
 

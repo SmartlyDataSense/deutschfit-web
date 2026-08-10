@@ -164,6 +164,18 @@ async function request<T>(url: string, opts: RequestOptions): Promise<T> {
     throw await toApiError(res);
   }
 
+  // A 204 (or any explicit zero-length body) has nothing to parse —
+  // `res.json()` on an empty body throws `SyntaxError: Unexpected end of
+  // JSON input`, which every caller's `try`/`catch` sees as a request
+  // failure even though the server succeeded. `account-delete` returns
+  // 204 (deutschfit-backend/supabase/functions/account-delete/index.ts) —
+  // without this guard a successful account deletion is reported to the
+  // user as a failed one. Generic fix here (not in the edge function) so
+  // the next 204-returning endpoint doesn't hit the same trap.
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return undefined as T;
+  }
+
   return (await res.json()) as T;
 }
 

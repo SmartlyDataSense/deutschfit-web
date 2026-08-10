@@ -143,7 +143,7 @@ export function SettingsScreen() {
                 aria-checked={active}
                 data-testid={`settings-language-${option}`}
                 onClick={() => handleLanguage(option)}
-                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl bg-bg-card px-4 py-3 text-left transition hover:opacity-90"
+                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-[var(--radius-md)] bg-bg-card px-4 py-3 text-left transition hover:opacity-90"
               >
                 <AppText size="body" weight="medium" tone="primary">
                   {t(`settings:language.${option}`)}
@@ -192,7 +192,7 @@ export function SettingsScreen() {
         <AppText size="caption" weight="semi" tone="tertiary" className="mt-2 uppercase">
           {t("settings:sections.analytics")}
         </AppText>
-        <div className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl bg-bg-card px-4 py-3">
+        <div className="flex min-h-14 w-full items-center justify-between gap-3 rounded-[var(--radius-md)] bg-bg-card px-4 py-3">
           <div className="min-w-0 flex-1">
             <AppText size="body" weight="medium" tone="tertiary">
               {t("settings:analytics.optOutLabel")}

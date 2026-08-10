@@ -18,7 +18,7 @@
  *     of the success side effects.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const replace = vi.fn();
@@ -238,5 +238,132 @@ describe("DeleteAccountScreen (S11.8)", () => {
     expect(back).toHaveBeenCalled();
     expect(invokeFn).not.toHaveBeenCalled();
     expect(signOut).not.toHaveBeenCalled();
+  });
+
+  // Review I1: the cancel/close test above never types the token, so it
+  // cannot catch `cancel`/`close` being mis-wired to `handleConfirm` —
+  // `tokenMatches` would still be false and mask it. The unmasked case —
+  // token typed, user clicks "Annuler"/close anyway — is the actual
+  // worst-case regression for this screen.
+  it("cancel with the token already typed still only navigates back — never deletes", () => {
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-cancel"));
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(invokeFn).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalledWith("account_delete_confirmed", { source: "web" });
+  });
+
+  it("close with the token already typed still only navigates back — never deletes", () => {
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-close"));
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(invokeFn).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalledWith("account_delete_confirmed", { source: "web" });
+  });
+
+  // Review I2: a failed attempt must leave the destructive path usable
+  // again — both the `deleting` state (DOM disabled) and the
+  // `inFlightRef` re-entrancy guard have to reset on failure, or retry
+  // silently becomes a dead button that dismisses the card but never
+  // fires `handleConfirm` (or fires it but the synchronous guard is
+  // still latched from the first attempt) again.
+  it("after a failed attempt, dismissing the error and confirming again actually retries and can still succeed", async () => {
+    invokeFn.mockRejectedValueOnce(new Error("edge 500")).mockResolvedValueOnce({ ok: true });
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    const cta = screen.getByTestId("delete-account-confirm-cta");
+    fireEvent.click(cta);
+    await waitFor(() => expect(screen.getByTestId("delete-account-error")).toBeInTheDocument());
+    expect(cta).not.toBeDisabled(); // deleting reset to false on failure
+
+    fireEvent.click(screen.getByTestId("delete-account-error-retry"));
+    expect(cta).not.toBeDisabled();
+    fireEvent.click(cta); // inFlightRef must have been released on failure too
+
+    await waitFor(() => expect(invokeFn).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+  });
+
+  // Review I3: leg 1 (server delete) succeeding must be the only thing
+  // that decides success/failure UI. A cleanup-step rejection (wipe,
+  // reset, sign-out) happening AFTER a successful server delete must
+  // never surface as "Suppression impossible" — the account is already
+  // gone, so that would wrongly invite a retry against a deleted
+  // account. It should instead still sign out, still redirect, and log
+  // a distinct `account_delete_cleanup_failed`.
+  it("a wipeLocalState failure AFTER a successful server delete still signs out and redirects — no failure card", async () => {
+    invokeFn.mockResolvedValue({ ok: true });
+    wipeLocalState.mockRejectedValueOnce(new Error("indexeddb blocked"));
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("account_delete_cleanup_failed", {
+        source: "web",
+        reason: "indexeddb blocked",
+      })
+    );
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+
+    expect(screen.queryByTestId("delete-account-error")).toBeNull();
+    expect(trackEvent).not.toHaveBeenCalledWith(
+      "account_delete_failed",
+      expect.objectContaining({ source: "web" })
+    );
+  });
+
+  it("a signOut rejection AFTER a successful server delete still redirects — no failure card", async () => {
+    invokeFn.mockResolvedValue({ ok: true });
+    signOut.mockRejectedValueOnce(new Error("network drop"));
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fr/app/login"));
+    expect(screen.queryByTestId("delete-account-error")).toBeNull();
+    expect(trackEvent).not.toHaveBeenCalledWith(
+      "account_delete_failed",
+      expect.objectContaining({ source: "web" })
+    );
+  });
+
+  // Review I4: no test previously rendered under StrictMode, so removing
+  // the `requestedRef` one-shot guard survived — `toHaveBeenCalledTimes(1)`
+  // in the plain-render test only pins single-render behaviour.
+  it("fires account_delete_requested exactly once even under StrictMode's mount double-invoke", () => {
+    render(
+      <StrictMode>
+        <LearnerI18nProvider lng="fr">
+          <DeleteAccountScreen />
+        </LearnerI18nProvider>
+      </StrictMode>
+    );
+    const requestedCalls = trackEvent.mock.calls.filter(
+      ([name]) => name === "account_delete_requested"
+    );
+    expect(requestedCalls).toHaveLength(1);
+  });
+
+  // Review M1: the confirm input must be locked while a delete is
+  // in-flight, same as the CTA/cancel/close — otherwise the "intent gate
+  // preserved" guarantee is only true for the CTA, not the input itself.
+  it("the confirm input is disabled while a delete is in-flight", async () => {
+    let resolveInvoke!: (v: unknown) => void;
+    invokeFn.mockReturnValue(
+      new Promise((resolve) => {
+        resolveInvoke = resolve;
+      })
+    );
+    ui();
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+    await waitFor(() => expect(confirmInput()).toBeDisabled());
+    resolveInvoke({ ok: true });
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
   });
 });
