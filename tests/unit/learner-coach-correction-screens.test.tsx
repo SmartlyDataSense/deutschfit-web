@@ -234,6 +234,24 @@ describe("CorrectionPickerScreen", () => {
       expect(screen.getByTestId("correction-row-recovered-1")).toBeInTheDocument()
     );
   });
+
+  // NOTE (fix round — cancelled guard on the mount effect): a dedicated
+  // regression test for the StrictMode double-invoke race was attempted
+  // and deliberately NOT kept — see task-9.9-report.md's fix-round section
+  // for the full investigation. Summary: (1) a bare-hooks probe confirms
+  // React *does* double-invoke `useEffect` under `<StrictMode>` in this
+  // harness; (2) adding `useTranslation` (react-i18next) to the hook tree
+  // suppresses that double-invoke down to a single call, so it cannot be
+  // reproduced against the real screen; (3) a `key`-forced remount was
+  // tried as a StrictMode-independent stand-in, but mutation-checking it
+  // (temporarily deleting the `isCancelled()` guard) proved it NOT
+  // load-bearing — a `key` change fully unmounts the old fiber, which
+  // React already no-ops `setState` against on its own, independent of any
+  // guard, so the test passed with or without the fix. Kept the code fix
+  // (matches Constraint 12 and `CorrectionWalkthroughScreen`'s identical,
+  // already-reviewed pattern) without a synthetic test that would offer
+  // false confidence — consistent with the reviewer's own observation that
+  // "unit tests don't reproduce this class of bug."
 });
 
 // ---------------------------------------------------------------------------

@@ -57,31 +57,63 @@ export function CorrectionPickerScreen() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback(async (nextCursor: string | null): Promise<void> => {
-    try {
-      const payload = await fetchHistory(nextCursor != null ? { cursor: nextCursor } : {});
-      // Mutation guard (a): this filter is load-bearing — rejected
-      // submissions have no correction to walk through.
-      const graded = payload.feed.filter((r) => r.status !== "rejected");
-      setRows((prev) => (nextCursor != null ? [...prev, ...graded] : [...graded]));
-      setCursor(payload.nextCursor);
-      setStatus("ready");
-    } catch {
-      setStatus("error");
-    } finally {
-      setLoadingMore(false);
-    }
-  }, []);
+  // `isCancelled` defaults to "never cancelled" so `handleRetry` and
+  // `handleLoadMore` (plain click handlers, not effects) can call `load`
+  // unguarded — see the file-header note on why only the mount effect
+  // below supplies a real predicate.
+  const load = useCallback(
+    async (nextCursor: string | null, isCancelled: () => boolean = () => false): Promise<void> => {
+      try {
+        const payload = await fetchHistory(nextCursor != null ? { cursor: nextCursor } : {});
+        if (isCancelled()) return;
+        // Mutation guard (a): this filter is load-bearing — rejected
+        // submissions have no correction to walk through.
+        const graded = payload.feed.filter((r) => r.status !== "rejected");
+        setRows((prev) => (nextCursor != null ? [...prev, ...graded] : [...graded]));
+        setCursor(payload.nextCursor);
+        setStatus("ready");
+      } catch {
+        if (!isCancelled()) setStatus("error");
+      } finally {
+        if (!isCancelled()) setLoadingMore(false);
+      }
+    },
+    []
+  );
 
+  // Constraint 12: `cancelled` is declared INSIDE the effect setup body —
+  // a StrictMode double-invoke re-runs this closure fresh each time, so
+  // there is no shared ref to go stale between setup -> cleanup -> setup.
+  // Without this guard, the dev-only double-invoke fires two concurrent
+  // `fetchHistory({})` calls that race to call `setRows`/`setCursor`/
+  // `setStatus`; if a submission is graded/rejected between the two
+  // responses, the later-arriving one can silently clobber fresher state.
   useEffect(() => {
-    void load(null);
+    let cancelled = false;
+    void load(null, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
+  // No `cancelled` guard here — deliberate, not an oversight. Click
+  // handlers are never re-invoked by StrictMode (only effects double-fire
+  // in dev), and `TopicPickerScreen.tsx`'s `refetch` (the retry-button
+  // analogue in this codebase's own established pattern) is equally
+  // unguarded — only its mount effect carries the flag. Re-entrancy is
+  // already structurally impossible: setting `status` to "loading"
+  // immediately swaps the error view (and its retry button) for the
+  // loading skeleton, so there is no button left to double-click while a
+  // retry is in flight.
   const handleRetry = useCallback(() => {
     setStatus("loading");
     void load(null);
   }, [load]);
 
+  // Same reasoning as `handleRetry`: re-entrancy is already prevented by
+  // the `loadingMore` state gate below (checked-and-set synchronously,
+  // before the async call) plus `AppButton`'s `loading` prop, which
+  // disables the trigger for the duration of the request.
   const handleLoadMore = useCallback(() => {
     if (cursor == null || loadingMore) return;
     setLoadingMore(true);
