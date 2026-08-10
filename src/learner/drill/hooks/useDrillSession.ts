@@ -32,6 +32,14 @@
  * auto-dismisses a zero-item session; the web screen instead renders
  * `DrillEmptyState` for that case (task-9.6-brief.md D6), which needs a
  * reason to render *before* a summary exists.
+ *
+ * This hook also returns `retry` — a real re-fetch (mirrors mobile's
+ * `useDrillRecommendation.reload`), NOT a dismiss/navigate-away. It
+ * shares the composition logic (`fetchSessionItems`) with the mount
+ * effect so a `reason: "error"` empty state's "Réessayer" button
+ * genuinely retries the recommendation fetch (review fix round 1 —
+ * the first cut mis-wired `DrillEmptyState`'s `onRetry` to
+ * `router.back()`, silently exiting instead of retrying).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -75,6 +83,8 @@ export interface UseDrillSessionResult {
   readonly reason: DrillReason;
   readonly answer: (selected: string) => Promise<void>;
   readonly next: () => void;
+  /** Re-fetches the recommendation from scratch — a real retry, not a dismiss. */
+  readonly retry: () => Promise<void>;
 }
 
 /** snake_case concept_code → human label ("kasus_akkusativ" → "Kasus Akkusativ"). */
@@ -107,6 +117,28 @@ export function toSessionItem(item: DrillItem, surface: DrillSurface): SessionIt
   };
 }
 
+/**
+ * Redo-first / home_daily-top-up composition — pure data fetch, no
+ * state writes. Shared by the mount effect and `retry()` so both paths
+ * run the exact same recommendation logic.
+ */
+async function fetchSessionItems(): Promise<{
+  items: SessionItem[];
+  reason: DrillReason;
+}> {
+  const redo = await fetchDrillRecommendation({ surface: "redo", max_items: SESSION_SIZE });
+  const redoItems = redo.items.map((i) => toSessionItem(i, "redo"));
+  if (redoItems.length >= SESSION_SIZE) {
+    return { items: redoItems, reason: "ok" };
+  }
+  const daily = await fetchDrillRecommendation({
+    surface: "home_daily",
+    max_items: SESSION_SIZE - redoItems.length,
+  });
+  const dailyItems = daily.items.map((i) => toSessionItem(i, "home_daily"));
+  return { items: [...redoItems, ...dailyItems], reason: daily.reason };
+}
+
 export function useDrillSession(): UseDrillSessionResult {
   const [status, setStatus] = useState<DrillSessionStatus>("loading");
   const [items, setItems] = useState<readonly SessionItem[]>([]);
@@ -128,25 +160,31 @@ export function useDrillSession(): UseDrillSessionResult {
     let cancelled = false;
     void (async () => {
       await flushOutbox();
-      const redo = await fetchDrillRecommendation({ surface: "redo", max_items: SESSION_SIZE });
-      const redoItems = redo.items.map((i) => toSessionItem(i, "redo"));
-      let dailyItems: SessionItem[] = [];
-      if (redoItems.length < SESSION_SIZE) {
-        const daily = await fetchDrillRecommendation({
-          surface: "home_daily",
-          max_items: SESSION_SIZE - redoItems.length,
-        });
-        dailyReasonRef.current = daily.reason;
-        if (!cancelled) setReason(daily.reason);
-        dailyItems = daily.items.map((i) => toSessionItem(i, "home_daily"));
-      }
+      const { items: nextItems, reason: nextReason } = await fetchSessionItems();
       if (cancelled) return;
-      setItems([...redoItems, ...dailyItems]);
+      dailyReasonRef.current = nextReason;
+      setReason(nextReason);
+      setItems(nextItems);
       setStatus("in_progress");
     })();
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  const retry = useCallback(async (): Promise<void> => {
+    setStatus("loading");
+    correctRef.current = 0;
+    missedRef.current = [];
+    completedRef.current = false;
+    await flushOutbox();
+    const { items: nextItems, reason: nextReason } = await fetchSessionItems();
+    dailyReasonRef.current = nextReason;
+    setReason(nextReason);
+    setItems(nextItems);
+    setIndex(0);
+    setSelected(undefined);
+    setStatus("in_progress");
   }, []);
 
   const writeSummary = useCallback(async () => {
@@ -226,5 +264,5 @@ export function useDrillSession(): UseDrillSessionResult {
     setSelected(undefined);
   }, [index, items.length, writeSummary]);
 
-  return { status, items, index, selected, summary, reason, answer, next };
+  return { status, items, index, selected, summary, reason, answer, next, retry };
 }

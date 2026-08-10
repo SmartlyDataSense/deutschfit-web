@@ -20,6 +20,17 @@
  *     `DrillEmptyState` — the level-gate/no-gaps reason must stay
  *     visible rather than silently bouncing the learner back to
  *     Accueil.
+ *
+ * The zero-item empty state's `onRetry` is wired to `useDrillSession`'s
+ * `retry()` — a genuine re-fetch — ONLY for `reason === "error"`,
+ * mirroring mobile's own `DrillEmptyState` usage
+ * (`SuggestionsScreen.tsx`: `onRetry={reload}` for the error branch,
+ * omitted entirely for every other reason). `DrillEmptyState` itself
+ * only renders the "Réessayer" button when both conditions hold, so
+ * every other reason renders no retry affordance at all — there is no
+ * close-labeled-as-retry path here (review fix round 1: the first cut
+ * wired `onRetry` to `handleClose` for every reason, which silently
+ * exited to Accueil under the promise of a retry).
  */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -35,7 +46,8 @@ import { useDrillSession } from "../hooks/useDrillSession";
 
 export function DrillSessionScreen() {
   const router = useRouter();
-  const { status, items, index, selected, summary, reason, answer, next } = useDrillSession();
+  const { status, items, index, selected, summary, reason, answer, next, retry } =
+    useDrillSession();
   const currentLevel = useExamContextStore((s) => s.level);
 
   useEffect(() => {
@@ -93,7 +105,13 @@ export function DrillSessionScreen() {
           <DrillEmptyState
             reason={reason}
             userLevel={currentLevel.toUpperCase()}
-            onRetry={handleClose}
+            onRetry={
+              reason === "error"
+                ? () => {
+                    void retry();
+                  }
+                : undefined
+            }
             testID="drill-session-empty"
           />
         </div>
