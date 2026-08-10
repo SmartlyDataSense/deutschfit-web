@@ -18,7 +18,7 @@ const PROJECT_REF_ENV: Readonly<Record<string, BackendEnvName>> = {
 
 export function readProjectRef(url: string | undefined): string | null {
   if (!url) return null;
-  const match = /^https:\/\/([a-z0-9]+)\.supabase\./i.exec(url);
+  const match = /^https:\/\/([a-z0-9]+)\.supabase\./i.exec(url.trim());
   return match ? match[1]!.toLowerCase() : null;
 }
 

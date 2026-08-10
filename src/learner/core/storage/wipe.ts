@@ -30,4 +30,9 @@ export async function wipeLocalState(userId: string | null): Promise<void> {
     removeFlag(learnerCoachOpenerSeenKeyFor(userId));
   }
   // NOT removed: LEARNER_LANG_STORAGE_KEY — language survives deletion.
+  // NOT removed: LEARNER_ANALYTICS_OPT_OUT_KEY — a privacy preference must
+  // fail closed; clearing it on account deletion would silently re-enable
+  // tracking for whoever next uses this browser.
+  // NOT removed: LEARNER_MIC_CHECK_PASSED_KEY — device-capability state,
+  // same class as the language key, not account data.
 }

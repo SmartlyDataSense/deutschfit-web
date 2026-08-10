@@ -60,6 +60,12 @@ describe("backendEnv (S11.1)", () => {
     expect(readProjectRef(undefined)).toBeNull();
   });
 
+  it("trims whitespace before matching (mobile parity — backendEnv.ts:34)", () => {
+    expect(readProjectRef("  https://ocqoqnifzlkrgcyjljpl.supabase.co  ")).toBe(
+      "ocqoqnifzlkrgcyjljpl"
+    );
+  });
+
   it("maps known refs to env names, unknown to 'unknown'", () => {
     expect(getBackendInfo("https://ocqoqnifzlkrgcyjljpl.supabase.co").env).toBe("dev");
     expect(getBackendInfo("https://auketecsgmdqlexosaay.supabase.co").env).toBe("prod");
