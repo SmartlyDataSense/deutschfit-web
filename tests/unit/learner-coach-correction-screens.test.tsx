@@ -107,6 +107,13 @@ function makeRow(overrides: Partial<HistoryFeedRow> = {}): HistoryFeedRow {
 
 const SPRECHEN_FIXTURE = feedbackV2Fixture as unknown as FeedbackV2;
 
+/** Builds a `SchreibenDimensionScore` — `max: null` (denominator unknown)
+ * unless a test explicitly cares about the `dimension_scores_json`-sourced
+ * denominator (issue #41 fix round 2). */
+function dimScore(score: number, max: number | null = null): { score: number; max: number | null } {
+  return { score, max };
+}
+
 function schreibenCorrection(overrides: Partial<SchreibenCorrection> = {}): SchreibenCorrection {
   return {
     modality: "schreiben",
@@ -118,10 +125,10 @@ function schreibenCorrection(overrides: Partial<SchreibenCorrection> = {}): Schr
     normalizedTotalPct: null,
     summaryFr: "",
     dimensionScores: {
-      erfuellung: 60,
-      kohaerenz: 55,
-      wortschatz: 58,
-      strukturen: 50,
+      erfuellung: dimScore(60),
+      kohaerenz: dimScore(55),
+      wortschatz: dimScore(58),
+      strukturen: dimScore(50),
     },
     ...overrides,
   };
@@ -451,7 +458,11 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
         overallScore: 38,
         scoreMax: 45,
         normalizedTotalPct: 84.0,
-        dimensionScores: { inhalt: 13, formale_richtigkeit: 12, kommunikative_gestaltung: 13 },
+        dimensionScores: {
+          inhalt: dimScore(13, 15),
+          formale_richtigkeit: dimScore(12, 15),
+          kommunikative_gestaltung: dimScore(13, 15),
+        },
       })
     );
 
@@ -494,6 +505,53 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
         "Communication"
       )
     ).toBeInTheDocument();
+
+    // Real per-dimension max (15, from dimension_scores_json), never the
+    // invented "/100" the flat map alone can't tell us.
+    expect(
+      within(screen.getByTestId("correction-dimension-inhalt")).getByText("13 / 15")
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("correction-dimension-formale_richtigkeit")).getByText("12 / 15")
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("correction-dimension-kommunikative_gestaltung")).getByText(
+        "13 / 15"
+      )
+    ).toBeInTheDocument();
+    for (const key of ["inhalt", "formale_richtigkeit", "kommunikative_gestaltung"]) {
+      expect(
+        within(screen.getByTestId(`correction-dimension-${key}`)).queryByText(/\/ 100/)
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it("a dimension with no per-dimension max on the wire shows the bare score, not a fabricated /100 or a bare '/'  (issue #41 fix round 2)", async () => {
+    fetchCorrectionMock.mockResolvedValueOnce(
+      schreibenCorrection({
+        dimensionScores: { inhalt: dimScore(13, null) },
+      })
+    );
+
+    renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-telc-no-max" modality="schreiben" />
+    );
+
+    const card = await screen.findByTestId("correction-dimension-inhalt");
+    expect(within(card).getByText("13")).toBeInTheDocument();
+    expect(within(card).queryByText(/\/ 100/)).not.toBeInTheDocument();
+    expect(within(card).queryByText(/\/\s*$/)).not.toBeInTheDocument();
+  });
+
+  it("Sprechen dimension cards keep the legacy '/ 100' label untouched (scoreMax omitted)", async () => {
+    fetchCorrectionMock.mockResolvedValueOnce({ modality: "sprechen", feedback: SPRECHEN_FIXTURE });
+
+    renderWithI18n(
+      <CorrectionWalkthroughScreen submissionId="sub-sprechen-label" modality="sprechen" />
+    );
+
+    const card = await screen.findByTestId("correction-dimension-aufgabe");
+    expect(within(card).getByText(/\/ 100$/)).toBeInTheDocument();
   });
 
   it("band is derived from the percentage, not the raw points score (mutation guard: feeding scoreToBand the raw score must fail this)", async () => {
@@ -535,7 +593,7 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
 
   it("an unlabelled dimension key degrades to a humanized name, not a blank card or the raw key", async () => {
     fetchCorrectionMock.mockResolvedValueOnce(
-      schreibenCorrection({ dimensionScores: { some_new_facet: 9 } })
+      schreibenCorrection({ dimensionScores: { some_new_facet: dimScore(9) } })
     );
 
     renderWithI18n(

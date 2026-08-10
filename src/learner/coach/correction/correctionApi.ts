@@ -26,6 +26,21 @@ import { isFeedbackV2, type FeedbackV2 } from "@/learner/core/feedback/feedbackV
 export type Modality = "schreiben" | "sprechen";
 
 /**
+ * One dimension's score, carrying its own board-native denominator.
+ *
+ * `max` (issue #41 fix round 2): sourced from `dimension_scores_json[key]
+ * .max` when the row carries that richer nested wire shape (telc = 15 per
+ * criterion, Goethe's own per-dimension max, …). Null when unknown — NEVER
+ * assume/invent 100 or any other value here. `DimensionCard` renders the
+ * score with no denominator when `max` is null rather than a fabricated
+ * fraction.
+ */
+export interface SchreibenDimensionScore {
+  readonly score: number;
+  readonly max: number | null;
+}
+
+/**
  * Board-blind by construction (issue #41): the writing pipeline's
  * `dimension_scores` column carries whatever facet set the board's rubric
  * defines — 4 keys for Goethe (`erfuellung`/`kohaerenz`/`wortschatz`/
@@ -34,7 +49,7 @@ export type Modality = "schreiben" | "sprechen";
  * 4-field shape here is what silently dropped every telc row's dimensions
  * to zero. Never widen this back to a closed set of fields.
  */
-export type SchreibenDimensionScores = Readonly<Record<string, number>>;
+export type SchreibenDimensionScores = Readonly<Record<string, SchreibenDimensionScore>>;
 
 export interface SprechenCorrection {
   readonly modality: "sprechen";
@@ -105,16 +120,45 @@ export async function fetchCorrection(
     throw new Error("correction_unavailable");
   }
   const dims = isRecord(submission.dimension_scores) ? submission.dimension_scores : {};
+  // `dimension_scores_json` (submissions-get's WRITING_COLUMNS) carries the
+  // richer nested wire shape ({score, pct, max} per key) — this is where
+  // the per-dimension denominator lives; the flat `dimension_scores` map
+  // above never had one. Legacy rows may carry the OLDER flat-number
+  // variant of this same column (`Record<string, number>`, pre-PR-3) —
+  // `isRecord(entry)` below rejects that shape per-key and falls back
+  // cleanly, it does not need its own branch.
+  const dimsJson = isRecord(submission.dimension_scores_json)
+    ? submission.dimension_scores_json
+    : {};
   // Board-blind by construction (issue #41 defect 1): render exactly the
   // keys the row carries, in the payload's own key order. `Object.entries`
   // on a JSON-parsed object preserves the source's insertion order for
   // string keys, so this is the grader's own canonical facet order (e.g.
   // telc: inhalt -> formale_richtigkeit -> kommunikative_gestaltung) —
   // never sort alphabetically, that would reorder a board's official
-  // criteria sequence.
-  const dimensionScores: Record<string, number> = {};
+  // criteria sequence. Key SET is still driven by the flat `dimension_scores`
+  // map (unchanged from the defect-1 fix) — `dimension_scores_json` is
+  // consulted only per-key, as an enrichment source for `score`/`max`.
+  const dimensionScores: Record<string, SchreibenDimensionScore> = {};
   for (const [key, value] of Object.entries(dims)) {
-    dimensionScores[key] = num(value);
+    const wireEntry = dimsJson[key];
+    // The nested shape is the only one carrying a `max`; a legacy flat-
+    // number entry (`typeof wireEntry === "number"`) has none to offer.
+    const hasWireMax =
+      isRecord(wireEntry) &&
+      typeof wireEntry.score === "number" &&
+      typeof wireEntry.max === "number" &&
+      Number.isFinite(wireEntry.max);
+    dimensionScores[key] = hasWireMax
+      ? {
+          // Prefer the richer wire shape's score over the flat map's value
+          // when both exist (issue #41 fix round 2) — they are written by
+          // the same grading pipeline in the same request and are expected
+          // to always agree; no known case where they disagree.
+          score: (wireEntry as { score: number }).score,
+          max: (wireEntry as { max: number }).max,
+        }
+      : { score: num(value), max: null };
   }
   const scoreMax = submission.score_max;
   const normalizedTotalPct = submission.normalized_total_pct;

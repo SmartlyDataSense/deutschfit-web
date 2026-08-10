@@ -60,6 +60,8 @@
         "a_retravailler": "À retravailler"
       },
       "dimensionScoreLabel": "{{score}} / 100",
+      "dimensionScoreWithMaxLabel": "{{score}} / {{scoreMax}}",
+      "dimensionScoreNoMaxLabel": "{{score}}",
       "examinerLabel": "Examinateur · DE",
       "betreuerLabel": "✦ Betreuer · FR",
       "transcriptHint": "Touche un passage souligné pour voir la note.",

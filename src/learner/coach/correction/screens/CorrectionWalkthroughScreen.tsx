@@ -175,15 +175,19 @@ export function CorrectionWalkthroughScreen({
           prueferText={correction.prueferText}
           betreuerText={correction.betreuerText}
         />
-        {Object.keys(correction.dimensionScores).map((key) => (
-          <DimensionCard
-            key={key}
-            dimensionKey={key}
-            score={correction.dimensionScores[key] ?? 0}
-            justification=""
-            onDrill={onDrill}
-          />
-        ))}
+        {Object.keys(correction.dimensionScores).map((key) => {
+          const dim = correction.dimensionScores[key] ?? { score: 0, max: null };
+          return (
+            <DimensionCard
+              key={key}
+              dimensionKey={key}
+              score={dim.score}
+              scoreMax={dim.max}
+              justification=""
+              onDrill={onDrill}
+            />
+          );
+        })}
       </>
     );
   } else {

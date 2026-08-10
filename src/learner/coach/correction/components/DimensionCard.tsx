@@ -30,6 +30,19 @@
  * guards the case a future board's facet ships before its labels do, so
  * an unlabelled key degrades to a humanized version of itself rather than
  * a raw i18n key string or a blank card.
+ *
+ * `scoreMax` (issue #41 fix round 2) is a deliberate three-state prop, not
+ * a plain `number | null`:
+ *   - omitted (`undefined`) — the Sprechen caller's contract. Sprechen
+ *     dimension scores are always a 0-100 value already (see
+ *     `feedbackV2.ts`); this preserves the EXACT prior rendering
+ *     (`coach:correction.walkthrough.dimensionScoreLabel`, "score / 100")
+ *     for the one path this fix must not touch.
+ *   - `null` — the Schreiben caller's "denominator unknown" case (row has
+ *     no `dimension_scores_json[key].max` on the wire). Renders the bare
+ *     score with NO denominator — never a fabricated "/ 100".
+ *   - a `number` — the Schreiben caller's normal case: renders
+ *     "score / scoreMax" in the board's own units (telc = "13 / 15").
  */
 import { useTranslation } from "react-i18next";
 
@@ -41,6 +54,7 @@ export type WalkthroughDimensionKey = string;
 export interface DimensionCardProps {
   readonly dimensionKey: WalkthroughDimensionKey;
   readonly score: number;
+  readonly scoreMax?: number | null;
   readonly justification: string;
   readonly onDrill: () => void;
 }
@@ -59,7 +73,13 @@ function humanizeDimensionKey(key: string): string {
     .join(" ");
 }
 
-export function DimensionCard({ dimensionKey, score, justification, onDrill }: DimensionCardProps) {
+export function DimensionCard({
+  dimensionKey,
+  score,
+  scoreMax,
+  justification,
+  onDrill,
+}: DimensionCardProps) {
   const { t, i18n } = useTranslation(["coach"]);
 
   const hasLabel = i18n.exists(`coach:correction.dimensions.${dimensionKey}.name`);
@@ -67,7 +87,14 @@ export function DimensionCard({ dimensionKey, score, justification, onDrill }: D
     ? t(`coach:correction.dimensions.${dimensionKey}.name`)
     : humanizeDimensionKey(dimensionKey);
   const blurb = hasLabel ? t(`coach:correction.dimensions.${dimensionKey}.blurb`) : "";
-  const scoreLabel = t("coach:correction.walkthrough.dimensionScoreLabel", { score });
+  // Three-state `scoreMax` — see the file-header comment for the full
+  // rationale (issue #41 fix round 2).
+  const scoreLabel =
+    scoreMax === undefined
+      ? t("coach:correction.walkthrough.dimensionScoreLabel", { score })
+      : scoreMax === null
+        ? t("coach:correction.walkthrough.dimensionScoreNoMaxLabel", { score })
+        : t("coach:correction.walkthrough.dimensionScoreWithMaxLabel", { score, scoreMax });
   const drillCta = t("coach:correction.walkthrough.drillCta");
   const drillA11y = t("coach:correction.walkthrough.drillCtaA11y", { dimension: dimensionName });
 
