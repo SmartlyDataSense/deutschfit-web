@@ -14,6 +14,7 @@ const {
   finalizeSessionMock,
   trackEventMock,
   pushMock,
+  replaceMock,
   backMock,
   reloadMock,
   useExamTimerMock,
@@ -26,6 +27,7 @@ const {
   finalizeSessionMock: vi.fn(),
   trackEventMock: vi.fn(),
   pushMock: vi.fn(),
+  replaceMock: vi.fn(),
   backMock: vi.fn(),
   reloadMock: vi.fn(),
   useExamTimerMock: vi.fn(),
@@ -85,7 +87,7 @@ vi.mock("@/learner/core/analytics/posthog", () => ({
   trackEvent: (...args: unknown[]) => trackEventMock(...args),
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock, replace: vi.fn(), back: backMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock, back: backMock }),
 }));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
 
@@ -109,6 +111,7 @@ import { useExamPlayer } from "@/learner/core/exam/engine/useExamPlayer";
 import type { ExamItem, ExamSession } from "@/learner/core/exam/engine/types";
 import { HoerenSessionScreen } from "@/learner/hoeren/screens/HoerenSessionScreen";
 import { useHoerenResultsStore } from "@/learner/hoeren/resultsStore";
+import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 
 function makeItem(id: string, number: number, correctKey: string, stimulusSlug: string): ExamItem {
@@ -242,6 +245,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
     finalizeSessionMock.mockReset();
     trackEventMock.mockReset();
     pushMock.mockReset();
+    replaceMock.mockReset();
     backMock.mockReset();
     reloadMock.mockReset();
     useExamTimerMock.mockReset();
@@ -253,6 +257,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
       session: { user: { id: "u1" } },
     } as never);
     useHoerenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
   });
   afterEach(cleanup);
 
@@ -515,5 +520,195 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(0);
+  });
+});
+
+describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
+  beforeEach(() => {
+    useHoerenSessionMock.mockReset();
+    submitHoerenMock.mockReset();
+    submitHoerenSessionMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
+    trackEventMock.mockReset();
+    pushMock.mockReset();
+    replaceMock.mockReset();
+    backMock.mockReset();
+    reloadMock.mockReset();
+    useExamTimerMock.mockReset();
+    useExamTimerMock.mockImplementation(
+      realUseExamTimerHolder.current as typeof import("@/learner/core/exam/useExamTimer").useExamTimer
+    );
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
+    useHoerenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
+  });
+  afterEach(cleanup);
+
+  it("(a) submit records raw/total/unanswered + duration into the simulation run store before advancing", async () => {
+    submitHoerenMock.mockResolvedValue({ attempt_id: "hoeren-1", raw_score: 1 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: "SCHREIBEN" });
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({
+        status: "ready",
+        session: twoPartSession,
+        audioUrlBySlug: TWO_PART_AUDIO,
+        attemptId: "hoeren-1",
+      })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
+    );
+
+    fireEvent.click(screen.getByTestId("hoeren-option-a")); // Teil 1 item answered
+    fireEvent.click(screen.getByTestId("hoeren-session-next"));
+    await waitFor(() => expect(screen.getByTestId("hoeren-session-submit")).toBeInTheDocument());
+    // Teil 2 item left unanswered — proves `unanswered` comes from the
+    // real fixture/player state, not a hardcoded 0.
+    fireEvent.click(screen.getByTestId("hoeren-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=b1-01")
+    );
+
+    expect(useSimulationRun.getState().outcomes.hoeren).toEqual({
+      raw: 1,
+      total: 2,
+      unanswered: 1,
+    });
+    // Fixture session duration is 20 minutes.
+    expect(useSimulationRun.getState().durationMinutesTotal).toBe(20);
+  });
+
+  it('(c) REAL server response: advanceSession resolving nextModule:"SCHREIBEN" redirects to the orchestrator (P6) and writes no results store/route', async () => {
+    submitHoerenMock.mockResolvedValue({ attempt_id: "hoeren-1", raw_score: 1 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: "SCHREIBEN" });
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
+    );
+    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=b1-01")
+    );
+
+    expect(finalizeSessionMock).not.toHaveBeenCalled();
+    expect(pushMock).not.toHaveBeenCalled();
+    expect(useHoerenResultsStore.getState().payload).toBeNull();
+    expect(useSimulationRun.getState().result).toBeNull();
+  });
+
+  it("(c') DEFENSIVE PARITY ONLY: advanceSession resolving nextModule:null finalizes into the run store and routes to /examen/simulation/results (backend can never return this for a leg)", async () => {
+    submitHoerenMock.mockResolvedValue({ attempt_id: "hoeren-1", raw_score: 1 });
+    advanceSessionMock.mockResolvedValue({ mockAttemptId: "mock-1", nextModule: null });
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T00:00:00.000Z",
+      perCompetenceReport: { hoeren: { status: "scored", raw_score: 1, max_score: 1 } },
+      replay: false,
+    });
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
+    );
+    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-session-submit"));
+
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledWith("/fr/app/examen/simulation/results")
+    );
+    expect(finalizeSessionMock).toHaveBeenCalledWith({
+      userId: "u1",
+      examSlug: "b1-01",
+      mockAttemptId: "mock-1",
+      answers: { i1: "a" },
+    });
+    expect(trackEventMock).toHaveBeenCalledWith("exam_finalized", {
+      attempt_id: "mock-1",
+      duration_ms: expect.any(Number),
+    });
+
+    const result = useSimulationRun.getState().result;
+    expect(result?.finalizedAt).toBe("2026-08-09T00:00:00.000Z");
+    expect(result?.report).toEqual({
+      hoeren: { status: "scored", raw_score: 1, max_score: 1 },
+    });
+    expect(result?.skills).toEqual([
+      { key: "lesen", status: "missing", score: null, max: null },
+      { key: "hoeren", status: "scored", score: 1, max: 1 },
+      { key: "schreiben", status: "missing", score: null, max: null },
+      { key: "sprechen", status: "missing", score: null, max: null },
+    ]);
+  });
+
+  it("(d) drill regression lock: moduleFilter:HOEREN never touches recordOutcome or the simulation routes", async () => {
+    submitHoerenMock.mockResolvedValue({ attempt_id: "hoeren-1", raw_score: 1 });
+    finalizeSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      status: "finalized",
+      finalizedAt: "2026-08-09T00:00:00.000Z",
+      perCompetenceReport: { hoeren: { status: "scored", raw_score: 1, max_score: 1 } },
+      replay: false,
+    });
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
+    );
+    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-session-submit"));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/results"));
+
+    expect(advanceSessionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(useSimulationRun.getState().outcomes.hoeren).toBeUndefined();
+    expect(useSimulationRun.getState().result).toBeNull();
+  });
+
+  it("(e) advance rejection in the full-sim branch: shipped local-fallback catch still navigates to per-module results", async () => {
+    submitHoerenMock.mockResolvedValue({ attempt_id: "hoeren-1", raw_score: 1 });
+    advanceSessionMock.mockRejectedValue(new Error("network_error"));
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
+    );
+    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-session-submit"));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/results"));
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(finalizeSessionMock).not.toHaveBeenCalled();
+
+    const payload = useHoerenResultsStore.getState().payload;
+    expect(payload?.mode).toBe("graded");
+    expect(payload?.submissionId).toMatch(/^local-/);
+    // `recordOutcome` already ran (before the rejecting `advanceSession`
+    // call) — this is the shipped ordering (brief interface note (a) runs
+    // BEFORE `advanceSession`), so the outcome is still recorded even
+    // though the chain-continuation redirect never fires.
+    expect(useSimulationRun.getState().outcomes.hoeren).toEqual({
+      raw: 1,
+      total: 1,
+      unanswered: 0,
+    });
   });
 });
