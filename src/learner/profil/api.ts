@@ -30,7 +30,10 @@ export async function fetchUserStats(): Promise<ProfilStatsPayload> {
   } catch (cause) {
     throw new Error("user_stats_transport_error", { cause });
   }
-  if (raw === null || raw === undefined) {
+  // Mobile parity (profil/api.ts `isPayload`): reject ANY non-object,
+  // including falsy primitives (`0` / `false` / `""`) and truthy ones
+  // (a bare number/string/boolean response) — not just null/undefined.
+  if (raw === null || typeof raw !== "object") {
     throw new Error("user_stats_empty_response");
   }
   const body = raw as Record<string, unknown>;

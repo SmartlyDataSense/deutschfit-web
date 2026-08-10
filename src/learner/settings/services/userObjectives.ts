@@ -2,7 +2,11 @@
  * user_objectives read/upsert — web port of
  * `mobile/src/features/settings/services/userObjectives.ts`.
  * PostgREST via the browser client (RLS scopes rows to the user);
- * throws "unauthenticated" without a session (mobile parity).
+ * throws "unauthenticated" without a session (mobile parity). PostgREST
+ * errors are wrapped with mobile's exact fallback strings
+ * (userObjectives.ts:39,71) rather than re-thrown raw, so a caller
+ * pattern-matching on `err.message` sees the same codes on both
+ * platforms.
  */
 import { getBrowserClient } from "@/lib/supabase/browser";
 
@@ -27,7 +31,7 @@ export async function readUserObjectives(): Promise<UserObjectivesRead | null> {
     .select("motivation, daily_minutes")
     .eq("user_id", userId)
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(error.message || "read_user_objectives_failed");
   if (!data) return null;
   return { motivation: data.motivation ?? null, dailyMinutes: data.daily_minutes ?? null };
 }
@@ -47,5 +51,5 @@ export async function updateUserObjectives(input: {
     },
     { onConflict: "user_id" }
   );
-  if (error) throw error;
+  if (error) throw new Error(error.message || "update_user_objectives_failed");
 }

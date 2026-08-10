@@ -44,17 +44,30 @@ describe("fetchUserStats (S11.2)", () => {
 
   it("maps a transport failure to user_stats_transport_error", async () => {
     invokeFn.mockRejectedValue(new Error("boom"));
-    await expect(fetchUserStats()).rejects.toThrow("user_stats_transport_error");
+    // Exact match — `.toThrow(string)` is substring matching in Vitest,
+    // which would stay green even if the code were mutated to
+    // `user_stats_transport_error_X`. Anchor the regex to catch that.
+    await expect(fetchUserStats()).rejects.toThrow(/^user_stats_transport_error$/);
   });
 
-  it("rejects an empty response", async () => {
+  it("rejects an empty response (null)", async () => {
     invokeFn.mockResolvedValue(null);
-    await expect(fetchUserStats()).rejects.toThrow("user_stats_empty_response");
+    await expect(fetchUserStats()).rejects.toThrow(/^user_stats_empty_response$/);
+  });
+
+  it("rejects a falsy-primitive response (mobile isPayload parity — Boolean(value) gate)", async () => {
+    invokeFn.mockResolvedValue(0);
+    await expect(fetchUserStats()).rejects.toThrow(/^user_stats_empty_response$/);
+  });
+
+  it("rejects a truthy non-object response (mobile isPayload parity — typeof value === 'object' gate)", async () => {
+    invokeFn.mockResolvedValue("not an object");
+    await expect(fetchUserStats()).rejects.toThrow(/^user_stats_empty_response$/);
   });
 
   it("rejects a malformed response (fullName not a string)", async () => {
     invokeFn.mockResolvedValue({ ...payload, fullName: 7 });
-    await expect(fetchUserStats()).rejects.toThrow("user_stats_malformed_response");
+    await expect(fetchUserStats()).rejects.toThrow(/^user_stats_malformed_response$/);
   });
 });
 
