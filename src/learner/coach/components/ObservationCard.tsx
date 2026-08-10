@@ -17,19 +17,17 @@ import { AppText, Chip } from "@/learner/ui/primitives";
 export interface ObservationCardProps {
   readonly body: string;
   readonly connectors: readonly string[];
-  /** Pre-translated overline (`coach:chat.scripted.observation.overline`). */
-  readonly overlineLabel?: string;
+  /**
+   * Pre-translated overline (`coach:chat.scripted.observation.overline`).
+   * Required — no French fallback baked into this component, so an
+   * `en`-locale caller can't silently render untranslated copy by
+   * omitting the prop.
+   */
+  readonly overlineLabel: string;
   readonly testID?: string;
 }
 
-const DEFAULT_OVERLINE = "Observation IA";
-
-export function ObservationCard({
-  body,
-  connectors,
-  overlineLabel = DEFAULT_OVERLINE,
-  testID,
-}: ObservationCardProps) {
+export function ObservationCard({ body, connectors, overlineLabel, testID }: ObservationCardProps) {
   return (
     <div
       role="group"

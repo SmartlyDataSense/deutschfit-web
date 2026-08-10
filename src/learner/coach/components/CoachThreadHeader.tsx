@@ -21,26 +21,27 @@ export interface CoachThreadHeaderProps {
   readonly status?: CoachThreadHeaderStatus;
   /** Pre-translated title (`coach:chat.header.title`). */
   readonly title: string;
-  /** Pre-translated a11y label for the hamburger button (`coach:threadHeader.menuA11y`). */
-  readonly menuAccessibilityLabel?: string;
-  /** Pre-translated a11y label for the status dot (`coach:threadHeader.online`). */
-  readonly onlineAccessibilityLabel?: string;
-  /** Pre-translated a11y label for the status dot (`coach:threadHeader.offline`). */
-  readonly offlineAccessibilityLabel?: string;
+  /**
+   * Pre-translated a11y label for the hamburger button
+   * (`coach:threadHeader.menuA11y`). Required — no French fallback baked
+   * into this component, so an `en`-locale caller can't silently render
+   * untranslated copy by omitting the prop.
+   */
+  readonly menuAccessibilityLabel: string;
+  /** Pre-translated a11y label for the status dot (`coach:threadHeader.online`). Required, same rationale as `menuAccessibilityLabel`. */
+  readonly onlineAccessibilityLabel: string;
+  /** Pre-translated a11y label for the status dot (`coach:threadHeader.offline`). Required, same rationale as `menuAccessibilityLabel`. */
+  readonly offlineAccessibilityLabel: string;
   readonly testID?: string;
 }
-
-const DEFAULT_MENU_LABEL = "Voir les conversations";
-const DEFAULT_ONLINE_LABEL = "En ligne";
-const DEFAULT_OFFLINE_LABEL = "Hors ligne";
 
 export function CoachThreadHeader({
   onMenu,
   status = "online",
   title,
-  menuAccessibilityLabel = DEFAULT_MENU_LABEL,
-  onlineAccessibilityLabel = DEFAULT_ONLINE_LABEL,
-  offlineAccessibilityLabel = DEFAULT_OFFLINE_LABEL,
+  menuAccessibilityLabel,
+  onlineAccessibilityLabel,
+  offlineAccessibilityLabel,
   testID = "coach-thread-header",
 }: CoachThreadHeaderProps) {
   const isOnline = status === "online";

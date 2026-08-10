@@ -22,6 +22,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof CoachChatComposer>
       onDraftChange={onDraftChange}
       onSubmit={onSubmit}
       placeholder="Écris au Betreuer…"
+      inputAccessibilityLabel="Message pour le Betreuer"
+      sendAccessibilityLabel="Envoyer le message"
       {...overrides}
     />
   );

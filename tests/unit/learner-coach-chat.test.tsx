@@ -317,4 +317,39 @@ describe("CoachChatScreen (S9 Task 9.4)", () => {
       message_length: "Hallo Betreuer".length,
     });
   });
+
+  it("opening the thread drawer keeps coach-thread-panel testIDs unambiguous (review fix round 1)", async () => {
+    listCoachThreadsMock.mockResolvedValue([
+      {
+        threadId: "latest",
+        preview: "hi",
+        messageCount: 2,
+        startedAt: "2026-08-08T00:00:00.000Z",
+        lastMessageAt: "2026-08-08T00:00:00.000Z",
+      },
+    ]);
+    loadCoachThreadHistoryMock.mockResolvedValue([sampleMessage({ id: "m1" })]);
+
+    renderWithI18n(<CoachChatScreen />);
+    await waitForReady();
+
+    // Before the drawer opens: exactly one persistent panel, at the plain
+    // brief-contract testID.
+    expect(screen.getAllByTestId("coach-thread-panel")).toHaveLength(1);
+
+    fireEvent.click(screen.getByTestId("coach-thread-header-menu"));
+
+    // The drawer is not gated to narrow viewports (nothing stops a
+    // wide-viewport learner from opening it too), so both panels are
+    // simultaneously in the DOM once it's open — the persistent one must
+    // keep sole ownership of the plain `coach-thread-panel` testID, and
+    // the drawer's instance (+ its `-new`/`-row-{id}` children) must be
+    // disambiguated, not collide with it.
+    expect(screen.getAllByTestId("coach-thread-panel")).toHaveLength(1);
+    expect(screen.getByTestId("coach-thread-panel-drawer")).toBeInTheDocument();
+    expect(screen.getByTestId("coach-thread-panel-new")).toBeInTheDocument();
+    expect(screen.getByTestId("coach-thread-panel-drawer-new")).toBeInTheDocument();
+    expect(screen.getByTestId("coach-thread-panel-row-latest")).toBeInTheDocument();
+    expect(screen.getByTestId("coach-thread-panel-drawer-row-latest")).toBeInTheDocument();
+  });
 });

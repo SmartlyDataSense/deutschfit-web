@@ -25,15 +25,21 @@ export interface CoachChatComposerProps {
   readonly onSubmit: () => void;
   readonly placeholder: string;
   readonly disabled?: boolean;
-  /** Pre-translated a11y label for the text input. */
-  readonly inputAccessibilityLabel?: string;
-  /** Pre-translated a11y label for the send button (`coach:chat.composer.sendA11y`). */
-  readonly sendAccessibilityLabel?: string;
+  /**
+   * Pre-translated a11y label for the text input
+   * (`coach:chat.composer.inputA11y`). Required — no French fallback
+   * baked into this component, so an `en`-locale caller can't silently
+   * render untranslated copy by omitting the prop.
+   */
+  readonly inputAccessibilityLabel: string;
+  /**
+   * Pre-translated a11y label for the send button
+   * (`coach:chat.composer.sendA11y`). Required, same rationale as
+   * `inputAccessibilityLabel`.
+   */
+  readonly sendAccessibilityLabel: string;
   readonly testID?: string;
 }
-
-const DEFAULT_INPUT_A11Y = "Message pour le Betreuer";
-const DEFAULT_SEND_A11Y = "Envoyer le message";
 
 export function CoachChatComposer({
   draft,
@@ -41,8 +47,8 @@ export function CoachChatComposer({
   onSubmit,
   placeholder,
   disabled = false,
-  inputAccessibilityLabel = DEFAULT_INPUT_A11Y,
-  sendAccessibilityLabel = DEFAULT_SEND_A11Y,
+  inputAccessibilityLabel,
+  sendAccessibilityLabel,
   testID = "coach-chat-composer",
 }: CoachChatComposerProps) {
   const handleChange = useCallback(

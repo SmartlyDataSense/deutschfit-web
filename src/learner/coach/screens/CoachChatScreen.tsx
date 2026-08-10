@@ -227,6 +227,14 @@ export function CoachChatScreen({ routeThreadId }: CoachChatScreenProps) {
           base={base}
           sessions={sessionsState.sessions}
           onClose={() => setDrawerOpen(false)}
+          // Distinct from the persistent panel's default `coach-thread-panel`
+          // testID — both can be mounted at once (the drawer isn't gated to
+          // narrow viewports; nothing stops a wide-viewport learner from
+          // opening it too), so sharing the default would make
+          // `coach-thread-panel`/`-new`/`-row-{id}` ambiguous the moment the
+          // drawer opens. The persistent instance keeps the brief-contract
+          // default; only this transient overlay gets the suffix.
+          testID="coach-thread-panel-drawer"
         />
       ) : null}
     </div>
@@ -494,13 +502,19 @@ function ChatContent({
   );
 
   const bannerKey = bannerCode === null ? null : `${ERROR_I18N_PREFIX}${bannerCode}`;
+  // `seconds` is only meaningful for `coach_rate_limited`'s
+  // "...dans {{seconds}} s." string — passed for every other code too it
+  // would be a latent trap if a future error string ever grows a
+  // `{{seconds}}` placeholder of its own with unrelated meaning.
   const bannerText =
     bannerKey === null
       ? null
-      : t(bannerKey, {
-          seconds: rateLimitRemainingSec,
-          defaultValue: t("coach:chat.errors.coach_send_failed"),
-        });
+      : bannerCode === "coach_rate_limited"
+        ? t(bannerKey, {
+            seconds: rateLimitRemainingSec,
+            defaultValue: t("coach:chat.errors.coach_send_failed"),
+          })
+        : t(bannerKey, { defaultValue: t("coach:chat.errors.coach_send_failed") });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
