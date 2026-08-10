@@ -30,7 +30,7 @@ import { useSubmitReview } from "@/learner/srs/hooks/useSubmitReview";
 import { DifficultyActionRow, type Difficulty } from "@/learner/ui/blocks/DifficultyActionRow";
 import { SRSExplanationPanel } from "@/learner/ui/blocks/SRSExplanationPanel";
 import { SRSOptionChipRow } from "@/learner/ui/blocks/SRSOptionChipRow";
-import { AppButton, AppText, Skeleton } from "@/learner/ui/primitives";
+import { AppButton, AppText, EmptyState, Skeleton } from "@/learner/ui/primitives";
 
 export interface RevealScreenProps {
   readonly cardId: string;
@@ -40,7 +40,7 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
   const { t } = useTranslation(["srs"]);
   const router = useRouter();
   const locale = useLocale();
-  const { cards, loading } = useDueCards({ limit: 20 });
+  const { cards, loading, error } = useDueCards({ limit: 20 });
   const { submit, submitting } = useSubmitReview();
 
   const card = cards.find((c) => c.id === cardId);
@@ -74,6 +74,27 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
         <Skeleton.Block width="50%" height={28} aria-label={t("srs:reveal.title")} />
         <Skeleton.Card aria-label={t("srs:reveal.title")} />
         <Skeleton.Block width="100%" height={52} aria-label={t("srs:reveal.title")} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-4 px-4 py-8 lg:px-8"
+        data-testid="srs-reveal-screen"
+      >
+        <EmptyState
+          testID="srs-reveal-error"
+          title={t("srs:revision.errorTitle")}
+          description={t("srs:revision.errorBody")}
+        />
+        <AppButton
+          testID="srs-reveal-back"
+          variant="outline"
+          label={t("srs:reveal.backToRevision")}
+          onClick={() => router.replace(`/${locale}/app/srs`)}
+        />
       </div>
     );
   }

@@ -96,6 +96,21 @@ describe("RevealScreen", () => {
     expect(replaceMock).toHaveBeenCalledWith("/fr/app/srs");
   });
 
+  it("renders the error state (not the missing state) when the due-queue query fails", async () => {
+    const db = await getLearnerDb();
+    vi.spyOn(db.srsCards, "toArray").mockRejectedValueOnce(new Error("boom"));
+
+    renderWithI18n(<RevealScreen cardId="card-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("srs-reveal-error")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("srs-reveal-error")).toHaveTextContent("Erreur");
+    expect(screen.queryByTestId("srs-reveal-missing")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("srs-reveal-back"));
+    expect(replaceMock).toHaveBeenCalledWith("/fr/app/srs");
+  });
+
   it("does not flash the missing-card state while the due-queue query is still in flight", async () => {
     await seedDueCard("card-1", 2);
     const db = await getLearnerDb();
