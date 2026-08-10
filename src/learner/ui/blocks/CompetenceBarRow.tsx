@@ -19,6 +19,19 @@ import { AppText, Chip, ProgressBar, type ProgressBarTone } from "@/learner/ui/p
  * Tone maps:
  *   - `teal`  → ProgressBar `coach`
  *   - `amber` → ProgressBar `gold`
+ *
+ * S8 Task 8.8 (B3 sub-step) widened `score`/`max` from non-nullable
+ * `number` to `number | null` — the simulation results screen's 4th/5th
+ * skill rows (Schreiben `missing` / Sprechen `deferred`) have no real
+ * number to show, and P8 forbids fabricating one (never a fake "0/0").
+ * `score === null || max === null` renders an em-dash glyph in place of
+ * the numeric score, a 0-fraction bar, and an aria announcement that
+ * drops the "X sur Y" clause entirely. The numeric branch is otherwise
+ * byte-unchanged from the pre-8.8 shape — S6 (Schreiben/Sprechen
+ * feedback via `ModuleResultLayout`) and S7 always pass non-null
+ * `score`/`max`, so their rendered output and aria text are identical
+ * before and after this change (regression-locked in
+ * `tests/unit/learner-module-result-layout.test.tsx`).
  */
 export type CompetenceBarTone = "teal" | "amber";
 
@@ -27,8 +40,8 @@ export type CompetenceBarState = "priorite" | "aTravailler";
 export interface CompetenceBarRowProps {
   readonly label: string;
   readonly italicSubtitle?: string;
-  readonly score: number;
-  readonly max: number;
+  readonly score: number | null;
+  readonly max: number | null;
   readonly tone?: CompetenceBarTone;
   readonly state?: CompetenceBarState;
   readonly testID?: string;
@@ -60,9 +73,24 @@ export function CompetenceBarRow({
   state,
   testID,
 }: CompetenceBarRowProps) {
-  const fraction = max > 0 ? clamp01(score / max) : 0;
   const stateLabel = state ? STATE_LABEL[state] : undefined;
-  const announcement = `${label}: ${score} sur ${max}${stateLabel ? `, ${stateLabel}` : ""}`;
+
+  // Nullable branch (B3): a missing/deferred/pending-unscored module has no
+  // real number — render "—" (glyph, not copy) instead of synthesizing a
+  // "0/0". Numeric branch below is byte-unchanged from the pre-8.8 shape.
+  let fraction: number;
+  let scoreLabel: string;
+  let announcement: string;
+  if (score === null || max === null) {
+    fraction = 0;
+    scoreLabel = "—";
+    announcement = `${label}: —${stateLabel ? `, ${stateLabel}` : ""}`;
+  } else {
+    fraction = max > 0 ? clamp01(score / max) : 0;
+    scoreLabel = `${score}/${max}`;
+    announcement = `${label}: ${score} sur ${max}${stateLabel ? `, ${stateLabel}` : ""}`;
+  }
+
   return (
     <div
       role="group"
@@ -83,7 +111,7 @@ export function CompetenceBarRow({
         </div>
         {stateLabel ? <Chip label={stateLabel} selected={false} className="mr-1" /> : null}
         <AppText size="body" weight="bold" numeric>
-          {`${score}/${max}`}
+          {scoreLabel}
         </AppText>
       </div>
       <ProgressBar value={fraction} tone={TONE_BAR[tone]} className="mt-1" />
