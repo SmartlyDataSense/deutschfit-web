@@ -11,13 +11,15 @@
     "emptyBody": "Tu es à jour. Reviens demain ou entraîne une autre compétence.",
     "errorTitle": "Erreur",
     "errorBody": "Impossible de charger les cartes. Réessaie.",
-    "remainingLabel": "restantes"
+    "remainingLabel": "restantes",
+    "positionLabel": "Carte {{current}} / {{total}}"
   },
   "reveal": {
     "title": "Réponse",
     "explanationOverline": "Pourquoi ?",
     "missingTitle": "Carte introuvable",
-    "missingBody": "Cette carte n'est plus disponible. Retour à la révision."
+    "missingBody": "Cette carte n'est plus disponible. Retour à la révision.",
+    "backToRevision": "Retour à la révision"
   },
   "difficulty": {
     "again": "À revoir",

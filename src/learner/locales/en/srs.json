@@ -11,13 +11,15 @@
     "emptyBody": "You're up to date. Come back tomorrow or train another skill.",
     "errorTitle": "Error",
     "errorBody": "Could not load cards. Try again.",
-    "remainingLabel": "remaining"
+    "remainingLabel": "remaining",
+    "positionLabel": "Card {{current}} / {{total}}"
   },
   "reveal": {
     "title": "Answer",
     "explanationOverline": "Why?",
     "missingTitle": "Card not found",
-    "missingBody": "This card is no longer available. Returning to revision."
+    "missingBody": "This card is no longer available. Returning to revision.",
+    "backToRevision": "Back to revision"
   },
   "difficulty": {
     "again": "Again",

@@ -73,6 +73,10 @@ export function ApprendreScreen() {
         router.push(`/${locale}/app/sprechen`);
         return;
       }
+      if (card.id === "srs") {
+        router.push(`/${locale}/app/srs`);
+        return;
+      }
       router.push(`/${locale}/app/apprendre/practice`);
     },
     [router, locale]
