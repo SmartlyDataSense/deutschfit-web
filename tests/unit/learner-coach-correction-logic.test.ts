@@ -194,8 +194,18 @@ describe("fetchCorrection — schreiben", () => {
       prueferText: "Ich bin gegangen.",
       betreuerText: "Achte auf das Perfekt mit 'sein'.",
       overallScore: 72,
+      scoreMax: null,
+      normalizedTotalPct: null,
       summaryFr: "",
-      dimensionScores: { erfuellung: 80, kohaerenz: 70, wortschatz: 65, strukturen: 60 },
+      // No `dimension_scores_json` on this row -> every entry falls back to
+      // the flat map's value with `max: null` (denominator unknown, never
+      // invented).
+      dimensionScores: {
+        erfuellung: { score: 80, max: null },
+        kohaerenz: { score: 70, max: null },
+        wortschatz: { score: 65, max: null },
+        strukturen: { score: 60, max: null },
+      },
     });
   });
 
@@ -208,5 +218,142 @@ describe("fetchCorrection — schreiben", () => {
   test("schema_version !== 2 throws correction_unavailable", async () => {
     getSubmissionMock.mockResolvedValue({ ...gradedRow, schema_version: 1 });
     await expect(fetchCorrection("sub-2", "schreiben")).rejects.toThrow("correction_unavailable");
+  });
+
+  // Regression coverage for issue #41: a real telc row
+  // (76b2894d-8fc2-4789-80f5-439838493973, exam_product = telc_deutsch_b1)
+  // has `dimension_scores = {"inhalt":13,"formale_richtigkeit":12,
+  // "kommunikative_gestaltung":13}` — none of the Goethe four hardcoded
+  // keys the old mapping pinned. Before the fix, every lookup here
+  // returned `undefined` -> `num()` coerced it to 0, and the walkthrough
+  // rendered four "0/100" cards for an 84% pass. This test would have
+  // caught it: a hardcoded Goethe-4 mapping produces
+  // `{erfuellung:0,kohaerenz:0,wortschatz:0,strukturen:0}`, not the telc
+  // keys asserted below.
+  test("telc-shaped dimension_scores (3 keys, no Goethe overlap) maps board-blind, in payload order", async () => {
+    getSubmissionMock.mockResolvedValue({
+      id: "sub-telc-1",
+      status: "graded",
+      schema_version: 2,
+      body_de: "Sehr geehrte Damen und Herren, ...",
+      pruefer_text: "Sehr geehrte Damen und Herren, ...",
+      betreuer_text: "Ton texte respecte les 4 points demandés.",
+      score: 38,
+      score_max: 45,
+      normalized_total_pct: 84.0,
+      dimension_scores: { inhalt: 13, formale_richtigkeit: 12, kommunikative_gestaltung: 13 },
+    });
+
+    const result = await fetchCorrection("sub-telc-1", "schreiben");
+
+    expect(result.modality).toBe("schreiben");
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    // No `dimension_scores_json` on this row -> every entry's `max` is
+    // `null` (denominator unknown; the flat map alone never carries one).
+    expect(result.dimensionScores).toEqual({
+      inhalt: { score: 13, max: null },
+      formale_richtigkeit: { score: 12, max: null },
+      kommunikative_gestaltung: { score: 13, max: null },
+    });
+    // Payload key order is preserved (mutation guard: a `sort()` or a
+    // `Object.entries` reimplementation that reorders keys must fail this).
+    expect(Object.keys(result.dimensionScores)).toEqual([
+      "inhalt",
+      "formale_richtigkeit",
+      "kommunikative_gestaltung",
+    ]);
+    expect(result.overallScore).toBe(38);
+    expect(result.scoreMax).toBe(45);
+    expect(result.normalizedTotalPct).toBe(84.0);
+  });
+
+  test("score_max / normalized_total_pct absent on legacy rows -> both null (not 0)", async () => {
+    getSubmissionMock.mockResolvedValue(gradedRow);
+    const result = await fetchCorrection("sub-2", "schreiben");
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.scoreMax).toBeNull();
+    expect(result.normalizedTotalPct).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------
+  // Issue #41 fix round 2 — dimension_scores_json enrichment. The real
+  // telc row's `dimension_scores_json` (submissions-get's WRITING_COLUMNS)
+  // carries the nested {score, pct, max} shape:
+  //   {"inhalt":{"max":15,"pct":87,"score":13},
+  //    "formale_richtigkeit":{"max":15,"pct":80,"score":12},
+  //    "kommunikative_gestaltung":{"max":15,"pct":87,"score":13}}
+  // ---------------------------------------------------------------------
+
+  test("dimension_scores_json's nested {score,max} enriches every dimension with its real denominator (mutation guard: hardcoding 100 as max must fail this)", async () => {
+    getSubmissionMock.mockResolvedValue({
+      id: "sub-telc-json-1",
+      status: "graded",
+      schema_version: 2,
+      body_de: "Sehr geehrte Damen und Herren, ...",
+      pruefer_text: "Sehr geehrte Damen und Herren, ...",
+      betreuer_text: "Ton texte respecte les 4 points demandés.",
+      score: 38,
+      score_max: 45,
+      normalized_total_pct: 84.0,
+      dimension_scores: { inhalt: 13, formale_richtigkeit: 12, kommunikative_gestaltung: 13 },
+      dimension_scores_json: {
+        inhalt: { score: 13, pct: 87, max: 15 },
+        formale_richtigkeit: { score: 12, pct: 80, max: 15 },
+        kommunikative_gestaltung: { score: 13, pct: 87, max: 15 },
+      },
+    });
+
+    const result = await fetchCorrection("sub-telc-json-1", "schreiben");
+
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.dimensionScores).toEqual({
+      inhalt: { score: 13, max: 15 },
+      formale_richtigkeit: { score: 12, max: 15 },
+      kommunikative_gestaltung: { score: 13, max: 15 },
+    });
+  });
+
+  test("dimension_scores_json absent (row carries only the flat map) -> max stays null, not a fabricated 100", async () => {
+    getSubmissionMock.mockResolvedValue({
+      ...gradedRow,
+      dimension_scores_json: null,
+    });
+
+    const result = await fetchCorrection("sub-2", "schreiben");
+
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    for (const dim of Object.values(result.dimensionScores)) {
+      expect(dim.max).toBeNull();
+    }
+  });
+
+  test("dimension_scores_json in the legacy flat-number shape (no max) -> falls back to the flat map's score, max stays null", async () => {
+    getSubmissionMock.mockResolvedValue({
+      ...gradedRow,
+      // Pre-PR-3 legacy shape: a plain number per key, no {score,max} object.
+      dimension_scores_json: { erfuellung: 80, kohaerenz: 70, wortschatz: 65, strukturen: 60 },
+    });
+
+    const result = await fetchCorrection("sub-2", "schreiben");
+
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.dimensionScores.erfuellung).toEqual({ score: 80, max: null });
+  });
+
+  test("dimension_scores_json's score is preferred over the flat map's value when they disagree", async () => {
+    getSubmissionMock.mockResolvedValue({
+      ...gradedRow,
+      // Deliberately mismatched to prove which source wins — in practice
+      // the grading pipeline writes both from the same request and they
+      // are expected to always agree; no known case produces a real
+      // disagreement.
+      dimension_scores: { erfuellung: 999 },
+      dimension_scores_json: { erfuellung: { score: 80, pct: 80, max: 100 } },
+    });
+
+    const result = await fetchCorrection("sub-2", "schreiben");
+
+    if (result.modality !== "schreiben") throw new Error("unreachable");
+    expect(result.dimensionScores.erfuellung).toEqual({ score: 80, max: 100 });
   });
 });

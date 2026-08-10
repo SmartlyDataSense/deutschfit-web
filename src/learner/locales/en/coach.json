@@ -60,6 +60,8 @@
         "a_retravailler": "Needs work"
       },
       "dimensionScoreLabel": "{{score}} / 100",
+      "dimensionScoreWithMaxLabel": "{{score}} / {{scoreMax}}",
+      "dimensionScoreNoMaxLabel": "{{score}}",
       "examinerLabel": "Examiner · DE",
       "betreuerLabel": "✦ Betreuer · FR",
       "transcriptHint": "Tap a highlighted passage to see the note.",
@@ -99,6 +101,18 @@
       "strukturen": {
         "name": "Structures",
         "blurb": "Command of written constructions."
+      },
+      "inhalt": {
+        "name": "Content",
+        "blurb": "How fully the prompt's points are covered, in enough detail."
+      },
+      "kommunikative_gestaltung": {
+        "name": "Communication",
+        "blurb": "Greeting, sign-off, and register suited to the situation."
+      },
+      "formale_richtigkeit": {
+        "name": "Language accuracy",
+        "blurb": "Grammatical and lexical correctness of the text."
       }
     }
   },

@@ -60,6 +60,8 @@
         "a_retravailler": "À retravailler"
       },
       "dimensionScoreLabel": "{{score}} / 100",
+      "dimensionScoreWithMaxLabel": "{{score}} / {{scoreMax}}",
+      "dimensionScoreNoMaxLabel": "{{score}}",
       "examinerLabel": "Examinateur · DE",
       "betreuerLabel": "✦ Betreuer · FR",
       "transcriptHint": "Touche un passage souligné pour voir la note.",
@@ -99,6 +101,18 @@
       "strukturen": {
         "name": "Structures",
         "blurb": "La maîtrise des constructions écrites."
+      },
+      "inhalt": {
+        "name": "Contenu",
+        "blurb": "Les points de la consigne traités, avec assez de détails."
+      },
+      "kommunikative_gestaltung": {
+        "name": "Communication",
+        "blurb": "La formule d'appel, la formule de politesse et le registre adaptés à la situation."
+      },
+      "formale_richtigkeit": {
+        "name": "Correction de la langue",
+        "blurb": "La justesse grammaticale et lexicale du texte."
       }
     }
   },

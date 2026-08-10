@@ -35,12 +35,7 @@ import { Icon } from "@/learner/core/icons";
 import { AppButton, AppText, EmptyState, Skeleton } from "@/learner/ui/primitives";
 import type { DimensionKey } from "@/learner/core/feedback/feedbackV2";
 
-import {
-  fetchCorrection,
-  type Correction,
-  type Modality,
-  type SchreibenDimensionScores,
-} from "../correctionApi";
+import { fetchCorrection, type Correction, type Modality } from "../correctionApi";
 import { GlobalScoreBlock } from "../components/GlobalScoreBlock";
 import { DimensionCard } from "../components/DimensionCard";
 import { AnnotatedTranscriptView } from "../components/AnnotatedTranscriptView";
@@ -70,13 +65,14 @@ export interface CorrectionWalkthroughScreenProps {
 // Module-level dimension key lists
 // ---------------------------------------------------------------------------
 
-const SCHREIBEN_DIMS: readonly (keyof SchreibenDimensionScores)[] = [
-  "erfuellung",
-  "kohaerenz",
-  "wortschatz",
-  "strukturen",
-];
-
+// NOTE: there is intentionally no `SCHREIBEN_DIMS` constant (issue #41
+// defect 1). A hardcoded key list is exactly what silently dropped every
+// telc row's dimension cards — the Schreiben branch below derives the
+// rendered keys from `correction.dimensionScores` itself, board-blind by
+// construction. `SPRECHEN_DIMS` stays a fixed list deliberately: the
+// Sprechen path is out of scope for this fix (its 5 keys come from
+// `FeedbackV2.dimension_scores`, a different, closed contract — see
+// `correctionApi.ts`'s header).
 const SPRECHEN_DIMS: readonly DimensionKey[] = [
   "aufgabe",
   "kohaerenz",
@@ -168,21 +164,30 @@ export function CorrectionWalkthroughScreen({
     const correction = state.correction;
     body = (
       <>
-        <GlobalScoreBlock score={correction.overallScore} summary={correction.summaryFr} />
+        <GlobalScoreBlock
+          score={correction.overallScore}
+          summary={correction.summaryFr}
+          scoreMax={correction.scoreMax}
+          normalizedTotalPct={correction.normalizedTotalPct}
+        />
         <SchreibenDiffView
           bodyDe={correction.bodyDe}
           prueferText={correction.prueferText}
           betreuerText={correction.betreuerText}
         />
-        {SCHREIBEN_DIMS.map((key) => (
-          <DimensionCard
-            key={key}
-            dimensionKey={key}
-            score={correction.dimensionScores[key]}
-            justification=""
-            onDrill={onDrill}
-          />
-        ))}
+        {Object.keys(correction.dimensionScores).map((key) => {
+          const dim = correction.dimensionScores[key] ?? { score: 0, max: null };
+          return (
+            <DimensionCard
+              key={key}
+              dimensionKey={key}
+              score={dim.score}
+              scoreMax={dim.max}
+              justification=""
+              onDrill={onDrill}
+            />
+          );
+        })}
       </>
     );
   } else {
