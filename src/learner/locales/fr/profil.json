@@ -17,7 +17,9 @@
     "changeExamDate": "Changer la date d'examen",
     "changeExamDateA11y": "Modifier la date de ton examen",
     "notifications": "Notifications de résultat",
-    "notificationsA11y": "Ouvrir les réglages de notifications du système"
+    "notificationsA11y": "Ouvrir les réglages de notifications du système",
+    "suggestions": "Suggestions",
+    "suggestionsA11y": "Suggestions, tes exercices ciblés"
   },
   "changeExamDate": {
     "title": "Date d'examen",

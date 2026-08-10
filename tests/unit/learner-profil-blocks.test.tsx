@@ -22,6 +22,21 @@ describe("SettingsRow (S11.3)", () => {
     expect(screen.getByText("B1")).toBeInTheDocument();
   });
 
+  // S11.4 layout decision: the row is FLAT — no own background/radius.
+  // Mobile's ProfilScreen groups rows in one shared container, and
+  // mobile's SettingsScreen (the fuller precedent) makes that grouping
+  // a single `bg-bg-card` / rounded surface per section, not per-row
+  // cards. The caller owns that shared surface (see ProfilScreen.tsx);
+  // this pins the row itself to stay transparent so a future edit
+  // doesn't quietly reintroduce a double-card look when rows are
+  // grouped.
+  it("is flat — no own background or radius (grouping is the caller's job)", () => {
+    render(<SettingsRow label="Parcours" value="B1" onClick={vi.fn()} testID="row-flat" />);
+    const row = screen.getByTestId("row-flat");
+    expect(row.className).not.toContain("bg-bg-card");
+    expect(row.className).not.toContain("rounded-[var(--radius-md)]");
+  });
+
   it("warning tone hides the chevron; disabled blocks the click", () => {
     const onClick = vi.fn();
     render(

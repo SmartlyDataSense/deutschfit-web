@@ -7,6 +7,16 @@
  * uses; inventing glyphs is forbidden). Chevron hidden for
  * `tone="warning"` and disabled rows (mobile parity). min-h 56px
  * (`min-h-14`) matches mobile's touch target.
+ *
+ * Layout decision (S11.4, resolving the Task 3 open inference): the row
+ * itself is FLAT — no own background or radius. Mobile's ProfilScreen
+ * groups `SettingsRow`s inside a single container
+ * (`styles.settingsList`), and mobile's SettingsScreen (the more fully
+ * realized precedent — `features/settings/screens/SettingsScreen.tsx`,
+ * its `styles.card`) makes that grouping visible: one shared
+ * `bg-bg-card` / rounded surface per section, rows divided by a hairline
+ * rather than each row being its own card. The caller (`ProfilScreen`)
+ * owns that shared surface; this component only renders its content.
  */
 import type { ReactNode } from "react";
 import clsx from "clsx";
@@ -70,8 +80,8 @@ export function SettingsRow({
   );
 
   const className = clsx(
-    "flex min-h-14 w-full items-center gap-3 rounded-[var(--radius-md)] bg-bg-card px-4 py-3 text-left transition",
-    disabled ? "cursor-not-allowed opacity-50" : "hover:opacity-90 active:opacity-70"
+    "flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition",
+    disabled ? "cursor-not-allowed opacity-50" : "hover:bg-bg-subtle active:opacity-70"
   );
 
   if (href) {
