@@ -220,6 +220,29 @@ describe("ObjectivesScreen (S11.7)", () => {
     );
   });
 
+  // I-1 residual coverage gap (re-review): the mirror image of the test
+  // above. A stored row with `motivation: null` (no row yet, or a row
+  // written before motivation was captured) leaves `motivation` state at
+  // null after hydration. Editing ONLY the schedule must save that null
+  // through untouched — not fabricate "other" the learner never picked.
+  // Mutating the screen's `handleSave` back to
+  // `motivation: motivation ?? "other"` makes this go red (asserts
+  // `motivation: null`, would receive `motivation: "other"`).
+  it("saving with an unset motivation persists null, not the 'other' fallback (I-1)", async () => {
+    readUserObjectives.mockResolvedValue({ motivation: null, dailyMinutes: 20 });
+    updateUserObjectives.mockResolvedValue(undefined);
+    ui();
+    await waitHydrated();
+    fireEvent.click(screen.getByTestId("settings-objectives-schedule-trigger"));
+    fireEvent.click(screen.getByTestId("settings-objectives-schedule-30"));
+    const save = screen.getByTestId("settings-objectives-save");
+    expect(save).not.toBeDisabled();
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(updateUserObjectives).toHaveBeenCalledWith({ motivation: null, schedule: "30" })
+    );
+  });
+
   it("changing only motivation (schedule untouched) still saves the unchanged schedule value", async () => {
     readUserObjectives.mockResolvedValue({ motivation: "work", dailyMinutes: 20 });
     updateUserObjectives.mockResolvedValue(undefined);
