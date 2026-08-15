@@ -196,6 +196,20 @@ describe("createSprechenPoller", () => {
       error: null,
     });
 
+    // S7-7.4 regression pin — hard-coded, NOT derived from
+    // MAX_DURATION_MS/INTERVAL_MS: the loop above already scales with
+    // those constants, so a shrink-mutation of either one stayed green
+    // before this literal existed (the tick count would shrink right
+    // along with it and the relative assertions below would still hold).
+    // Value is 49, not the 48 the task brief named: `start()` fires tick #1
+    // synchronously at elapsed=0 (outside the loop above, which only
+    // advances timers), then the loop's 48 timer advances land ticks #2-49
+    // — the 49th tick (at elapsed===240_000) still performs its fetch
+    // before `scheduleNext()` detects the budget is exhausted and emits
+    // `timeout` instead of scheduling a 50th. Confirmed by running the
+    // suite with `toBe(48)`: it failed with "49 times".
+    expect(getSprechenSubmissionMock).toHaveBeenCalledTimes(49);
+
     const callsAtTimeout = getSprechenSubmissionMock.mock.calls.length;
     const updatesAtTimeout = onUpdate.mock.calls.length;
     // "emitted once" — advancing further never re-emits or re-fetches.
