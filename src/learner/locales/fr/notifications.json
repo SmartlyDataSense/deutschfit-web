@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "notifications": "Notifications"
+  },
+  "settings": {
+    "toggleLabel": "Recevoir les notifications",
+    "toggleHint": "Ton bilan est parfois prêt après ton départ — on te prévient ici, sur ce navigateur.",
+    "blockedLabel": "Notifications bloquées dans ton navigateur",
+    "blockedHint": "Pour les réactiver, autorise les notifications pour ce site dans les réglages du navigateur.",
+    "unsupportedLabel": "Notifications non disponibles",
+    "unsupportedHint": "Ce navigateur ne prend pas en charge les notifications web. Elles restent disponibles dans l'app mobile.",
+    "enableError": "Impossible d'activer les notifications — vérifie ta connexion puis réessaie."
+  }
+}

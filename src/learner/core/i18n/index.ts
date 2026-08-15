@@ -9,7 +9,9 @@
  *
  * Locale catalogs are copied verbatim from `deutschfit-mobile`
  * (`src/locales/{fr,en}/*.json`, 16 namespaces) and bundled statically via
- * eager imports — no runtime fetch, no i18next-http-backend.
+ * eager imports — no runtime fetch, no i18next-http-backend. `notifications`
+ * (S12) is the one exception: web push has no mobile counterpart, so that
+ * catalog is authored here (French first, mirrored to English).
  *
  * Language resolution order:
  *   1. `lngOverride` argument passed to `initLearnerI18n()` (e.g. from
@@ -33,6 +35,7 @@ import frDashboard from "../../locales/fr/dashboard.json";
 import frDrill from "../../locales/fr/drill.json";
 import frExam from "../../locales/fr/exam.json";
 import frExamen from "../../locales/fr/examen.json";
+import frNotifications from "../../locales/fr/notifications.json";
 import frOnboarding from "../../locales/fr/onboarding.json";
 import frProfil from "../../locales/fr/profil.json";
 import frSchreiben from "../../locales/fr/schreiben.json";
@@ -51,6 +54,7 @@ import enDashboard from "../../locales/en/dashboard.json";
 import enDrill from "../../locales/en/drill.json";
 import enExam from "../../locales/en/exam.json";
 import enExamen from "../../locales/en/examen.json";
+import enNotifications from "../../locales/en/notifications.json";
 import enOnboarding from "../../locales/en/onboarding.json";
 import enProfil from "../../locales/en/profil.json";
 import enSchreiben from "../../locales/en/schreiben.json";
@@ -81,6 +85,7 @@ export const LEARNER_NAMESPACES = [
   "drill",
   "exam",
   "examen",
+  "notifications",
   "onboarding",
   "profil",
   "schreiben",
@@ -101,6 +106,7 @@ const resources = {
     drill: frDrill,
     exam: frExam,
     examen: frExamen,
+    notifications: frNotifications,
     onboarding: frOnboarding,
     profil: frProfil,
     schreiben: frSchreiben,
@@ -119,6 +125,7 @@ const resources = {
     drill: enDrill,
     exam: enExam,
     examen: enExamen,
+    notifications: enNotifications,
     onboarding: enOnboarding,
     profil: enProfil,
     schreiben: enSchreiben,

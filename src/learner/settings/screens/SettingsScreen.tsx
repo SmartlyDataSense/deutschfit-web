@@ -10,7 +10,8 @@
  * navigates — mobile's dev row is a disabled placeholder), S11-D11 (no
  * leading icons). Appearance section is NOT ported (mobile doesn't
  * render one either — the keys are dormant since the P0.5 cream-only
- * build).
+ * build). S12 adds a Notifications section with no mobile counterpart
+ * (mobile uses Expo push, web uses the W3C Push API).
  *
  * PRODUCT LOCK: no paywall / IAP / premium rows anywhere on this
  * screen, and the app-store `settings:account.deleteSubsHint` copy is
@@ -30,6 +31,8 @@ import { formatExamTrackLabel } from "@/learner/core/exam/examTypes";
 import { getBackendInfo } from "@/learner/core/api/backendEnv";
 import { LEARNER_LANG_STORAGE_KEY, setFlag } from "@/learner/core/storage/flags";
 import { SettingsRow } from "@/learner/profil/components/SettingsRow";
+import { SettingsToggleRow } from "@/learner/settings/components/SettingsToggleRow";
+import { useWebPushSettings } from "@/learner/core/notifications/useWebPushSettings";
 
 const LANG_OPTIONS = ["fr", "en"] as const;
 type LangOption = (typeof LANG_OPTIONS)[number];
@@ -59,9 +62,10 @@ export function SettingsScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
-  const { t } = useTranslation(["settings", "profil"]);
+  const { t } = useTranslation(["settings", "profil", "notifications"]);
   const { board, level, source, isLoaded } = useExamContextStore();
   const backend = getBackendInfo();
+  const webPush = useWebPushSettings();
 
   // Per-screen exam-context hydration (precedent AccueilScreen.tsx:103,
   // DrillSessionScreen.tsx:54, ProfilScreen.tsx) — no ancestor layout
@@ -187,6 +191,66 @@ export function SettingsScreen() {
           testID="settings-objectives-row"
         />
       </Section>
+
+      <section className="flex flex-col gap-2" data-testid="settings-notifications-section">
+        <AppText size="caption" weight="semi" tone="tertiary" className="mt-2 uppercase">
+          {t("notifications:sections.notifications")}
+        </AppText>
+        <div className="flex flex-col divide-y divide-line-soft rounded-[var(--radius-lg)] bg-bg-card">
+          {webPush.state === "unsupported" ? (
+            <div
+              className="flex min-h-14 w-full items-center px-4 py-3"
+              data-testid="settings-notifications-unsupported"
+            >
+              <div className="min-w-0 flex-1">
+                <AppText size="body" weight="medium" tone="tertiary">
+                  {t("notifications:settings.unsupportedLabel")}
+                </AppText>
+                <AppText size="caption" tone="tertiary">
+                  {t("notifications:settings.unsupportedHint")}
+                </AppText>
+              </div>
+            </div>
+          ) : webPush.state === "denied" ? (
+            /* Denied ≠ off: browsers never re-prompt after a denial, so a
+               flippable toggle here would silently no-op. Render the
+               blocked explanation instead. */
+            <div
+              className="flex min-h-14 w-full items-center px-4 py-3"
+              data-testid="settings-notifications-blocked"
+            >
+              <div className="min-w-0 flex-1">
+                <AppText size="body" weight="medium" tone="tertiary">
+                  {t("notifications:settings.blockedLabel")}
+                </AppText>
+                <AppText size="caption" tone="tertiary">
+                  {t("notifications:settings.blockedHint")}
+                </AppText>
+              </div>
+            </div>
+          ) : (
+            <>
+              <SettingsToggleRow
+                label={t("notifications:settings.toggleLabel")}
+                hint={t("notifications:settings.toggleHint")}
+                checked={webPush.state === "on"}
+                disabled={webPush.state === "busy"}
+                onChange={(next) => {
+                  void (next ? webPush.enable() : webPush.disable());
+                }}
+                testID="settings-notifications"
+              />
+              {webPush.hasError ? (
+                <div className="px-4 py-2" data-testid="settings-notifications-error">
+                  <AppText size="caption" tone="warning">
+                    {t("notifications:settings.enableError")}
+                  </AppText>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="flex flex-col gap-2" data-testid="settings-analytics-section">
         <AppText size="caption" weight="semi" tone="tertiary" className="mt-2 uppercase">

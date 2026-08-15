@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "notifications": "Notifications"
+  },
+  "settings": {
+    "toggleLabel": "Receive notifications",
+    "toggleHint": "Your feedback is sometimes ready after you leave — we let you know here, on this browser.",
+    "blockedLabel": "Notifications blocked in your browser",
+    "blockedHint": "To turn them back on, allow notifications for this site in your browser settings.",
+    "unsupportedLabel": "Notifications not available",
+    "unsupportedHint": "This browser does not support web notifications. They remain available in the mobile app.",
+    "enableError": "Could not enable notifications — check your connection and try again."
+  }
+}

@@ -73,11 +73,17 @@ describe("learner i18n — init + language resolution", () => {
     expect(instance.t("common:actions.continue")).toBe(FR_VALUE);
   });
 
-  it("bundles all 16 mobile namespaces", async () => {
+  it("bundles the 16 mobile namespaces plus the web-only notifications catalog", async () => {
     const { initLearnerI18n } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
 
-    expect(LEARNER_NAMESPACES).toHaveLength(16);
+    // 16 catalogs ported verbatim from deutschfit-mobile + `notifications`
+    // (S12), which is web-only: mobile uses Expo push and has no
+    // equivalent namespace. Registering a namespace without shipping BOTH
+    // catalogs is the failure this loop exists to catch — a missing fr
+    // bundle silently falls back to English mid-screen.
+    expect(LEARNER_NAMESPACES).toHaveLength(17);
+    expect(LEARNER_NAMESPACES).toContain("notifications");
     for (const ns of LEARNER_NAMESPACES) {
       expect(instance.hasResourceBundle("fr", ns)).toBe(true);
       expect(instance.hasResourceBundle("en", ns)).toBe(true);
