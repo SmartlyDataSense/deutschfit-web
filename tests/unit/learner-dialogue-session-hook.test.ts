@@ -427,6 +427,37 @@ describe("useDialogueSession", () => {
     expect(result.current.phase).toBe("graded");
   });
 
+  // S7-7.10 regression pin — `"failed"` is deliberately NOT in the
+  // finalize block-list (only `"graded"`/`"finalizing"` are, see
+  // useDialogueSession.ts's `finalize` callback) — a transient
+  // finalizeDialogue failure must leave the learner able to retry, unlike
+  // the terminal `"graded"` case pinned above.
+  it("finalize retries successfully after a 'failed' phase (\"failed\" is not in the block-list)", async () => {
+    const finalizeDialogue = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network_blip"))
+      .mockResolvedValueOnce(graderResult);
+    const deps = makeDeps({ finalizeDialogue });
+    const { result } = renderHook(() => useDialogueSession(deps));
+
+    await act(async () => {
+      await result.current.start({ board: "telc", level: "B1", teil: "b1_teil_3" });
+    });
+    await act(async () => {
+      await result.current.finalize();
+    });
+    expect(result.current.phase).toBe("failed");
+    expect(result.current.errorMessage).toBe("network_blip");
+    expect(finalizeDialogue).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.finalize();
+    });
+    expect(finalizeDialogue).toHaveBeenCalledTimes(2);
+    expect(result.current.phase).toBe("graded");
+    expect(result.current.grader).toEqual(graderResult);
+  });
+
   it("a second submitStudentTurn while the first is in flight short-circuits (re-entrancy guard)", async () => {
     const sendGate = deferred<DialogueTurnResult>();
     const sendDialogueTurn = vi.fn().mockReturnValue(sendGate.promise);
