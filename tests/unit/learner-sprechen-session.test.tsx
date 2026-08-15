@@ -684,4 +684,99 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
       )
     ).toBe(true);
   });
+
+  // S7-7.8 regression pin — a `graded` poller snapshot with unified
+  // (schema_version >= 2) data must drive `FeedbackView`'s inline
+  // `ModuleResultLayout` with the RIGHT props wired to the RIGHT slots. A
+  // prop swap (e.g. `coach_feedback_fr` passed as `nextDrillFr`, or
+  // `focus_areas` dropped) would ship silently — nothing asserted the
+  // rendered content of this screen's done-phase view before.
+  it("a graded v2 snapshot renders the inline ModuleResultLayout wired to the unified fields", async () => {
+    useTopicHandoff.setState({ topic: sampleTopic() });
+    const fakeRecorder = makeFakeRecorder();
+    const { deps, pollerListeners } = makeSessionDeps();
+
+    renderScreen({ recorderFactory: () => fakeRecorder, sessionDeps: deps });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-mic-check")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-mic-check-skip"));
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-stop-cta")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("sprechen-session-stop-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-submit")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-review-submit"));
+
+    await waitFor(() => expect(pollerListeners.has("sub-1")).toBe(true));
+
+    const gradedSubmission = sampleSubmission({
+      id: "sub-1",
+      status: "graded",
+      schema_version: 2,
+      transcript_de: "Ich möchte über meine Wohnung sprechen.",
+      normalized_total_pct: 73,
+      dimension_scores_json: {
+        aussprache: { score: 4, max: 5, pct: 80 },
+        wortschatz: { score: 3, max: 5, pct: 60 },
+      },
+      feedback_json: {
+        coach_feedback_fr: "Bonne prononciation, continue ainsi.",
+        next_drill_fr: "Travaille le vocabulaire du logement.",
+        focus_areas: ["wortschatz", "aussprache"],
+        model_answer_de: "Meine Wohnung liegt im Zentrum der Stadt.",
+      },
+    });
+
+    act(() => {
+      pollerListeners.get("sub-1")?.({
+        status: "graded",
+        data: gradedSubmission,
+        error: null,
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-module-result")).toBeInTheDocument()
+    );
+
+    // Donut: normalized_total_pct=73 -> pct text "73%".
+    expect(screen.getByTestId("sprechen-session-module-result-donut")).toHaveTextContent("73%");
+
+    // Betreuer card carries coach_feedback_fr + next_drill_fr in the RIGHT
+    // slots (not swapped) — BetreuerCard renders both as plain <p> text
+    // with no distinguishing testid, so a prop swap wouldn't be caught by
+    // toHaveTextContent alone (both strings would still be present
+    // somewhere in the card); assert DOM order instead, which mirrors the
+    // component's fixed [title, coachFeedbackFr, nextDrillFr] paragraph
+    // sequence.
+    const betreuerCard = screen.getByTestId("sprechen-session-module-result-betreuer-card");
+    const betreuerParagraphs = betreuerCard.querySelectorAll("p");
+    expect(betreuerParagraphs[1]).toHaveTextContent("Bonne prononciation, continue ainsi.");
+    expect(betreuerParagraphs[2]).toHaveTextContent("Travaille le vocabulaire du logement.");
+
+    // Focus chips render both areas.
+    const focusChips = screen.getByTestId("sprechen-session-module-result-focus-chips");
+    expect(focusChips).toHaveTextContent("wortschatz");
+    expect(focusChips).toHaveTextContent("aussprache");
+
+    // Personalized model card carries model_answer_de.
+    expect(screen.getByTestId("sprechen-session-module-result-personalized-model")).toHaveTextContent(
+      "Meine Wohnung liegt im Zentrum der Stadt."
+    );
+
+    // Transcript card carries transcript_de.
+    expect(screen.getByTestId("sprechen-session-module-result-transcript")).toHaveTextContent(
+      "Ich möchte über meine Wohnung sprechen."
+    );
+
+    // Both dimension rows rendered, each keyed under its own key.
+    expect(
+      screen.getByTestId("sprechen-session-module-result-competence-aussprache")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("sprechen-session-module-result-competence-wortschatz")
+    ).toBeInTheDocument();
+  });
 });
