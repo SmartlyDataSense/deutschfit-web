@@ -99,9 +99,20 @@ stuck showing the raw i18next key forever, even after the bundle lands.
   `notifications` (S12, web push) is the one exception — authored here
   (French first, mirrored to English) because web push has no mobile
   counterpart.
-- Default language: **French (FR)**, resolved from an explicit override →
-  `localStorage["@deutschfit/lang"]` → `"fr"`. Never derived from
-  `navigator.language`. `en` is the fallback language for missing `fr` keys.
+- Language resolution the module supports (`core/i18n/index.ts`,
+  `resolveInitialLng`): explicit override → `localStorage["@deutschfit/lang"]`
+  → `"fr"` default. Never derived from `navigator.language`. This is
+  mobile-parity module capability, not what actually happens on the web
+  surface — see below.
+- **On web, only the override branch is ever reached.** `LearnerProviders`
+  (`core/LearnerProviders.tsx`) always calls `initLearnerI18n(useLocale())`,
+  and `useLocale()` — under `localePrefix: "always"` (`src/i18n/routing.ts`)
+  — is always `"en"` or `"fr"` from the URL segment, never `undefined`. So
+  the `localStorage` branch and the `"fr"` default are dead code paths on
+  this surface: there is no "FR default" on web. `defaultLocale: "en"`
+  means a visitor whose browser doesn't negotiate to `/fr` lands on `/en`.
+  `en` is the fallback language for keys missing from whichever catalog
+  actually booted, independent of which language that was.
 
 ## Dexie (IndexedDB)
 

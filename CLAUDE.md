@@ -42,7 +42,16 @@ legal** (public), **admin back-office**, **learner app**. Full context in
   `src/learner/README.md`'s "Approved Dependencies"). Adding any new
   runtime dependency needs fresh sign-off before it lands — don't just
   `npm install` and go.
-- Learner-app i18n: **FR default, EN fallback** (never derived from
+- Learner-app i18n: the URL locale segment (`/en/...` or `/fr/...` —
+  `localePrefix: "always"`, `src/i18n/routing.ts`) always drives the boot
+  language. `LearnerProviders` passes `useLocale()` explicitly on every
+  mount, so the i18n module's own `localStorage["@deutschfit/lang"]` →
+  `"fr"` default (documented in `core/i18n/index.ts` as what the module
+  supports, mirroring mobile) is never actually reached on this web
+  surface — there is no "FR default" here. `defaultLocale: "en"`, so a
+  visitor whose browser doesn't negotiate to `/fr` lands on `/en`, never
+  `/fr`. `en` remains the fallback language for keys missing from
+  whichever catalog actually booted (never derived from
   `navigator.language`). Persona is the unnamed **Betreuer** — "Coach" and
   "entraîneur" are forbidden in user-facing copy. No exclamation marks, no
   gamification vocabulary. Emoji are limited to four functional glyphs —
