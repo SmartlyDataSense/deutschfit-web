@@ -34,7 +34,7 @@ vi.mock("@/learner/core/auth/useLearnerSession", () => {
   return { useLearnerSession: hook };
 });
 
-import { initLearnerI18n } from "@/learner/core/i18n";
+import { initLearnerI18n, whenEnReady } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
 import {
   __hydrateForBoot,
@@ -46,9 +46,9 @@ import { AccueilScreen } from "@/learner/accueil/screens/AccueilScreen";
 
 afterEach(cleanup);
 beforeAll(() => initLearnerI18n("fr"));
-const ui = () =>
+const ui = (lng: "fr" | "en" = "fr") =>
   render(
-    <LearnerI18nProvider lng="fr">
+    <LearnerI18nProvider lng={lng}>
       <AccueilScreen />
     </LearnerI18nProvider>
   );
@@ -90,6 +90,21 @@ beforeEach(() => {
 });
 
 describe("AccueilScreen", () => {
+  it("greets in the active language — the line goes through `t`, it is not a hardcoded French string", async () => {
+    // `defaultLocale` is `en` (src/i18n/routing.ts, localePrefix "always"),
+    // so this line is the first thing a default-entry visitor reads. It was
+    // hardcoded to `Bonjour, ${name}.` from S3 until S13, which greeted every
+    // English user in French while a correct `greeting.hi` key sat unused in
+    // both catalogs. Asserting the EN rendering is what pins it: a fixture
+    // asserting only the FR string passes against the hardcoded version too.
+    fetchAccueilHome.mockResolvedValue(homeWithDate);
+    await whenEnReady();
+    ui("en");
+    await waitFor(() =>
+      expect(screen.getByTestId("accueil-greeting")).toHaveTextContent("Hi, Amadou.")
+    );
+  });
+
   it("skeleton → header/greeting/teaser/hero/drill card once the payload lands", async () => {
     fetchAccueilHome.mockResolvedValue(homeWithDate);
     ui();
