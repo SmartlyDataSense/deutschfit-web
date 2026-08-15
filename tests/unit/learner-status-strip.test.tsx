@@ -114,26 +114,29 @@ describe("PriorityTaskCard", () => {
     expect(screen.getByTestId("pt-empty-cta")).toBeDisabled();
   });
 
-  // S13 Task 5 · Step 2 (S3-3.7 + 3.8): the card root is never itself
-  // interactive (no role="button"/tabIndex — the inner CTA button is the
-  // single focusable control) but still needs an accessible name
-  // summarising the card, via the new `Card ariaLabel` (mobile parity:
-  // PriorityTaskCard.tsx passes `accessibilityLabel` to `Card` the same
-  // way).
-  it("active branch: card root has no role=button/tabIndex; carries a role=group summary; the CTA is the single focusable control", () => {
+  // S13 final-fixes finding 2 (whole-branch review): the card root is
+  // never itself interactive (no role="button"/tabIndex — the inner CTA
+  // button is the single focusable control) and must NOT carry a
+  // role="group" aria-label composed from the descendants' own text
+  // either. `role="group"` is not children-presentational the way a
+  // native `accessible` View is — a screen reader announces the group's
+  // composed name AND THEN re-reads every descendant text node, so a
+  // label that just restates the visible children doubles the
+  // announcement. The children already expose the same text as
+  // independently-readable nodes, in the same order, so no wrapper
+  // accessible name is needed at all.
+  it("active branch: card root has no role=button/tabIndex/role=group — content reads naturally without a duplicated summary; the CTA is the single focusable control", () => {
     ui(<PriorityTaskCard {...props} testID="pt" />);
     const card = screen.getByTestId("pt");
     expect(card).not.toHaveAttribute("role", "button");
     expect(card).not.toHaveAttribute("tabIndex");
-    expect(
-      screen.getByRole("group", {
-        name: "Priorité. Sprachbausteine. Exercices du jour. 4 exercices ciblés. corps",
-      })
-    ).toBe(card);
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByText(props.title)).toBeInTheDocument();
     expect(screen.getByTestId("pt-cta").tagName).toBe("BUTTON");
   });
 
-  it("empty branch: card root carries a role=group summary from the empty copy", () => {
+  it("empty branch: card root carries no duplicated role=group summary either — content reads naturally", () => {
     ui(
       <PriorityTaskCard
         {...props}
@@ -141,8 +144,9 @@ describe("PriorityTaskCard", () => {
         testID="pt"
       />
     );
-    expect(screen.getByRole("group", { name: "Rien à corriger. b" })).toBe(
-      screen.getByTestId("pt")
-    );
+    const card = screen.getByTestId("pt");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Rien à corriger")).toBeInTheDocument();
   });
 });

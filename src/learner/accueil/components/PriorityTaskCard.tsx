@@ -18,6 +18,16 @@
  * `router.push(.../drill/session)` by `AccueilScreen`; the empty-branch
  * CTA stays `disabled` — there is still nothing to navigate to when no
  * priority task exists.
+ *
+ * Deliberately does NOT pass `ariaLabel` to `Card` on either branch (S13
+ * final-fixes finding 2). An earlier version composed a label restating
+ * every visible child ("<priorité>. <skill>. <title>. <subtitle>.
+ * <body>") and passed it to `Card`'s non-clickable `role="group"` path —
+ * `role="group"` is not children-presentational on web (unlike mobile's
+ * `accessible` View), so a screen reader announced that composed name
+ * and then re-read every descendant a second time. The children already
+ * expose the same text as independently-readable nodes, in the same
+ * order, so no wrapper accessible name is needed here at all.
  */
 import { AppButton, AppText, Card, Chip } from "@/learner/ui/primitives";
 
@@ -57,9 +67,8 @@ export function PriorityTaskCard({
   testID,
 }: PriorityTaskCardProps) {
   if (empty) {
-    const a11yEmpty = `${empty.title}. ${empty.body}`;
     return (
-      <Card testID={testID} ariaLabel={a11yEmpty}>
+      <Card testID={testID}>
         <AppText family="serif" size="h3" weight="bold" className="mt-2">
           {empty.title}
         </AppText>
@@ -80,9 +89,8 @@ export function PriorityTaskCard({
   }
 
   const composedCta = `${ctaLabel} · ${durationLabel}`;
-  const a11y = `${priorityLabel}. ${skill}. ${title}. ${subtitle}. ${body}`;
   return (
-    <Card testID={testID} ariaLabel={a11y}>
+    <Card testID={testID}>
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <div className="self-start rounded-[var(--radius-full)] border border-cta bg-bg-hero px-3 py-0.5">
           <AppText tone="cta" size="caption" weight="semi">
