@@ -96,6 +96,30 @@ export function collectLearnerRoutes(manifest) {
 }
 
 /**
+ * True once `collectLearnerRoutes` found at least one route to measure.
+ *
+ * Isolated as a pure predicate (no `process.exit`) so it's unit-testable
+ * without mocking the filesystem — `main()` below is the only caller that
+ * treats a `false` result as fatal. Exists because an empty `routes` array
+ * flows silently all the way to a "pass": `evaluate([])` trivially returns
+ * zero failures, `console.table([])` prints nothing, and the script would
+ * otherwise log "all (learner) routes within budget" and exit 0 having
+ * enforced no budget at all. This is the exact failure mode
+ * `tests/unit/learner-source-scan.test.ts`'s
+ * `expect(files.length).toBeGreaterThan(50)` floor exists to catch for its
+ * own file walk — a targeted rename of the `(learner)` route-group folder
+ * (or any other change to `app-build-manifest.json`'s key shape) zeroes
+ * out `collectLearnerRoutes`'s result the same way a typo'd scan root
+ * zeroes out a file walk.
+ *
+ * @param {Array<unknown>} routes
+ * @returns {boolean}
+ */
+export function hasMeasurableRoutes(routes) {
+  return routes.length > 0;
+}
+
+/**
  * Gzip (level 9) a buffer and return its size in KiB.
  *
  * @param {Buffer} buffer
@@ -141,6 +165,21 @@ async function main() {
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const routes = collectLearnerRoutes(manifest);
+
+  if (!hasMeasurableRoutes(routes)) {
+    // Same "cannot measure" exit code as the missing-.next/ branch above —
+    // both mean this run produced no trustworthy budget result, so CI
+    // must not read it as a pass. See hasMeasurableRoutes's doc comment
+    // for why an empty result is treated as fatal rather than "0 routes,
+    // 0 failures, exit 0".
+    console.error(
+      "[check-bundle-budget] found 0 (learner) routes in app-build-manifest.json — the route-group " +
+        "folder was likely renamed, or the manifest's shape changed. Refusing to report a vacuous " +
+        'pass; treating this the same as a missing .next/ (exit 2, "cannot measure").'
+    );
+    process.exit(2);
+    return;
+  }
 
   // Read + gzip + markers-scan each unique chunk file exactly once — chunks
   // are shared across dozens of routes, so caching by file path keeps this

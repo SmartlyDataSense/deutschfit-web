@@ -5,6 +5,7 @@ import {
   extractMarkers,
   formatMarkerCell,
   gzKb,
+  hasMeasurableRoutes,
 } from "../../scripts/check-bundle-budget.mjs";
 
 const manifest = {
@@ -69,6 +70,48 @@ describe("check-bundle-budget", () => {
     // 310 > 300.
     const rows = [{ route: "/[locale]/(learner)/app/(protected)/srs/page", gz: 310 }];
     expect(evaluate(rows, { appBudget: 300, routeBudget: 320 }).failures).toHaveLength(0);
+  });
+});
+
+describe("hasMeasurableRoutes — S13 final-fixes finding 3: check:bundle must not pass vacuously", () => {
+  // Before this guard, `main()` fed an empty `routes` array straight into
+  // `evaluate`, whose `failures` array is then trivially empty too —
+  // `console.table([])` prints nothing and the script logs "all
+  // (learner) routes within budget" and exits 0, having enforced no
+  // budget at all. Mirrors the floor
+  // `tests/unit/learner-source-scan.test.ts` already has for its own
+  // file walk ("scans nothing, passes for the wrong reason").
+  it("is false for zero routes", () => {
+    expect(hasMeasurableRoutes([])).toBe(false);
+  });
+
+  it("is true once at least one route was found", () => {
+    expect(
+      hasMeasurableRoutes([{ route: "/[locale]/(learner)/app/(protected)/page", files: [] }])
+    ).toBe(true);
+  });
+
+  it("reproduces the reviewer's exact repro: renaming (learner) -> (app) in the manifest silently zeroes out routes", () => {
+    // routes found: 0 | failures: 0 | would exit 0 — pre-guard, nothing
+    // downstream of `collectLearnerRoutes` catches this.
+    const renamedManifest = {
+      pages: {
+        "/[locale]/(app)/app/(protected)/page": ["static/chunks/a.js"],
+        "/[locale]/(app)/app/(protected)/srs/page": ["static/chunks/b.js"],
+      },
+    };
+    const routes = collectLearnerRoutes(renamedManifest);
+    expect(routes).toHaveLength(0);
+    expect(
+      evaluate(
+        routes.map((r) => ({ route: r.route, gz: 0 })),
+        {
+          appBudget: 300,
+          routeBudget: 320,
+        }
+      ).failures
+    ).toHaveLength(0); // the vacuous "pass" evaluate() alone would report
+    expect(hasMeasurableRoutes(routes)).toBe(false); // the guard catches what evaluate() can't
   });
 });
 
