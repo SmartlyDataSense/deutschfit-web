@@ -7,6 +7,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { createElement } from "react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { useTranslation } from "react-i18next";
+import type { i18n as I18nInstance } from "i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import frCommon from "../../src/learner/locales/fr/common.json";
 import enCommon from "../../src/learner/locales/en/common.json";
@@ -165,6 +169,7 @@ describe("learner i18n — whenEnReady", () => {
 
   afterEach(() => {
     window.localStorage.clear();
+    cleanup();
   });
 
   it("resolves once all 17 en namespaces are registered, matching the real catalogs", async () => {
@@ -200,5 +205,50 @@ describe("learner i18n — whenEnReady", () => {
     await instance.changeLanguage("en");
 
     expect(instance.t("common:actions.continue")).toBe(EN_VALUE);
+  });
+
+  it("heals a react-i18next consumer stranded by the unsafe order: changeLanguage(\"en\") before whenEnReady() resolves still self-heals to the EN string once it lands", async () => {
+    const { initLearnerI18n, whenEnReady } = await import(
+      "../../src/learner/core/i18n"
+    );
+    const instance = initLearnerI18n();
+    expect(instance.language).toBe("fr");
+
+    // A real react-i18next consumer, bound directly to this instance (not
+    // via LearnerI18nProvider/context) so the test exercises exactly the
+    // subscription react-i18next's useTranslation() sets up: it listens for
+    // the instance's 'languageChanged' event (default bindI18n), NOT the
+    // store's 'added' event that addResourceBundle() emits.
+    function Probe({ i18nInstance }: { readonly i18nInstance: I18nInstance }) {
+      const { t } = useTranslation("common", { i18n: i18nInstance });
+      return createElement("span", { "data-testid": "probe" }, t("actions.continue"));
+    }
+
+    render(createElement(Probe, { i18nInstance: instance }));
+
+    // The unsafe order: switch to "en" before whenEnReady() has resolved.
+    // changeLanguage() fires 'languageChanged' once as part of its own
+    // flow, so react-i18next re-renders right away — but no en resources
+    // are registered yet, so the rendered text is NOT the EN string.
+    await act(async () => {
+      await instance.changeLanguage("en");
+    });
+    expect(screen.getByTestId("probe").textContent).not.toBe(EN_VALUE);
+
+    // EN lands. Nothing here re-renders <Probe/> directly — only the
+    // `learnerI18n.emit("languageChanged", ...)` inside whenEnReady()
+    // (src/learner/core/i18n/index.ts) does, by re-firing the event
+    // react-i18next's useSyncExternalStore subscription actually listens
+    // for. Delete that emit and this assertion times out: the rendered
+    // text stays stuck on the pre-EN value forever, because
+    // addResourceBundle's 'added' event has no react-i18next listener by
+    // default (bindI18nStore: "").
+    await act(async () => {
+      await whenEnReady();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("probe").textContent).toBe(EN_VALUE);
+    });
   });
 });

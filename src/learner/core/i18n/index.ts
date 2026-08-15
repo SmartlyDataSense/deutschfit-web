@@ -148,6 +148,21 @@ let enLoad: Promise<void> | null = null;
  * hydration — callers only need to await it explicitly when they must be
  * certain EN is resolvable *now* (an `/en/…` boot, or a fr→en fallback that
  * must not flash a raw key).
+ *
+ * DO NOT remove the `learnerI18n.emit("languageChanged", ...)` below — it
+ * looks like dead code but it is load-bearing. `react-i18next`'s
+ * `useTranslation()` only re-renders a component in response to the
+ * `'languageChanged'` event; by default (`bindI18nStore: ''`) it does NOT
+ * subscribe to the store's `'added'` event that `addResourceBundle` emits.
+ * So without this explicit emit, any component that rendered *before* this
+ * promise resolved — either because a key was missing from `fr` and fell
+ * through to a not-yet-loaded `en`, or because `changeLanguage("en")` was
+ * called before this settled — is stuck showing the raw key forever: the
+ * bundles land, but nothing tells react-i18next to re-render. Firing
+ * `'languageChanged'` once here, at the single resolution point of the
+ * shared promise (never inside the `.map`, never re-triggered by a repeat
+ * call to `whenEnReady()` since `enLoad` is cached), heals every such
+ * component in one pass.
  */
 export function whenEnReady(): Promise<void> {
   enLoad ??= Promise.all(
@@ -155,7 +170,12 @@ export function whenEnReady(): Promise<void> {
       const mod = await EN_LOADERS[ns]();
       learnerI18n.addResourceBundle("en", ns, mod.default, true, false);
     })
-  ).then(() => undefined);
+  ).then(() => {
+    // Re-render every mounted useTranslation() consumer now that `en` is
+    // fully registered — see the doc comment above for why this is
+    // required and must not be deleted.
+    learnerI18n.emit("languageChanged", learnerI18n.language);
+  });
   return enLoad;
 }
 
