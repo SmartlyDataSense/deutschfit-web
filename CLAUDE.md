@@ -45,7 +45,10 @@ legal** (public), **admin back-office**, **learner app**. Full context in
 - Learner-app i18n: **FR default, EN fallback** (never derived from
   `navigator.language`). Persona is the unnamed **Betreuer** — "Coach" and
   "entraîneur" are forbidden in user-facing copy. No exclamation marks, no
-  gamification vocabulary, no emoji except `⏱`. These rules bind the
+  gamification vocabulary. Emoji are limited to four functional glyphs —
+  `📍` (location), `⏱` (time), `✓` (done), `✕` (failed/forbidden); see
+  `../deutschfit-meta/docs/product/brand-voice.md` §"Allowed (functional
+  only)", which is the authority. These rules bind the
   strings the code renders, not this document — brand voice doesn't apply
   to internal engineering docs.
 
@@ -81,9 +84,11 @@ are not a committed-secret risk for that reason. Full detail:
 
 `npm run check:bundle` gzips (level 9) each `(learner)` route's JS from
 `.next/app-build-manifest.json` and enforces: app-shell `(protected)/page`
-≤ 300 KB gz, every other learner route ≤ 320 KB gz. This number reads lower
-than what `next build`'s own summary table prints (different aggregation) —
-expected, not a bug. Runs in `preflight` and in CI.
+≤ 300 KB gz, every other learner route ≤ 320 KB gz. It is deliberately not
+the same number `next build` prints in its own summary table (different
+aggregation) — the guard is internally consistent, compared only against
+itself, so a gap either way is expected rather than a bug. Runs in
+`preflight` and in CI.
 
 ## Read next
 

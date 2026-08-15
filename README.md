@@ -99,9 +99,12 @@ under `src/learner/**` for hex-color / raw font-size / spacing literals.
 `.next/app-build-manifest.json` after a build, and for every `(learner)`
 route sums the **gzip level-9** byte size (KiB) of that route's listed JS
 files. This is a deliberately different metric from the number `next build`
-prints in its own build-output table (different aggregation) — the guard's
-numbers will read **lower** than Next's summary for the same route; that gap
-is expected, not a bug. Budgets: the bare `(protected)/page` app-shell route
+prints in its own build-output table (different aggregation). **The guard is
+internally consistent — its numbers are only ever compared against itself
+and against the budgets below, never against Next's summary.** A gap between
+the two is expected, not a bug: during S13 the app-shell route measured
+371.9 KB gz by this guard where Next's table printed 381 KB for the same
+route. Budgets: the bare `(protected)/page` app-shell route
 ≤ 300 KB gz; every other `(learner)` route ≤ 320 KB gz. The guard also
 prints a chunk-attribution table for the app-shell route (which dependency —
 posthog, dexie, i18next, supabase — landed in which chunk).
