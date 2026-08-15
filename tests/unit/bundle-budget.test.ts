@@ -1,3 +1,4 @@
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
   collectLearnerRoutes,
@@ -33,21 +34,31 @@ describe("check-bundle-budget", () => {
     // so it can't tell gzKb apart from an implementation that forgot
     // { level: 9 }. This fixture — repeated-but-varying JSON records built
     // from a small deterministic LCG — has just enough near-but-not-exact
-    // redundancy that level 9's deeper match search finds a smaller
-    // encoding than level 6 (verified locally: level 6 -> 584 bytes,
-    // level 9 -> 580 bytes for this exact input), so pinning the level-9
-    // byte count actually exercises the `{ level: 9 }` option.
+    // redundancy that level 9's deeper match search finds a materially
+    // smaller encoding than the default level 6.
+    //
+    // The expected size is computed here rather than hardcoded: exact gzip
+    // output is a property of the linked zlib, not of the input, and it
+    // differs between Node majors (this test first shipped pinned to the
+    // local Node 26 byte count and failed on CI's Node 20 — 565 bytes
+    // there vs 580 here for the same bytes). Deriving it keeps the test
+    // portable; the level-6 guard below is what keeps it discriminating.
     let seed = 7;
     const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff);
     let json = "[";
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 400; i++) {
       json += `{"id":${rnd() % 100000},"name":"user${rnd() % 1000}","active":${rnd() % 2 === 0},"score":${(rnd() % 10000) / 100}},`;
     }
     json += "]";
-    // 580 bytes gzip(level 9) / 1024 = the level-9 answer; level 6 on the
-    // same input would be 584 / 1024, so this fails if gzKb regresses to
-    // a different level.
-    expect(gzKb(Buffer.from(json))).toBe(580 / 1024);
+    const bytes = Buffer.from(json);
+    const atLevel9 = gzipSync(bytes, { level: 9 }).length;
+    const atLevel6 = gzipSync(bytes, { level: 6 }).length;
+    // Guards the fixture itself: if some future zlib made the two levels
+    // agree here, the assertion below would still pass while proving
+    // nothing. 400 records opens a ~50-byte gap on zlib 1.2.12 — wide
+    // enough that a version bump narrowing it stays visible.
+    expect(atLevel6).toBeGreaterThan(atLevel9);
+    expect(gzKb(bytes)).toBe(atLevel9 / 1024);
   });
   it("fails the app route above 300 and other learner routes above 320", () => {
     const rows = [
