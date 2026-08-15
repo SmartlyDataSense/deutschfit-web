@@ -61,6 +61,8 @@ beforeEach(() => {
     value: {
       register: vi.fn(async () => registration),
       getRegistration: vi.fn(async () => registration),
+      // `ready` resolves with the registration that has an ACTIVE worker.
+      ready: Promise.resolve(registration),
     },
   });
   vi.stubGlobal("Notification", {
@@ -76,6 +78,38 @@ afterEach(() => {
 });
 
 describe("subscribeToPush (S12)", () => {
+  it("subscribes on the ACTIVATED registration, not the one register() returns", async () => {
+    // Live-found (B7): on a first-ever visit the worker is still
+    // installing when register() resolves, and subscribing against that
+    // registration fails with AbortError "Registration failed - permission
+    // denied" — which is not a permission problem at all.
+    //
+    // The fixture has to be able to CARRY that failure, so the
+    // still-installing registration's subscribe() throws exactly as Chrome
+    // does. A fixture where both registrations work would pass either way.
+    const installingSubscribe = vi.fn(async () => {
+      throw new DOMException("Registration failed - permission denied", "AbortError");
+    });
+    const activated = {
+      pushManager: { subscribe: subscribeSpy, getSubscription: vi.fn(async () => null) },
+    };
+    Object.defineProperty(window.navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        register: vi.fn(async () => ({
+          pushManager: { subscribe: installingSubscribe, getSubscription: vi.fn(async () => null) },
+        })),
+        getRegistration: vi.fn(async () => activated),
+        ready: Promise.resolve(activated),
+      },
+    });
+
+    await expect(subscribeToPush()).resolves.toBeUndefined();
+    expect(installingSubscribe).not.toHaveBeenCalled();
+    expect(subscribeSpy).toHaveBeenCalledTimes(1);
+    expect(invokeFnMock).toHaveBeenCalledTimes(1);
+  });
+
   it("subscribes with userVisibleOnly + decoded applicationServerKey and registers with the backend", async () => {
     await subscribeToPush();
 

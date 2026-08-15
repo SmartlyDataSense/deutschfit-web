@@ -22,8 +22,19 @@ export class PushPermissionDeniedError extends Error {
   }
 }
 
+/**
+ * Registers `/sw.js` and resolves only once a worker is ACTIVE for this
+ * scope. `register()` resolves as soon as the registration exists — the
+ * worker may still be installing, and `pushManager.subscribe()` against a
+ * registration with no active worker fails with
+ * `AbortError: Registration failed - permission denied`, which reads like
+ * a permission problem but is not one. That is exactly what happened on a
+ * learner's first-ever visit (fresh browser profile, no cached worker) —
+ * found in the S12 B7 live pass, invisible to a mocked test.
+ */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration> {
-  return await window.navigator.serviceWorker.register("/sw.js");
+  await window.navigator.serviceWorker.register("/sw.js");
+  return await window.navigator.serviceWorker.ready;
 }
 
 export async function getExistingSubscription(): Promise<PushSubscription | null> {

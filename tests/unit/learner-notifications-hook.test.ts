@@ -10,7 +10,8 @@
  *     "denied" (user dismissed/denied the live prompt), not an error.
  *   - other enable() failures → back to "off" with hasError = true.
  */
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { createElement } from "react";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The mocks are annotated with the WIDE return types (WebPushSupport,
@@ -57,6 +58,29 @@ afterEach(() => {
 });
 
 describe("useWebPushSettings (S12)", () => {
+  it("the FIRST render is 'busy', never 'unsupported' (SSR / pre-hydration paint)", () => {
+    // Support can only be read in an effect (it touches `window`), so the
+    // initial state is what Next.js server-renders and what the user sees
+    // until hydration finishes. Starting at "unsupported" made the settings
+    // screen claim "Notifications non disponibles" on a perfectly capable
+    // browser — caught live in the B7 pass, not by any earlier test.
+    //
+    // Recording every render is what makes this real: asserting on
+    // `result.current` after renderHook would read a value the effect has
+    // already overwritten, and would pass against the old default too.
+    const seen: string[] = [];
+    function Probe() {
+      seen.push(useWebPushSettings().state);
+      return null;
+    }
+    // Support IS available here — an "unsupported" first paint would be a
+    // lie about this very browser, which is the defect being pinned.
+    supportMock.mockReturnValue("supported");
+    render(createElement(Probe));
+    expect(seen[0]).toBe("busy");
+    expect(seen).not.toContain("unsupported");
+  });
+
   it("resolves to 'off' when supported with no existing subscription", async () => {
     const { result } = renderHook(() => useWebPushSettings());
     await waitFor(() => expect(result.current.state).toBe("off"));

@@ -11,7 +11,17 @@
  *                 denial, so a flippable toggle would silently no-op.
  *                 The screen renders a "blocked in your browser" row.
  *   off / on    — no active subscription / active subscription.
- *   busy        — an enable/disable transition is in flight.
+ *   busy        — support is still being determined, or an
+ *                 enable/disable transition is in flight.
+ *
+ * `busy` — not `unsupported` — is the INITIAL state. Support can only be
+ * determined in an effect (it reads `window`), so the server-rendered
+ * HTML and the pre-hydration paint use the initial value. Starting at
+ * `unsupported` made the settings screen assert "Notifications non
+ * disponibles" to every visitor until hydration finished — a false claim
+ * on a perfectly capable browser, caught in the S12 B7 live pass.
+ * `busy` renders the toggle disabled instead, which is honest for both
+ * outcomes.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -33,7 +43,7 @@ export interface WebPushSettings {
 }
 
 export function useWebPushSettings(): WebPushSettings {
-  const [state, setState] = useState<WebPushToggleState>("unsupported");
+  const [state, setState] = useState<WebPushToggleState>("busy");
   const [hasError, setHasError] = useState(false);
   // StrictMode double-mount guard (idiom pinned in web#38): never call
   // setState after unmount from the async hydration below.

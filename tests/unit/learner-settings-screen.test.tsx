@@ -334,6 +334,10 @@ describe("SettingsScreen — notifications section (S12)", () => {
     });
     ui();
     expect(screen.getByTestId("settings-notifications-toggle")).toBeDisabled();
+    // `busy` is also the pre-hydration state, so it must never render the
+    // "not available" claim — that copy is reserved for a browser that
+    // genuinely cannot do web push.
+    expect(screen.queryByTestId("settings-notifications-unsupported")).toBeNull();
 
     cleanup();
     useWebPushSettingsMock.mockReturnValue({
