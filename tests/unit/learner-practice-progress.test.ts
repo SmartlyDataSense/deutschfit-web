@@ -8,8 +8,8 @@ import {
   savePracticeProgress,
 } from "@/learner/core/storage/practiceProgress";
 import { deriveChip } from "@/learner/practice/model/progressChip";
-import { lockPick, locksToAnswerMap, partProgress, resetPart } from "@/learner/practice/model/lockState";
-import type { ExamItem, ExamPart } from "@/learner/core/exam/engine/types";
+import { isSessionComplete, lockPick, locksToAnswerMap, partProgress, resetPart } from "@/learner/practice/model/lockState";
+import type { ExamItem, ExamPart, ExamSession } from "@/learner/core/exam/engine/types";
 
 const item = (id: string, correctKey: string): ExamItem =>
   ({ id, number: 1, stem: "s", answerFormat: "MC_SINGLE_3",
@@ -57,5 +57,25 @@ describe("practiceProgress storage + chip/lock models", () => {
     expect(partProgress(locks, part)).toEqual({ locked: 2, correct: 1, total: 2 });
     expect(locksToAnswerMap(locks)).toEqual({ i1: "b", i2: "b" });
     expect(resetPart(locks, part)).toEqual({});
+  });
+
+  // S4-4.4 regression pin — direct isSessionComplete cases. Empty-session
+  // (`parts: []`) is vacuously true per the ported mobile behaviour
+  // (deutschfit-mobile/src/features/practice/model/lockState.ts:54-59 is
+  // byte-identical to this file's implementation: `.every()` over an
+  // empty array returns `true`).
+  it("isSessionComplete: all-answered -> true, one unanswered -> false, empty session -> true (mobile parity)", () => {
+    const session: ExamSession = {
+      id: "sess1", examSlug: "ex1", moduleCode: "LESEN", title: "t",
+      totalDurationMinutes: 10, parts: [part],
+    };
+    const allLocked = { i1: { key: "a", correct: true }, i2: { key: "b", correct: true } };
+    expect(isSessionComplete(allLocked, session)).toBe(true);
+
+    const oneMissing = { i1: { key: "a", correct: true } };
+    expect(isSessionComplete(oneMissing, session)).toBe(false);
+
+    const emptySession: ExamSession = { ...session, parts: [] };
+    expect(isSessionComplete({}, emptySession)).toBe(true);
   });
 });
