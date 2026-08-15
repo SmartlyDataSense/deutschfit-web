@@ -34,9 +34,20 @@ export function LearnerI18nProvider({ children, lng }: LearnerI18nProviderProps)
 
   useEffect(() => {
     let cancelled = false;
-    void whenEnReady().then(() => {
-      if (!cancelled) setEnReady(true);
-    });
+    // `whenEnReady()` is designed to never reject — a failed EN chunk load
+    // is caught internally (`index.ts`) so this always resolves. The
+    // `.catch` below is defense in depth only: if that internal contract
+    // is ever broken by a future change, this still flips `enReady` and
+    // renders `children` instead of leaving the provider hung on `null`
+    // forever (see the class doc comment above for why that must never
+    // happen on an `/en/…` boot).
+    void whenEnReady()
+      .then(() => {
+        if (!cancelled) setEnReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setEnReady(true);
+      });
     return () => {
       cancelled = true;
     };

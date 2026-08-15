@@ -161,6 +161,31 @@ let enLoad: Promise<void> | null = null;
  * shared promise (never inside the `.map`, never re-triggered by a repeat
  * call to `whenEnReady()` since `enLoad` is cached), heals every such
  * component in one pass.
+ *
+ * Failure path: any of the 17 dynamic imports can reject (deploy skew — a
+ * stale HTML payload references a chunk hash no longer on the CDN — or a
+ * plain network blip). The `.catch` below does two things that must both
+ * happen, not just one:
+ *
+ *   1. Resets `enLoad` to `null` so the NEXT call kicks off a fresh
+ *      `Promise.all` instead of replaying this rejection forever. Without
+ *      this, `enLoad ??=` at the top of this function never reassigns
+ *      once `enLoad` holds a settled-rejected promise — every future
+ *      caller (a later `/en/…` boot, or a language switch in Settings)
+ *      gets the exact same dead promise, and `LearnerI18nProvider` (which
+ *      renders `null` until this resolves) is stuck blank for the rest of
+ *      the page session.
+ *   2. Still emits `'languageChanged'`, exactly like the success path.
+ *      `addResourceBundle` already ran inside the `.map` above for every
+ *      namespace whose import DID resolve before the rejection — those
+ *      partial results are already registered on the instance. Skipping
+ *      the emit here would strand that partial catalog: the bundles are
+ *      there, but nothing tells react-i18next to re-render, which is
+ *      worse than the happy-path emit ever being unnecessary.
+ *
+ * This function itself never rejects — a caller can always safely
+ * `.then()` it without a `.catch` of its own, though `LearnerI18nProvider`
+ * adds one anyway as defense in depth.
  */
 export function whenEnReady(): Promise<void> {
   enLoad ??= Promise.all(
@@ -168,12 +193,22 @@ export function whenEnReady(): Promise<void> {
       const mod = await EN_LOADERS[ns]();
       learnerI18n.addResourceBundle("en", ns, mod.default, true, false);
     })
-  ).then(() => {
-    // Re-render every mounted useTranslation() consumer now that `en` is
-    // fully registered — see the doc comment above for why this is
-    // required and must not be deleted.
-    learnerI18n.emit("languageChanged", learnerI18n.language);
-  });
+  )
+    .then(() => {
+      // Re-render every mounted useTranslation() consumer now that `en` is
+      // fully registered — see the doc comment above for why this is
+      // required and must not be deleted.
+      learnerI18n.emit("languageChanged", learnerI18n.language);
+    })
+    .catch((err: unknown) => {
+      console.warn(
+        "[i18n] one or more en catalogs failed to load — will retry on the next call:",
+        err
+      );
+      // See the doc comment above — both of these must happen together.
+      enLoad = null;
+      learnerI18n.emit("languageChanged", learnerI18n.language);
+    });
   return enLoad;
 }
 
