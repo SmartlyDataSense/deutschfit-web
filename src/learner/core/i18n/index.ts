@@ -114,28 +114,26 @@ const resources = {
  * `LEARNER_NAMESPACES` member, alphabetical. Each is a code-split chunk;
  * none of these run until `whenEnReady()` is called.
  */
-const EN_LOADERS: Record<
-  (typeof LEARNER_NAMESPACES)[number],
-  () => Promise<{ default: object }>
-> = {
-  apprendre: () => import("../../locales/en/apprendre.json"),
-  auth: () => import("../../locales/en/auth.json"),
-  coach: () => import("../../locales/en/coach.json"),
-  common: () => import("../../locales/en/common.json"),
-  dashboard: () => import("../../locales/en/dashboard.json"),
-  drill: () => import("../../locales/en/drill.json"),
-  exam: () => import("../../locales/en/exam.json"),
-  examen: () => import("../../locales/en/examen.json"),
-  notifications: () => import("../../locales/en/notifications.json"),
-  onboarding: () => import("../../locales/en/onboarding.json"),
-  profil: () => import("../../locales/en/profil.json"),
-  schreiben: () => import("../../locales/en/schreiben.json"),
-  settings: () => import("../../locales/en/settings.json"),
-  simulation: () => import("../../locales/en/simulation.json"),
-  sprechen: () => import("../../locales/en/sprechen.json"),
-  srs: () => import("../../locales/en/srs.json"),
-  writing: () => import("../../locales/en/writing.json"),
-};
+const EN_LOADERS: Record<(typeof LEARNER_NAMESPACES)[number], () => Promise<{ default: object }>> =
+  {
+    apprendre: () => import("../../locales/en/apprendre.json"),
+    auth: () => import("../../locales/en/auth.json"),
+    coach: () => import("../../locales/en/coach.json"),
+    common: () => import("../../locales/en/common.json"),
+    dashboard: () => import("../../locales/en/dashboard.json"),
+    drill: () => import("../../locales/en/drill.json"),
+    exam: () => import("../../locales/en/exam.json"),
+    examen: () => import("../../locales/en/examen.json"),
+    notifications: () => import("../../locales/en/notifications.json"),
+    onboarding: () => import("../../locales/en/onboarding.json"),
+    profil: () => import("../../locales/en/profil.json"),
+    schreiben: () => import("../../locales/en/schreiben.json"),
+    settings: () => import("../../locales/en/settings.json"),
+    simulation: () => import("../../locales/en/simulation.json"),
+    sprechen: () => import("../../locales/en/sprechen.json"),
+    srs: () => import("../../locales/en/srs.json"),
+    writing: () => import("../../locales/en/writing.json"),
+  };
 
 let enLoad: Promise<void> | null = null;
 
