@@ -153,6 +153,11 @@ function persist(signal: ReadinessSignal): void {
   });
 }
 
+// S13 Task 7 (S3-3.1): callers that `persist()` then `persistDelete()` back
+// to back (see `acknowledgeReadiness` below) depend on both fire-and-forget
+// IIFEs awaiting the same memoized `getLearnerDb()` promise so their
+// continuations preserve call order on the microtask queue — see the
+// longer note at that call site.
 function persistDelete(): void {
   const userId = resolveUserId();
   if (!userId) return;
@@ -315,6 +320,17 @@ export function acknowledgeReadiness(payload: AcknowledgePayload): void {
   if (active.module !== payload.module) return;
   // Persist the ack timestamp so a future hydrate-on-boot task can
   // short-circuit a stale slot if needed, then clear in-memory.
+  //
+  // S13 Task 7 (S3-3.1): `persist` then `persistDelete` are both
+  // fire-and-forget IIFEs (neither is awaited here), so the put-before-
+  // delete ordering these two calls need is NOT enforced by this call
+  // site — it relies on `getLearnerDb()`'s memoized promise (`dbPromise`
+  // in `core/db/index.ts`): once resolved, both IIFEs await the SAME
+  // already-settled promise, so their continuations queue onto the
+  // microtask queue in call order (persist's continuation first, since
+  // persist() was invoked first), which puts persist's `db.activeSubmission.put`
+  // ahead of persistDelete's `.delete` on the same row. Breaks if
+  // `getLearnerDb()` ever stops memoizing (e.g. re-opens per call).
   persist({ ...active, acknowledgedAt: payload.acknowledgedAt });
   active = null;
   persistDelete();

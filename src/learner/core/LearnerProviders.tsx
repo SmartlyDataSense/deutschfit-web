@@ -12,6 +12,7 @@ import { clearReadiness } from "./readiness";
 import { hydrateOnBoot, subscribeForegroundHydration } from "./readiness/hydrate";
 import { installAcknowledgeAdapter } from "./submissions/installAcknowledgeAdapter";
 import { installPollingAdapter } from "./submissions/installPollingAdapter";
+import { useOnboardingAnswers } from "@/learner/onboarding/state/useOnboardingAnswers";
 import { LearnerErrorBoundary } from "@/learner/ui/chrome/LearnerErrorBoundary";
 import { OfflineBanner } from "@/learner/ui/chrome/OfflineBanner";
 
@@ -55,6 +56,11 @@ import { OfflineBanner } from "@/learner/ui/chrome/OfflineBanner";
  *      The teardowns are kept in a ref and run — together with
  *      `clearReadiness()` — on `"unauthenticated"`, so a sign-out drops
  *      both the in-memory slot and every listener the adapters installed.
+ *      The same branch also resets `useOnboardingAnswers` (S13 Task 7,
+ *      M-2.11) — that store is session-local with no per-user
+ *      namespacing, so without this a second user signing in on the same
+ *      tab would inherit the first user's `motivation`/`schedule`
+ *      answers into their own `finish()` call.
  *   7. Calls `usePrefetchOnLogin()` (S4 Task 4.10, port of mobile's
  *      `src/features/content/hooks/usePrefetchOnLogin.ts`) — warms the
  *      `prompts-list` content cache once per login transition so the S6
@@ -111,6 +117,7 @@ export function LearnerProviders({ children }: { children: React.ReactNode }) {
         }
         readinessTeardownsRef.current = [];
         clearReadiness();
+        useOnboardingAnswers.getState().reset();
       }
       resetAnalyticsUser();
       useOnboardingFlagStore.getState().hydrateFor(null);

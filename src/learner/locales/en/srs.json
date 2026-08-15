@@ -11,6 +11,7 @@
     "emptyBody": "You're up to date. Come back tomorrow or train another skill.",
     "errorTitle": "Error",
     "errorBody": "Could not load cards. Try again.",
+    "rateError": "Your answer wasn't saved. Try again.",
     "remainingLabel": "remaining",
     "positionLabel": "Card {{current}} / {{total}}"
   },
