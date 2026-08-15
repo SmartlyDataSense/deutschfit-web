@@ -122,7 +122,7 @@ test.describe("Practice hub + Lesen (qa1, real backend)", () => {
     if (await emptyState.isVisible().catch(() => false)) {
       test.skip(
         true,
-        "No published Lesen Modelltest content on dev yet — see deutschfit-backend issue (Lesen mirror of the Hören backfill). Re-run once content lands; single metered submit."
+        "No published Lesen Modelltest content on dev yet — backend#414 (Lesen mirror of the Hören backfill). Re-run once content lands; single metered submit."
       );
     }
     await expect(picker).toBeVisible({ timeout: 30_000 });
