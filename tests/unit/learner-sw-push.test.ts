@@ -88,7 +88,9 @@ function loadServiceWorker(): SwHarness {
     },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  // Evaluating the shipped file is the point: these tests gate the exact
+  // bytes we deploy. The source is read from our own repo — no interpolation,
+  // no external input — so this is not the injection shape it resembles.
   new Function("self", "URL", SW_SOURCE)(self, URL);
 
   const listener = (type: string): Listener => {
