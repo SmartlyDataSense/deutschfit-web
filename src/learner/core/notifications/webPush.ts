@@ -37,8 +37,14 @@ export function getWebPushSupport(): WebPushSupport {
  * multiple of 4 ( `(4 - len % 4) % 4` — the trailing `% 4` prevents
  * adding 4 pad chars when the length is already a multiple of 4,
  * which browsers reject at runtime).
+ *
+ * Returns `Uint8Array<ArrayBuffer>`, not the default
+ * `Uint8Array<ArrayBufferLike>`: `PushSubscriptionOptionsInit.
+ * applicationServerKey` is typed as `BufferSource`, which excludes
+ * SharedArrayBuffer-backed views. The narrower annotation is what lets
+ * the result be passed straight to `pushManager.subscribe`.
  */
-export function urlBase64ToUint8Array(base64Url: string): Uint8Array {
+export function urlBase64ToUint8Array(base64Url: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
   const base64 = (base64Url + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
