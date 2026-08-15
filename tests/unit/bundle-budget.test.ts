@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { collectLearnerRoutes, evaluate, gzKb } from "../../scripts/check-bundle-budget.mjs";
+import {
+  collectLearnerRoutes,
+  evaluate,
+  extractMarkers,
+  formatMarkerCell,
+  gzKb,
+} from "../../scripts/check-bundle-budget.mjs";
 
 const manifest = {
   pages: {
@@ -49,10 +55,10 @@ describe("check-bundle-budget", () => {
     ];
     expect(evaluate(rows, { appBudget: 300, routeBudget: 320 }).failures).toHaveLength(2);
     expect(
-      evaluate(
-        [{ route: "/[locale]/(learner)/app/(protected)/page", gz: 300 }],
-        { appBudget: 300, routeBudget: 320 }
-      ).failures
+      evaluate([{ route: "/[locale]/(learner)/app/(protected)/page", gz: 300 }], {
+        appBudget: 300,
+        routeBudget: 320,
+      }).failures
     ).toHaveLength(0);
   });
   it("uses the route-specific budget, not the app budget, for non-app routes", () => {
@@ -63,5 +69,85 @@ describe("check-bundle-budget", () => {
     // 310 > 300.
     const rows = [{ route: "/[locale]/(learner)/app/(protected)/srs/page", gz: 310 }];
     expect(evaluate(rows, { appBudget: 300, routeBudget: 320 }).failures).toHaveLength(0);
+  });
+});
+
+describe("extractMarkers", () => {
+  it("detects posthog", () => {
+    expect(
+      extractMarkers(Buffer.from('function initPostHog(){posthog.init("x")}')).markers
+    ).toContain("posthog");
+  });
+  it("detects dexie", () => {
+    expect(extractMarkers(Buffer.from("class LearnerDexie extends Dexie {}")).markers).toContain(
+      "dexie"
+    );
+  });
+  it("detects i18next", () => {
+    expect(extractMarkers(Buffer.from("var i=e.i(1);i18next.init({})")).markers).toContain(
+      "i18next"
+    );
+  });
+  it("detects the FR catalog marker", () => {
+    expect(extractMarkers(Buffer.from('{"status":{"loading":"Chargement…"}}')).markers).toContain(
+      "fr-catalog"
+    );
+  });
+  it("detects supabase", () => {
+    expect(
+      extractMarkers(Buffer.from("https://ocqoqnifzlkrgcyjljpl.supabase.co")).markers
+    ).toContain("supabase");
+  });
+  it("detects __DOM_INTERNALS", () => {
+    expect(
+      extractMarkers(Buffer.from("__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE"))
+        .markers
+    ).toContain("__DOM_INTERNALS");
+  });
+  it("detects multiple markers in the same chunk", () => {
+    const buf = Buffer.from("Dexie; supabase.co; posthog.init()");
+    const { markers } = extractMarkers(buf);
+    expect(markers).toEqual(expect.arrayContaining(["dexie", "supabase", "posthog"]));
+  });
+  it("returns no markers and no export for unrelated text", () => {
+    const { markers, firstExport } = extractMarkers(Buffer.from("var x = 1 + 2;"));
+    expect(markers).toEqual([]);
+    expect(firstExport).toBeNull();
+  });
+  it("extracts the first Turbopack e.s(...) export name", () => {
+    const { firstExport } = extractMarkers(
+      Buffer.from('e.s(["fetchAccueilHome",()=>o,"updateExamDate",()=>i],90285)')
+    );
+    expect(firstExport).toBe("fetchAccueilHome");
+  });
+  it("extracts the first Object.defineProperty export name as a fallback", () => {
+    const { firstExport } = extractMarkers(
+      Buffer.from(
+        'Object.defineProperty(r,"invalidateCacheBelowFlightSegmentPath",{enumerable:!0})'
+      )
+    );
+    expect(firstExport).toBe("invalidateCacheBelowFlightSegmentPath");
+  });
+});
+
+describe("formatMarkerCell", () => {
+  it("joins markers and the export name when both are present", () => {
+    expect(formatMarkerCell({ markers: ["dexie"], firstExport: "getLearnerDb" })).toBe(
+      "dexie, export:getLearnerDb"
+    );
+  });
+  it("falls back to just the markers when there is no useful export", () => {
+    expect(formatMarkerCell({ markers: ["posthog"], firstExport: null })).toBe("posthog");
+  });
+  it("falls back to just the export when there are no keyword markers", () => {
+    expect(formatMarkerCell({ markers: [], firstExport: "fetchAccueilHome" })).toBe(
+      "export:fetchAccueilHome"
+    );
+  });
+  it("reports 'unattributed' rather than guessing when nothing useful was found", () => {
+    expect(formatMarkerCell({ markers: [], firstExport: null })).toBe("unattributed");
+  });
+  it("treats a bare __esModule export as not useful on its own", () => {
+    expect(formatMarkerCell({ markers: [], firstExport: "__esModule" })).toBe("unattributed");
   });
 });
