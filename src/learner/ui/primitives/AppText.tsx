@@ -49,10 +49,19 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   secondary: "text-text-secondary",
   tertiary: "text-text-tertiary",
   inverse: "text-on-premium",
-  cta: "text-cta",
-  coach: "text-coach",
+  // S13 Task 10 (axe sweep): the vivid `text-cta`/`text-coach` brand hues
+  // fail WCAG AA as body text on every light surface they actually render
+  // on (mirrors mobile's own contrast.test.ts, which documents cta/coach
+  // as "decorative only" — never body-text-safe). `-text` are the same
+  // hue, darkened to clear AA; see globals.css for the derivation.
+  cta: "text-cta-text",
+  coach: "text-coach-text",
   gold: "text-accent-gold",
-  warning: "text-warning-red",
+  // S13 Task 10 (axe sweep): `warning` backs 30+ form-validation-error /
+  // destructive-label call sites app-wide, none at the "large text" AA
+  // bar — the vivid `text-warning-red` fails AA there; `-text` is the
+  // same hue darkened to clear it. See globals.css for the derivation.
+  warning: "text-warning-red-text",
   success: "text-success-green",
 };
 

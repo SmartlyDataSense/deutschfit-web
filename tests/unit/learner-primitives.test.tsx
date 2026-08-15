@@ -29,8 +29,10 @@ import { GlassSurface } from "@/learner/ui/primitives/GlassSurface";
 
 describe("AppText — variant to class mapping", () => {
   it("maps tone to the matching text-color class", () => {
+    // S13 Task 10 (axe sweep): "cta" resolves to the AA-safe `text-cta-text`
+    // shade, not the vivid decorative `text-cta` — see AppText.tsx TONE_CLASS.
     render(<AppText tone="cta">Hallo</AppText>);
-    expect(screen.getByText("Hallo").className).toMatch(/\btext-cta\b/);
+    expect(screen.getByText("Hallo").className).toMatch(/\btext-cta-text\b/);
   });
 
   it("maps size to the matching type-scale class", () => {

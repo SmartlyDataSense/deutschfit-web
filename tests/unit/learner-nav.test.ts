@@ -100,12 +100,15 @@ describe("resolveActiveTabId", () => {
 
 describe("resolveTabTint", () => {
   it("keeps Coach teal whether active or not", () => {
+    // S13 Task 10 (axe sweep): label text uses the AA-safe `-text` shade;
+    // the icon var stays the vivid decorative teal (unaffected by axe's
+    // text-only color-contrast rule).
     expect(resolveTabTint("coach", false)).toEqual({
-      textClass: "text-coach",
+      textClass: "text-coach-text",
       iconVar: "var(--color-coach)",
     });
     expect(resolveTabTint("coach", true)).toEqual({
-      textClass: "text-coach",
+      textClass: "text-coach-text",
       iconVar: "var(--color-coach)",
       pillClass: "bg-coach/10",
     });
@@ -113,7 +116,7 @@ describe("resolveTabTint", () => {
 
   it("tints every other tab orange (nav-active) only when active", () => {
     expect(resolveTabTint("accueil", true)).toEqual({
-      textClass: "text-nav-active",
+      textClass: "text-nav-active-text",
       iconVar: "var(--color-nav-active)",
       pillClass: "bg-nav-active/10",
     });

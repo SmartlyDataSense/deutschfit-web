@@ -80,7 +80,7 @@ export function RevisionScreen() {
     }
     return (
       <>
-        {currentCard.prompt.before} <span className="text-coach">{"  ____  "}</span>{" "}
+        {currentCard.prompt.before} <span className="text-coach-text">{"  ____  "}</span>{" "}
         {currentCard.prompt.after}
       </>
     );

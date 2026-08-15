@@ -19,9 +19,42 @@
   --color-cta-ink: #ffffff;
   --color-coach: #4dac99;
   --color-coach-ink: #ffffff;
+  /*
+   * `--color-cta-text` / `--color-coach-text` (S13 Task 10, axe sweep) —
+   * accessible (AA, >=4.5:1) darker shades of the same brand hue, for use
+   * whenever `cta`/`coach` render as actual TEXT on a light surface
+   * (sidebar/tab active-label, "Betreuer" eyebrow, badge captions, etc.).
+   * `--color-cta`/`--color-coach` themselves stay vivid/undimmed — they
+   * back backgrounds, icons and other decorative (non-text) uses, which
+   * axe's color-contrast rule doesn't evaluate and which mobile's own
+   * `contrast.test.ts` documents as "decorative only" (coach/cta FAIL AA
+   * as body text there too — this is a real, pre-existing brand-palette
+   * constraint, not a web-only bug). Same shade-of-same-hue derivation as
+   * the `-subtle`/`-text` pairs below (darken via uniform RGB scaling,
+   * never a lighter/desaturated substitute): #d56e3a -> #a2542c (factor
+   * ~0.76), #4dac99 -> #347367 (factor ~0.67). Verified >=4.53:1 against
+   * every background these actually render on today (white, bg-hero /
+   * bg-cream #f2e9d8, the ~10%-tint pill blend ~#fbf1eb, bg-subtle
+   * #f7f3ec for cta-text; white, coach-subtle #e4f1ee, bg-subtle
+   * #f7f3ec, bg-hero #f2e9d8 for coach-text).
+   */
+  --color-cta-text: #a2542c;
+  --color-coach-text: #347367;
   --color-accent-gold: #e5b367;
   --color-accent-gold-ink: #1a1714;
   --color-warning-red: #c2492e;
+  /*
+   * `--color-warning-red-text` (S13 Task 10, axe sweep) — AA-safe darker
+   * shade of `--color-warning-red`, same derivation as cta-text/coach-text
+   * above (#c2492e -> #b4442b, factor ~0.93). `warning-red` backs
+   * AppText's `warning` tone ONLY (never a background — grep confirms no
+   * `bg-warning-red` call site exists), and that tone is the app-wide
+   * form-validation-error / destructive-action-label color (30+ call
+   * sites via AppText, most caption/small, none at the "large text" AA
+   * bar), so this is a real pre-existing app-wide gap, not a one-off.
+   * Verified >=4.5:1 against white, bg-subtle #f7f3ec, bg-hero #f2e9d8.
+   */
+  --color-warning-red-text: #b4442b;
   --color-success-green: #2e8b64;
   --color-priority-amber: #d99b3c;
   --color-coach-subtle: #e4f1ee;
@@ -53,6 +86,8 @@
   --color-on-premium: #f4ead3;
   /* active nav indicator (mirrors tokens.theme.navActive — same value as --color-cta) */
   --color-nav-active: #d56e3a;
+  /* accessible text variant of --color-nav-active — see --color-cta-text above (same source hue/derivation) */
+  --color-nav-active-text: #a2542c;
 
   /* radius (mirrors tokens.radius — px). Not registered under @theme (would
    * collide with Tailwind's built-in rounded-sm/md/lg/full scale used
@@ -202,11 +237,14 @@
   --color-premium-ink: var(--color-premium-ink);
   --color-cta: var(--color-cta);
   --color-cta-ink: var(--color-cta-ink);
+  --color-cta-text: var(--color-cta-text);
   --color-coach: var(--color-coach);
   --color-coach-ink: var(--color-coach-ink);
+  --color-coach-text: var(--color-coach-text);
   --color-accent-gold: var(--color-accent-gold);
   --color-accent-gold-ink: var(--color-accent-gold-ink);
   --color-warning-red: var(--color-warning-red);
+  --color-warning-red-text: var(--color-warning-red-text);
   --color-success-green: var(--color-success-green);
   --color-priority-amber: var(--color-priority-amber);
   --color-coach-subtle: var(--color-coach-subtle);
@@ -225,6 +263,7 @@
   --color-bg-premium: var(--color-bg-premium);
   --color-on-premium: var(--color-on-premium);
   --color-nav-active: var(--color-nav-active);
+  --color-nav-active-text: var(--color-nav-active-text);
 
   --color-success-subtle: var(--color-success-subtle);
   --color-success-text: var(--color-success-text);

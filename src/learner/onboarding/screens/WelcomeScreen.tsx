@@ -88,6 +88,10 @@ export function WelcomeScreen() {
             <ProgressBar
               value={TEASER_PROGRESS_VALUE}
               tone="gold"
+              // S13 Task 10 (axe sweep): aria-progressbar-name — reuse the
+              // existing visible legend strings (no new inline literal) so
+              // the accessible name always matches what's on screen.
+              aria-label={`${t("onboarding:welcome.teaserProgress")} · ${t("onboarding:welcome.teaserGoal")}`}
               testID="onboarding-welcome-teaser-progress"
             />
             <div className="flex justify-between">
