@@ -104,6 +104,17 @@ function makeFakeNativeMicCheck(overrides: Partial<NativeMicCheck> = {}): Native
   };
 }
 
+describe("MIC_CHECK_DURATION_MS", () => {
+  // S7-7.3 regression pin — the constant is exercised throughout this file
+  // via `advanceTimersByTimeAsync(MIC_CHECK_DURATION_MS)`, but nothing
+  // pinned the literal value itself (a shrink to e.g. 3000 stayed green
+  // before this test existed, since every timer-advance call scales with
+  // the same constant it's supposed to be guarding).
+  it("is 5000 (mobile parity)", () => {
+    expect(MIC_CHECK_DURATION_MS).toBe(5000);
+  });
+});
+
 describe("useMicCheck", () => {
   beforeEach(() => {
     vi.useFakeTimers();
