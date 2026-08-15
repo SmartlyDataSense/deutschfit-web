@@ -19,6 +19,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BackendEnvName } from "@/learner/core/api/backendEnv";
+import type { WebPushSettings } from "@/learner/core/notifications/useWebPushSettings";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -49,6 +50,27 @@ vi.mock("@/learner/core/api/backendEnv", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/api/backendEnv")>();
   return { ...actual, getBackendInfo: getBackendInfoMock };
 });
+
+// S12 — the notifications section is driven entirely by this hook, so the
+// screen tests own the RENDERING contract per state and nothing else; the
+// state machine itself is pinned in learner-notifications-hook.test.ts.
+// The mock is annotated with the WIDE `WebPushSettings` type: inferred
+// from its default implementation, `state` would narrow to `"off"` and
+// every `mockReturnValue({ state: "denied" | "on" | ... })` below — i.e.
+// the exact overrides these tests exist for — would fail to typecheck.
+const { useWebPushSettingsMock } = vi.hoisted(() => ({
+  useWebPushSettingsMock: vi.fn(
+    (): WebPushSettings => ({
+      state: "off",
+      hasError: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    })
+  ),
+}));
+vi.mock("@/learner/core/notifications/useWebPushSettings", () => ({
+  useWebPushSettings: useWebPushSettingsMock,
+}));
 
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
@@ -83,6 +105,15 @@ beforeEach(() => {
   hydrateExamContextMock.mockClear();
   getBackendInfoMock.mockClear();
   getBackendInfoMock.mockReturnValue({ env: "dev", projectRef: "ocqoqnifzlkrgcyjljpl" });
+  // Re-arm the default every test: `mockReturnValue` persists, so without
+  // this a per-test override ("denied", "unsupported") would leak forward
+  // and silently change what the NEXT test renders.
+  useWebPushSettingsMock.mockReturnValue({
+    state: "off",
+    hasError: false,
+    enable: vi.fn(),
+    disable: vi.fn(),
+  });
   store = installStorageMock();
 });
 
@@ -226,5 +257,103 @@ describe("SettingsScreen (S11.5)", () => {
     const text = document.body.textContent ?? "";
     expect(text).not.toMatch(/settings:[a-zA-Z.]+/);
     expect(text).not.toMatch(/profil:[a-zA-Z.]+/);
+    // S12: the notifications namespace must be REGISTERED, not merely
+    // referenced — an unregistered ns renders "notifications:settings.…".
+    expect(text).not.toMatch(/notifications:[a-zA-Z.]+/);
+  });
+});
+
+describe("SettingsScreen — notifications section (S12)", () => {
+  it("renders a live toggle in the 'off' state", () => {
+    useWebPushSettingsMock.mockReturnValue({
+      state: "off",
+      hasError: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    });
+    ui();
+    const toggle = screen.getByTestId("settings-notifications-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(toggle).not.toBeDisabled();
+    expect(screen.queryByTestId("settings-notifications-blocked")).toBeNull();
+  });
+
+  it("clicking the off toggle calls enable(); clicking the on toggle calls disable()", () => {
+    const enable = vi.fn();
+    const disable = vi.fn();
+    useWebPushSettingsMock.mockReturnValue({ state: "off", hasError: false, enable, disable });
+    ui();
+    fireEvent.click(screen.getByTestId("settings-notifications-toggle"));
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(disable).not.toHaveBeenCalled();
+
+    cleanup();
+    useWebPushSettingsMock.mockReturnValue({ state: "on", hasError: false, enable, disable });
+    ui();
+    expect(screen.getByTestId("settings-notifications-toggle")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    fireEvent.click(screen.getByTestId("settings-notifications-toggle"));
+    expect(disable).toHaveBeenCalledTimes(1);
+  });
+
+  it("denied renders the blocked variant and NO flippable toggle", () => {
+    useWebPushSettingsMock.mockReturnValue({
+      state: "denied",
+      hasError: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    });
+    ui();
+    expect(screen.getByTestId("settings-notifications-blocked")).toBeInTheDocument();
+    expect(screen.getByText("Notifications bloquées dans ton navigateur")).toBeInTheDocument();
+    // The denied state must NOT look like something the user can flip —
+    // browsers never re-prompt after a denial.
+    expect(screen.queryByTestId("settings-notifications-toggle")).toBeNull();
+  });
+
+  it("unsupported renders the visible non-interactive variant without crashing", () => {
+    useWebPushSettingsMock.mockReturnValue({
+      state: "unsupported",
+      hasError: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    });
+    ui();
+    expect(screen.getByTestId("settings-notifications-unsupported")).toBeInTheDocument();
+    expect(screen.queryByTestId("settings-notifications-toggle")).toBeNull();
+  });
+
+  it("busy disables the toggle; hasError shows the retry copy", () => {
+    useWebPushSettingsMock.mockReturnValue({
+      state: "busy",
+      hasError: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    });
+    ui();
+    expect(screen.getByTestId("settings-notifications-toggle")).toBeDisabled();
+
+    cleanup();
+    useWebPushSettingsMock.mockReturnValue({
+      state: "off",
+      hasError: true,
+      enable: vi.fn(),
+      disable: vi.fn(),
+    });
+    ui();
+    expect(screen.getByTestId("settings-notifications-error")).toBeInTheDocument();
+  });
+
+  it("shows no error copy when hasError is false", () => {
+    ui();
+    expect(screen.queryByTestId("settings-notifications-error")).toBeNull();
+  });
+
+  it("the analytics placeholder row is untouched (still inert)", () => {
+    ui();
+    const optOut = screen.getByTestId("settings-analytics-optout-switch");
+    expect(optOut).toBeDisabled();
   });
 });
