@@ -52,3 +52,6 @@ jobs:
           NEXT_PUBLIC_PAY_PAYPAL_HANDLE: ""
           NEXT_PUBLIC_PAY_WISE_HANDLE: ""
           NEXT_PUBLIC_PAY_EMAIL: support@deutschfit.app
+
+      - name: Bundle budget
+        run: npm run check:bundle
