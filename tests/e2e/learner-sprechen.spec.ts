@@ -86,7 +86,8 @@ function trackMeteredRequests(page: Page): {
   return { uploadRequests, dialogueStartRequests };
 }
 
-test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, metered recording submit (qa1, real backend)", () => {
+test.describe
+  .serial("Sprechen topic picker, dialogue picker, custom topic, metered recording submit (qa1, real backend)", () => {
   test("(a) zero-quota — picker renders, subgenre/level/search filters, zero sprechen-upload calls", async ({
     page,
   }) => {
@@ -120,9 +121,9 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     // then a search term — exercises the picker's client-side filtering
     // without ever touching a topic card (no `sprechen-upload` risk here).
     await page.getByTestId("sprechen-topic-picker-subgenre-trigger").click();
-    await expect(
-      page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByTestId("sprechen-topic-picker-subgenre-vortrag").click();
     await expect(page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")).toHaveCount(0);
 
@@ -270,7 +271,9 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     const error = page.getByTestId("sprechen-topic-picker-error");
     await expect(list.or(empty).or(error).first()).toBeVisible({ timeout: 30_000 });
 
-    const topicCardCount = await page.locator('button[data-testid^="sprechen-topic-card-"]').count();
+    const topicCardCount = await page
+      .locator('button[data-testid^="sprechen-topic-card-"]')
+      .count();
     test.skip(topicCardCount === 0, "dev has no sprechen topics — backend content gap");
 
     // First topic card — clicking it (not a direct `page.goto` to the

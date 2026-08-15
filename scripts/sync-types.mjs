@@ -25,7 +25,7 @@ if (!existsSync(source)) {
   console.error(
     `[sync-types] Source not found: ${source}\n` +
       `Expected sibling checkout at ${backendRoot}.\n` +
-      `Clone deutschfit-backend next to deutschfit-web, or pull latest.`,
+      `Clone deutschfit-backend next to deutschfit-web, or pull latest.`
   );
   process.exit(1);
 }

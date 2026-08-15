@@ -85,7 +85,7 @@ describe("ExamHomeScreen — S8 Task 8.3 (track badge, resume card, module + sim
     expect(screen.queryByTestId("examHome.resume")).not.toBeInTheDocument();
   });
 
-  it("pending row: resume card renders resume.* copy, routes to the simulation URL with the row's slug, and fires exam_home_card_tapped {card:\"resume\"}", async () => {
+  it('pending row: resume card renders resume.* copy, routes to the simulation URL with the row\'s slug, and fires exam_home_card_tapped {card:"resume"}', async () => {
     readPendingMockExamMock.mockResolvedValue(pendingRow());
     renderWithI18n(<ExamHomeScreen />);
 
@@ -101,9 +101,7 @@ describe("ExamHomeScreen — S8 Task 8.3 (track badge, resume card, module + sim
     fireEvent.click(screen.getByTestId("examHome.resume"));
 
     expect(trackEventMock).toHaveBeenCalledWith("exam_home_card_tapped", { card: "resume" });
-    expect(pushMock).toHaveBeenCalledWith(
-      "/fr/app/examen/simulation?examSlug=goethe-b1-modell-1"
-    );
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=goethe-b1-modell-1");
   });
 
   it("rejected readPendingMockExam: cards still render (resume is best-effort); guard resets so a later legitimate re-run can retry and show the card", async () => {

@@ -10,7 +10,10 @@ import {
   getReadiness,
   markSubmissionInFlight,
 } from "@/learner/core/readiness";
-import { createSubmissionPoller, type PollSubmissionSnapshot } from "@/learner/core/submissions/usePollSubmission";
+import {
+  createSubmissionPoller,
+  type PollSubmissionSnapshot,
+} from "@/learner/core/submissions/usePollSubmission";
 
 describe("createSubmissionPoller (mobile parity)", () => {
   beforeEach(() => {
@@ -26,8 +29,11 @@ describe("createSubmissionPoller (mobile parity)", () => {
     const fetchRow = vi.fn(async () => ({ id: "sub-1", status }) as never);
     const snapshots: PollSubmissionSnapshot[] = [];
     const poller = createSubmissionPoller({
-      submissionId: "sub-1", module: "schreiben",
-      onUpdate: (s) => snapshots.push(s), fetchRow, now: () => Date.now(),
+      submissionId: "sub-1",
+      module: "schreiben",
+      onUpdate: (s) => snapshots.push(s),
+      fetchRow,
+      now: () => Date.now(),
     });
     poller.start();
     await vi.advanceTimersByTimeAsync(10); // first tick
@@ -50,10 +56,14 @@ describe("createSubmissionPoller (mobile parity)", () => {
 
   it("failed row lands markSubmissionFailed with the reaper hint", async () => {
     markSubmissionInFlight("sub-2", "sprechen");
-    const fetchRow = vi.fn(async () =>
-      ({ id: "sub-2", status: "failed", failure_reason: "reaper-timeout" }) as never);
+    const fetchRow = vi.fn(
+      async () => ({ id: "sub-2", status: "failed", failure_reason: "reaper-timeout" }) as never
+    );
     const poller = createSubmissionPoller({
-      submissionId: "sub-2", module: "sprechen", onUpdate: () => undefined, fetchRow,
+      submissionId: "sub-2",
+      module: "sprechen",
+      onUpdate: () => undefined,
+      fetchRow,
     });
     poller.start();
     await vi.advanceTimersByTimeAsync(10);
@@ -66,7 +76,10 @@ describe("createSubmissionPoller (mobile parity)", () => {
     const fetchRow = vi.fn().mockRejectedValue(new Error("boom"));
     const snapshots: PollSubmissionSnapshot[] = [];
     const poller = createSubmissionPoller({
-      submissionId: "sub-3", module: "schreiben", onUpdate: (s) => snapshots.push(s), fetchRow,
+      submissionId: "sub-3",
+      module: "schreiben",
+      onUpdate: (s) => snapshots.push(s),
+      fetchRow,
     });
     poller.start();
     await vi.advanceTimersByTimeAsync(10);

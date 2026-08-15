@@ -60,8 +60,12 @@ test.describe("S11 profil + settings", () => {
 
   test.afterEach(() => {
     // The hard safety gates — every test, not just the delete leg.
-    expect(fileGuardedRequests.accountDelete, "account-delete must NEVER fire in e2e").toHaveLength(0);
-    expect(fileGuardedRequests.profileWrites, "user_profiles must never be written").toHaveLength(0);
+    expect(fileGuardedRequests.accountDelete, "account-delete must NEVER fire in e2e").toHaveLength(
+      0
+    );
+    expect(fileGuardedRequests.profileWrites, "user_profiles must never be written").toHaveLength(
+      0
+    );
     expect(fileGuardedRequests.consumeTrial).toHaveLength(0);
     expect(fileGuardedRequests.aiCoach).toHaveLength(0);
   });
@@ -101,7 +105,9 @@ test.describe("S11 profil + settings", () => {
     }
   });
 
-  test("exam track: beta gate + confirm modal asserted then CANCELLED (never saved)", async ({ page }) => {
+  test("exam track: beta gate + confirm modal asserted then CANCELLED (never saved)", async ({
+    page,
+  }) => {
     trackGuardedRequests(page);
     await login(page);
     await page.goto("/fr/app/profil/settings/exam-track");
@@ -133,17 +139,23 @@ test.describe("S11 profil + settings", () => {
     await expect(modal).toHaveCount(0);
   });
 
-  test("objectives: pickers hydrate, save stays disabled untouched (no mutation)", async ({ page }) => {
+  test("objectives: pickers hydrate, save stays disabled untouched (no mutation)", async ({
+    page,
+  }) => {
     trackGuardedRequests(page);
     await login(page);
     await page.goto("/fr/app/profil/settings/objectives");
-    await expect(page.getByTestId("settings-objectives-motivation")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("settings-objectives-motivation")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByTestId("settings-objectives-schedule")).toBeVisible();
     // Not dirty → save disabled; we deliberately do NOT save (qa1 fixture).
     await expect(page.getByTestId("settings-objectives-save")).toBeDisabled();
   });
 
-  test("account deletion: typed-DELETE gate asserted, STOPPING SHORT OF SUBMIT", async ({ page }) => {
+  test("account deletion: typed-DELETE gate asserted, STOPPING SHORT OF SUBMIT", async ({
+    page,
+  }) => {
     trackGuardedRequests(page);
     await login(page);
     await page.goto("/fr/app/profil/delete-account");

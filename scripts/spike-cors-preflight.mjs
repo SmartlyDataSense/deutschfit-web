@@ -25,9 +25,7 @@ const QA_EMAIL = process.env.QA_EMAIL;
 const QA_PASSWORD = process.env.QA_PASSWORD;
 
 if (!BASE || !ANON_KEY) {
-  console.error(
-    "Missing required env: SUPABASE_URL and SUPABASE_ANON_KEY must be set.",
-  );
+  console.error("Missing required env: SUPABASE_URL and SUPABASE_ANON_KEY must be set.");
   process.exit(1);
 }
 
@@ -59,18 +57,15 @@ console.table(preflightResults);
 let authedResults = [];
 
 if (!QA_EMAIL || !QA_PASSWORD) {
-  console.log(
-    "\n=== Step 3: SKIPPED (QA_EMAIL / QA_PASSWORD not set in env) ===",
-  );
+  console.log("\n=== Step 3: SKIPPED (QA_EMAIL / QA_PASSWORD not set in env) ===");
 } else {
   console.log("\n=== Step 3: Authenticated GET (Node + browser) ===");
 
   const supabase = createClient(BASE, ANON_KEY);
-  const { data: signInData, error: signInError } =
-    await supabase.auth.signInWithPassword({
-      email: QA_EMAIL,
-      password: QA_PASSWORD,
-    });
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: QA_EMAIL,
+    password: QA_PASSWORD,
+  });
 
   if (signInError || !signInData?.session?.access_token) {
     console.error("QA sign-in failed:", signInError?.message ?? "no session");
@@ -132,12 +127,10 @@ if (!QA_EMAIL || !QA_PASSWORD) {
       }
       return out;
     },
-    { base: BASE, fns: FUNCTIONS, jwt: userJwt, anonKey: ANON_KEY },
+    { base: BASE, fns: FUNCTIONS, jwt: userJwt, anonKey: ANON_KEY }
   );
 
-  console.table(
-    browserResults.map((r) => ({ step: "authed-GET (browser)", ...r })),
-  );
+  console.table(browserResults.map((r) => ({ step: "authed-GET (browser)", ...r })));
 
   await browser.close();
   await supabase.auth.signOut();
@@ -154,6 +147,4 @@ if (!QA_EMAIL || !QA_PASSWORD) {
 
 // --- Machine-readable summary for the report/doc ---
 console.log("\n=== JSON summary ===");
-console.log(
-  JSON.stringify({ preflightResults, authedResults }, null, 2),
-);
+console.log(JSON.stringify({ preflightResults, authedResults }, null, 2));

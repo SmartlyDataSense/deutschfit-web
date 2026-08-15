@@ -14,10 +14,7 @@ import type { i18n as I18nInstance } from "i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import frCommon from "../../src/learner/locales/fr/common.json";
 import enCommon from "../../src/learner/locales/en/common.json";
-import {
-  LEARNER_LANG_STORAGE_KEY,
-  LEARNER_NAMESPACES,
-} from "../../src/learner/core/i18n";
+import { LEARNER_LANG_STORAGE_KEY, LEARNER_NAMESPACES } from "../../src/learner/core/i18n";
 
 // `common:actions.continue` is a real key present in both catalogs with
 // distinct FR/EN values — a stable anchor for the resolution assertions
@@ -59,10 +56,7 @@ function installLocalStorageMock(): void {
 
 describe("learner i18n — EN catalogs are not eagerly imported", () => {
   it("index.ts has no static import from the en locale directory", () => {
-    const source = readFileSync(
-      join(process.cwd(), "src/learner/core/i18n/index.ts"),
-      "utf-8"
-    );
+    const source = readFileSync(join(process.cwd(), "src/learner/core/i18n/index.ts"), "utf-8");
 
     expect(source).not.toMatch(/from\s+["']\.\.\/\.\.\/locales\/en\//);
   });
@@ -91,9 +85,7 @@ describe("learner i18n — init + language resolution", () => {
   });
 
   it("bundles the 16 mobile namespaces plus the web-only notifications catalog", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
 
     // 16 catalogs ported verbatim from deutschfit-mobile + `notifications`
@@ -133,9 +125,7 @@ describe("learner i18n — init + language resolution", () => {
   });
 
   it("honors an lng override passed to initLearnerI18n", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n("en");
 
     expect(instance.language).toBe("en");
@@ -149,9 +139,7 @@ describe("learner i18n — init + language resolution", () => {
   it("honors localStorage['@deutschfit/lang'] when no override is passed", async () => {
     window.localStorage.setItem(LEARNER_LANG_STORAGE_KEY, "en");
 
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
 
     expect(instance.language).toBe("en");
@@ -173,9 +161,7 @@ describe("learner i18n — whenEnReady", () => {
   });
 
   it("resolves once all 17 en namespaces are registered, matching the real catalogs", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
 
     await whenEnReady();
@@ -184,9 +170,7 @@ describe("learner i18n — whenEnReady", () => {
   });
 
   it("is idempotent — calling it multiple times returns the same settled promise", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     initLearnerI18n();
 
     await Promise.all([whenEnReady(), whenEnReady(), whenEnReady()]);
@@ -195,9 +179,7 @@ describe("learner i18n — whenEnReady", () => {
   });
 
   it("lets an fr instance switch to en and resolve a translated string", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
     expect(instance.language).toBe("fr");
 
@@ -207,10 +189,8 @@ describe("learner i18n — whenEnReady", () => {
     expect(instance.t("common:actions.continue")).toBe(EN_VALUE);
   });
 
-  it("heals a react-i18next consumer stranded by the unsafe order: changeLanguage(\"en\") before whenEnReady() resolves still self-heals to the EN string once it lands", async () => {
-    const { initLearnerI18n, whenEnReady } = await import(
-      "../../src/learner/core/i18n"
-    );
+  it('heals a react-i18next consumer stranded by the unsafe order: changeLanguage("en") before whenEnReady() resolves still self-heals to the EN string once it lands', async () => {
+    const { initLearnerI18n, whenEnReady } = await import("../../src/learner/core/i18n");
     const instance = initLearnerI18n();
     expect(instance.language).toBe("fr");
 

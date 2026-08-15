@@ -139,9 +139,7 @@ describe("isNetworkError", () => {
   });
 
   it('is true for an error named "AuthRetryableFetchError"', () => {
-    expect(isNetworkError({ name: "AuthRetryableFetchError", message: "fetch failed" })).toBe(
-      true
-    );
+    expect(isNetworkError({ name: "AuthRetryableFetchError", message: "fetch failed" })).toBe(true);
   });
 
   it("is false for a plain auth rejection (e.g. AuthApiError-shaped)", () => {
@@ -162,13 +160,19 @@ describe("isNetworkError", () => {
 describe("mapAuthErrorKey", () => {
   it("maps a password rejection to the invalid-credentials key", () => {
     expect(
-      mapAuthErrorKey({ name: "AuthApiError", status: 400, message: "Invalid login credentials" }, "password")
+      mapAuthErrorKey(
+        { name: "AuthApiError", status: 400, message: "Invalid login credentials" },
+        "password"
+      )
     ).toBe("login.error.invalidCredentials");
   });
 
   it("maps an otpVerify rejection to the invalid-otp key", () => {
     expect(
-      mapAuthErrorKey({ name: "AuthApiError", status: 403, message: "Token has expired or is invalid" }, "otpVerify")
+      mapAuthErrorKey(
+        { name: "AuthApiError", status: 403, message: "Token has expired or is invalid" },
+        "otpVerify"
+      )
     ).toBe("login.error.invalidOtp");
   });
 

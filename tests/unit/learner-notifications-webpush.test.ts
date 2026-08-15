@@ -10,10 +10,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getWebPushSupport,
-  urlBase64ToUint8Array,
-} from "@/learner/core/notifications/webPush";
+import { getWebPushSupport, urlBase64ToUint8Array } from "@/learner/core/notifications/webPush";
 
 // RFC 8291 §5 sender public key — a real 65-byte uncompressed P-256
 // point whose base64url form is 87 chars (needs 1 padding char).

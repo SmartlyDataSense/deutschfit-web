@@ -232,7 +232,7 @@ describe("key configured — client is constructed as a named, explicit-track-on
 });
 
 describe("source scan — posthog-js must not be a top-level value import", () => {
-  it("only `import type { PostHog } from \"posthog-js\"` appears; no value import", () => {
+  it('only `import type { PostHog } from "posthog-js"` appears; no value import', () => {
     const source = readFileSync(
       join(process.cwd(), "src/learner/core/analytics/posthog.ts"),
       "utf-8"

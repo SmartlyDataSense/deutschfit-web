@@ -15,9 +15,7 @@ const TEST_EMAIL = "qa1@df.dev";
 const TEST_PASSWORD = "test1234567890";
 
 test.describe("learner login (password mode, dev backend)", () => {
-  test("valid credentials redirect to /fr/app and protected content renders", async ({
-    page,
-  }) => {
+  test("valid credentials redirect to /fr/app and protected content renders", async ({ page }) => {
     await page.goto("/fr/app/login");
 
     await page.locator("#login-email").fill(TEST_EMAIL);

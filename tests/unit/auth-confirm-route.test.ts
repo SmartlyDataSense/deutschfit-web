@@ -82,12 +82,8 @@ describe("GET /auth/confirm", () => {
       data: { session: { access_token: "at_test", refresh_token: "rt_test" } },
       error: null,
     });
-    const iosUa =
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15";
-    const req = makeRequest(
-      "https://web.example/auth/confirm?token_hash=abc&type=email",
-      iosUa
-    );
+    const iosUa = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15";
+    const req = makeRequest("https://web.example/auth/confirm?token_hash=abc&type=email", iosUa);
     const res = await GET(req);
     expect(res.status).toBe(302);
     const loc = res.headers.get("location") ?? "";
@@ -107,10 +103,7 @@ describe("GET /auth/confirm", () => {
   ])(
     "redirects recovery to /auth/reset-password for %s UA without verifying server-side",
     async (ua) => {
-      const req = makeRequest(
-        "https://web.example/auth/confirm?token_hash=abc&type=recovery",
-        ua
-      );
+      const req = makeRequest("https://web.example/auth/confirm?token_hash=abc&type=recovery", ua);
       const res = await GET(req);
       expect(res.status).toBe(302);
       const loc = res.headers.get("location") ?? "";

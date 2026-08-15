@@ -88,7 +88,10 @@ describe("fetchTopics", () => {
 
     const topics = await fetchTopics({ subgenre: "praesentation", level: "B1" });
 
-    expect(rawGetMock).toHaveBeenCalledWith("topics-list", { subgenre: "praesentation", level: "B1" });
+    expect(rawGetMock).toHaveBeenCalledWith("topics-list", {
+      subgenre: "praesentation",
+      level: "B1",
+    });
     const expected: TopicCard = {
       id: "topic-1",
       subgenre: "praesentation",
@@ -242,10 +245,38 @@ describe("createTopic", () => {
 
 describe("sortTopicsByCert", () => {
   const topics: TopicCard[] = [
-    { id: "1", subgenre: "praesentation", level: "B1", titleDe: "A", subtitleFr: "a", cert: "TELC" },
-    { id: "2", subgenre: "praesentation", level: "B1", titleDe: "B", subtitleFr: "b", cert: "GOETHE" },
-    { id: "3", subgenre: "praesentation", level: "B1", titleDe: "C", subtitleFr: "c", cert: "GOETHE" },
-    { id: "4", subgenre: "praesentation", level: "B1", titleDe: "D", subtitleFr: "d", cert: "OESD" },
+    {
+      id: "1",
+      subgenre: "praesentation",
+      level: "B1",
+      titleDe: "A",
+      subtitleFr: "a",
+      cert: "TELC",
+    },
+    {
+      id: "2",
+      subgenre: "praesentation",
+      level: "B1",
+      titleDe: "B",
+      subtitleFr: "b",
+      cert: "GOETHE",
+    },
+    {
+      id: "3",
+      subgenre: "praesentation",
+      level: "B1",
+      titleDe: "C",
+      subtitleFr: "c",
+      cert: "GOETHE",
+    },
+    {
+      id: "4",
+      subgenre: "praesentation",
+      level: "B1",
+      titleDe: "D",
+      subtitleFr: "d",
+      cert: "OESD",
+    },
   ];
 
   it("is stable with the user's cert first", () => {

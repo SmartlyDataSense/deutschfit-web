@@ -26,13 +26,17 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchDrillRecommendationMock, submitDrillAttemptMock, enqueueAttemptMock, flushOutboxMock } =
-  vi.hoisted(() => ({
-    fetchDrillRecommendationMock: vi.fn(),
-    submitDrillAttemptMock: vi.fn(),
-    enqueueAttemptMock: vi.fn(),
-    flushOutboxMock: vi.fn(),
-  }));
+const {
+  fetchDrillRecommendationMock,
+  submitDrillAttemptMock,
+  enqueueAttemptMock,
+  flushOutboxMock,
+} = vi.hoisted(() => ({
+  fetchDrillRecommendationMock: vi.fn(),
+  submitDrillAttemptMock: vi.fn(),
+  enqueueAttemptMock: vi.fn(),
+  flushOutboxMock: vi.fn(),
+}));
 
 vi.mock("@/learner/drill/api/drillClient", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/drill/api/drillClient")>();
@@ -108,7 +112,10 @@ describe("mount", () => {
     await waitFor(() => expect(result.current.status).toBe("in_progress"));
 
     expect(order).toEqual(["flush", "redo", "home_daily"]);
-    expect(fetchDrillRecommendationMock).toHaveBeenNthCalledWith(1, { surface: "redo", max_items: 5 });
+    expect(fetchDrillRecommendationMock).toHaveBeenNthCalledWith(1, {
+      surface: "redo",
+      max_items: 5,
+    });
     expect(fetchDrillRecommendationMock).toHaveBeenNthCalledWith(2, {
       surface: "home_daily",
       max_items: 3,
@@ -298,7 +305,11 @@ describe("session completion", () => {
       ledWithRedo: true,
       reason: "ok",
       missed: [
-        { conceptCode: "kasus_akkusativ", conceptName: "Kasus Akkusativ", explanationFr: "Accusatif masculin." },
+        {
+          conceptCode: "kasus_akkusativ",
+          conceptName: "Kasus Akkusativ",
+          explanationFr: "Accusatif masculin.",
+        },
       ],
     });
 

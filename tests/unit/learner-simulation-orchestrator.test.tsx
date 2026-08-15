@@ -230,9 +230,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
 
     renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument());
     expect(screen.queryByTestId("simulation-orchestrator-error")).not.toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
   });
@@ -252,9 +250,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
 
     renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("simulation-finalizing")).toBeInTheDocument());
   });
 
   it("resumed with abandoned status: dispatches to the error phase", async () => {

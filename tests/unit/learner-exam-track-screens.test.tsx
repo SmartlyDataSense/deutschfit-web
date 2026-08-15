@@ -127,7 +127,11 @@ describe("ExamTrackScreen (S11.6)", () => {
     expect(screen.getByText("Ajuster ton niveau ?")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("settings-confirm-exam-change-modal-confirm"));
     await waitFor(() =>
-      expect(setExamContext).toHaveBeenCalledWith({ board: "goethe", level: "b2", source: "settings" })
+      expect(setExamContext).toHaveBeenCalledWith({
+        board: "goethe",
+        level: "b2",
+        source: "settings",
+      })
     );
     await waitFor(() => expect(back).toHaveBeenCalled());
   });
@@ -195,7 +199,8 @@ describe("ExamTrackScreen (S11.6)", () => {
     // with the arg-level assertion above, which is what actually catches a
     // fromBoard/toBoard-only swap (invisible in rendered text since the
     // template never interpolates board).
-    const subtitle = screen.getByTestId("settings-confirm-exam-change-modal-card").textContent ?? "";
+    const subtitle =
+      screen.getByTestId("settings-confirm-exam-change-modal-card").textContent ?? "";
     expect(subtitle).toContain("B1");
     expect(subtitle).toContain("B2");
 

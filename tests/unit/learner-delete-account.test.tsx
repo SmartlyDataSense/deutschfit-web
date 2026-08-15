@@ -266,7 +266,9 @@ describe("DeleteAccountScreen (S11.8)", () => {
     }
     fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
     fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
-    await waitFor(() => expect(screen.getByTestId("delete-account-error-retry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("delete-account-error-retry")).toBeInTheDocument()
+    );
     for (const cls of FOCUS_RING_CLASSES.split(" ")) {
       expect(screen.getByTestId("delete-account-error-retry")).toHaveClass(cls);
     }

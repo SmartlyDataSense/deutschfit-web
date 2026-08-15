@@ -215,9 +215,7 @@ describe("CorrectionPickerScreen", () => {
 
     renderWithI18n(<CorrectionPickerScreen />);
 
-    await waitFor(() =>
-      expect(screen.getByText("Aucune copie corrigée")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Aucune copie corrigée")).toBeInTheDocument());
     expect(
       screen.getByText("Termine une expression écrite ou orale — sa correction apparaîtra ici.")
     ).toBeInTheDocument();
@@ -394,9 +392,7 @@ describe("CorrectionWalkthroughScreen — sprechen", () => {
       <CorrectionWalkthroughScreen submissionId="sub-sprechen-1" modality="sprechen" />
     );
 
-    await waitFor(() =>
-      expect(screen.getByText("Correction indisponible")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Correction indisponible")).toBeInTheDocument());
     expect(
       screen.getByText("Cette copie n'a pas pu être chargée. Réessaie plus tard.")
     ).toBeInTheDocument();
@@ -494,7 +490,9 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
 
     // Authored FR labels (grounded in DIMENSION_LABEL_MAP / telc b1.md
     // reference), not the raw snake_case key.
-    expect(within(screen.getByTestId("correction-dimension-inhalt")).getByText("Contenu")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("correction-dimension-inhalt")).getByText("Contenu")
+    ).toBeInTheDocument();
     expect(
       within(screen.getByTestId("correction-dimension-formale_richtigkeit")).getByText(
         "Correction de la langue"
@@ -561,13 +559,9 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
       schreibenCorrection({ overallScore: 38, scoreMax: 45, normalizedTotalPct: 84.0 })
     );
 
-    renderWithI18n(
-      <CorrectionWalkthroughScreen submissionId="sub-telc-2" modality="schreiben" />
-    );
+    renderWithI18n(<CorrectionWalkthroughScreen submissionId="sub-telc-2" modality="schreiben" />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument());
     expect(screen.queryByTestId("correction-band-a_retravailler")).not.toBeInTheDocument();
     // The denominator is shown so the number is self-explanatory.
     const scoreBlock = screen.getByTestId("correction-global-score");
@@ -582,13 +576,9 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
       schreibenCorrection({ overallScore: 38, scoreMax: 45, normalizedTotalPct: null })
     );
 
-    renderWithI18n(
-      <CorrectionWalkthroughScreen submissionId="sub-telc-3" modality="schreiben" />
-    );
+    renderWithI18n(<CorrectionWalkthroughScreen submissionId="sub-telc-3" modality="schreiben" />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("correction-band-solide")).toBeInTheDocument());
   });
 
   it("an unlabelled dimension key degrades to a humanized name, not a blank card or the raw key", async () => {
@@ -602,7 +592,9 @@ describe("CorrectionWalkthroughScreen — schreiben", () => {
 
     const card = await screen.findByTestId("correction-dimension-some_new_facet");
     expect(within(card).getByText("Some New Facet")).toBeInTheDocument();
-    expect(within(card).queryByText("coach:correction.dimensions.some_new_facet.name")).not.toBeInTheDocument();
+    expect(
+      within(card).queryByText("coach:correction.dimensions.some_new_facet.name")
+    ).not.toBeInTheDocument();
   });
 });
 

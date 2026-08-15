@@ -198,7 +198,9 @@ describe("SettingsScreen (S11.5)", () => {
   it("about section renders live getBackendInfo() values, not literals", () => {
     getBackendInfoMock.mockReturnValue({ env: "prod", projectRef: "auketecsgmdqlexosaay" });
     ui();
-    expect(screen.getByTestId("settings-backend-ref-row")).toHaveTextContent("auketecsgmdqlexosaay");
+    expect(screen.getByTestId("settings-backend-ref-row")).toHaveTextContent(
+      "auketecsgmdqlexosaay"
+    );
     expect(screen.getByTestId("settings-backend-env-row")).toHaveTextContent(/Prod/i);
   });
 

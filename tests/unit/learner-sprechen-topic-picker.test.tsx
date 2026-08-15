@@ -269,7 +269,9 @@ describe("TopicPickerScreen — sprechen monologue topic picker (S7 Task 7.6)", 
     fetchTopicsMock.mockRejectedValueOnce(new Error("network_down"));
     renderWithI18n(<TopicPickerScreen />);
 
-    await waitFor(() => expect(screen.getByTestId("sprechen-topic-picker-error")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-topic-picker-error")).toBeInTheDocument()
+    );
 
     fetchTopicsMock.mockResolvedValueOnce([topic({ id: "t1" })]);
     fireEvent.click(screen.getByTestId("sprechen-topic-picker-retry"));

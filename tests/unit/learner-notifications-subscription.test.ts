@@ -29,9 +29,7 @@ const ENDPOINT = "https://fcm.googleapis.com/wp/test-sub";
 const VAPID_KEY =
   "BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8";
 
-function makeFakeSubscription(
-  overrides: Partial<{ unsubscribe: () => Promise<boolean> }> = {},
-) {
+function makeFakeSubscription(overrides: Partial<{ unsubscribe: () => Promise<boolean> }> = {}) {
   return {
     endpoint: ENDPOINT,
     toJSON: () => ({
@@ -136,18 +134,14 @@ describe("subscribeToPush (S12)", () => {
       permission: "default",
       requestPermission: vi.fn(async () => "denied"),
     });
-    await expect(subscribeToPush()).rejects.toBeInstanceOf(
-      PushPermissionDeniedError,
-    );
+    await expect(subscribeToPush()).rejects.toBeInstanceOf(PushPermissionDeniedError);
     expect(subscribeSpy).not.toHaveBeenCalled();
     expect(invokeFnMock).not.toHaveBeenCalled();
   });
 
   it("rolls back the local subscription and rethrows when backend registration fails", async () => {
     const unsubscribe = vi.fn().mockResolvedValue(true);
-    subscribeSpy.mockImplementation(async () =>
-      makeFakeSubscription({ unsubscribe }),
-    );
+    subscribeSpy.mockImplementation(async () => makeFakeSubscription({ unsubscribe }));
     invokeFnMock.mockRejectedValue(new Error("db_write_failed"));
 
     await expect(subscribeToPush()).rejects.toThrow("db_write_failed");

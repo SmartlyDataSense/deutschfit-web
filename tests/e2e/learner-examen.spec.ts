@@ -177,7 +177,7 @@ const WEB32_LESEN_DEAD_END_SKIP_REASON =
   "mock-exam-start/SimulationOrchestratorScreen always dispatches LESEN " +
   "first regardless of the picked row's actual modules — LesenSessionScreen " +
   "renders its untestid'd, unrecoverable \"Keine Aufgaben in dieser " +
-  "Sitzung.\" empty state. Content gap + app defect, not a spec bug; no row " +
+  'Sitzung." empty state. Content gap + app defect, not a spec bug; no row ' +
   "selection can route around it until dev ships a real multi-module " +
   "Modelltest. Zero lesen-submit/hoeren-submit requests fired.";
 
@@ -288,7 +288,9 @@ async function answerAllHoerenTeile(page: Page): Promise<void> {
     await expect(nextBtn).toBeVisible({ timeout: 15_000 });
     await nextBtn.click();
   }
-  throw new Error(`answerAllHoerenTeile: exceeded MAX_PARTS (${MAX_PARTS}) without reaching submit`);
+  throw new Error(
+    `answerAllHoerenTeile: exceeded MAX_PARTS (${MAX_PARTS}) without reaching submit`
+  );
 }
 
 /** Asserts the audio-player container renders then branches per P12 (never
@@ -310,7 +312,8 @@ async function completeHoerenLeg(page: Page): Promise<Landing> {
   return detectLanding(page);
 }
 
-test.describe.serial("Examen home/picker + one full mock-exam chain walk (qa1, real backend)", () => {
+test.describe
+  .serial("Examen home/picker + one full mock-exam chain walk (qa1, real backend)", () => {
   test("(a) zero-submit — examen home renders (resume-or-cards both pass), simulation card lands on modelltestsList", async ({
     page,
   }) => {

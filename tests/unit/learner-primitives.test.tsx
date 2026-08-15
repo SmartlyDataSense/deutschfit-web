@@ -9,7 +9,16 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 // between every test explicitly.
 afterEach(cleanup);
 
-import { AppText, AppButton, Chip, Card, ProgressBar, TimerPill, formatMs, ScoreBadge } from "@/learner/ui/primitives";
+import {
+  AppText,
+  AppButton,
+  Chip,
+  Card,
+  ProgressBar,
+  TimerPill,
+  formatMs,
+  ScoreBadge,
+} from "@/learner/ui/primitives";
 import { Donut, arcPath, describeArc, polarToCartesian } from "@/learner/ui/primitives/Donut";
 import { SegmentedControl } from "@/learner/ui/primitives/SegmentedControl";
 import { Input } from "@/learner/ui/primitives/Input";
@@ -65,20 +74,23 @@ describe("AppText — variant to class mapping", () => {
     render(
       <AppText family="serif" numeric>
         42
-      </AppText>,
+      </AppText>
     );
     expect(screen.getByText("42").className).toMatch(/\bfont-mono\b/);
   });
 });
 
 describe("AppButton — variants + disabled/loading states", () => {
-  it.each(["solid", "outline", "ghost", "premium"] as const)("renders the %s variant", (variant) => {
-    const onClick = vi.fn();
-    render(<AppButton label={`btn-${variant}`} onClick={onClick} variant={variant} />);
-    const btn = screen.getByRole("button", { name: `btn-${variant}` });
-    fireEvent.click(btn);
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
+  it.each(["solid", "outline", "ghost", "premium"] as const)(
+    "renders the %s variant",
+    (variant) => {
+      const onClick = vi.fn();
+      render(<AppButton label={`btn-${variant}`} onClick={onClick} variant={variant} />);
+      const btn = screen.getByRole("button", { name: `btn-${variant}` });
+      fireEvent.click(btn);
+      expect(onClick).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it("disabled blocks the onClick handler", () => {
     const onClick = vi.fn();
@@ -135,7 +147,9 @@ describe("Card", () => {
         content
       </Card>
     );
-    expect(screen.getByRole("group", { name: "Résumé de la carte" })).toBe(screen.getByTestId("card"));
+    expect(screen.getByRole("group", { name: "Résumé de la carte" })).toBe(
+      screen.getByTestId("card")
+    );
   });
 
   it("clickable: ariaLabel sets aria-label on the button (already has an implicit role)", () => {
@@ -144,7 +158,9 @@ describe("Card", () => {
         content
       </Card>
     );
-    expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(screen.getByTestId("card"));
+    expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(
+      screen.getByTestId("card")
+    );
   });
 });
 
@@ -234,7 +250,7 @@ describe("Donut — arc math (pure functions)", () => {
           { value: 0.5, tone: "teal" },
           { value: 0.25, tone: "amber" },
         ]}
-      />,
+      />
     );
     expect(screen.getByTestId("seg")).toHaveAttribute("aria-valuenow", "0.75");
   });
@@ -251,7 +267,7 @@ describe("SegmentedControl", () => {
         ]}
         value="fr"
         onChange={onChange}
-      />,
+      />
     );
     fireEvent.click(screen.getByText("EN"));
     expect(onChange).toHaveBeenCalledWith("en");

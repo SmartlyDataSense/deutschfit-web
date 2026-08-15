@@ -16,21 +16,37 @@ import type { ReadinessSignal } from "@/learner/core/readiness";
 afterEach(cleanup);
 beforeAll(() => initLearnerI18n("fr"));
 beforeEach(() => trackEvent.mockClear());
-const ui = (node: React.ReactNode) => render(<LearnerI18nProvider lng="fr">{node}</LearnerI18nProvider>);
+const ui = (node: React.ReactNode) =>
+  render(<LearnerI18nProvider lng="fr">{node}</LearnerI18nProvider>);
 
 const slot = (over: Partial<ReadinessSignal>): ReadinessSignal => ({
-  submissionId: "s1", module: "schreiben", state: "in-flight", startedAt: 0, ...over,
+  submissionId: "s1",
+  module: "schreiben",
+  state: "in-flight",
+  startedAt: 0,
+  ...over,
 });
 
 describe("StatusStrip", () => {
   it("hidden on null slot; in-flight renders non-interactive copy + emits strip_shown once", () => {
     const { rerender } = ui(<StatusStrip _signal={null} _now={() => 0} />);
     expect(screen.queryByTestId("status-strip")).toBeNull();
-    rerender(<LearnerI18nProvider lng="fr"><StatusStrip _signal={slot({})} _now={() => 0} /></LearnerI18nProvider>);
+    rerender(
+      <LearnerI18nProvider lng="fr">
+        <StatusStrip _signal={slot({})} _now={() => 0} />
+      </LearnerI18nProvider>
+    );
     expect(screen.getByTestId("status-strip")).toBeInTheDocument();
     expect(screen.queryByTestId("status-strip-press")).toBeNull();
-    expect(trackEvent).toHaveBeenCalledWith("strip_shown", { submission_id: "s1", module: "schreiben" });
-    rerender(<LearnerI18nProvider lng="fr"><StatusStrip _signal={slot({ slow: true })} _now={() => 0} /></LearnerI18nProvider>);
+    expect(trackEvent).toHaveBeenCalledWith("strip_shown", {
+      submission_id: "s1",
+      module: "schreiben",
+    });
+    rerender(
+      <LearnerI18nProvider lng="fr">
+        <StatusStrip _signal={slot({ slow: true })} _now={() => 0} />
+      </LearnerI18nProvider>
+    );
     expect(trackEvent).toHaveBeenCalledTimes(1); // once per slot
   });
 
@@ -39,19 +55,31 @@ describe("StatusStrip", () => {
     let now = 1_000;
     const { rerender } = ui(<StatusStrip _signal={slot({})} _now={() => now} onReady={onReady} />);
     now = 4_500;
-    rerender(<LearnerI18nProvider lng="fr">
-      <StatusStrip _signal={slot({ state: "ready" })} _now={() => now} onReady={onReady} />
-    </LearnerI18nProvider>);
+    rerender(
+      <LearnerI18nProvider lng="fr">
+        <StatusStrip _signal={slot({ state: "ready" })} _now={() => now} onReady={onReady} />
+      </LearnerI18nProvider>
+    );
     expect(trackEvent).toHaveBeenCalledWith("strip_ready", {
-      submission_id: "s1", module: "schreiben", latency_ms_since_strip_shown: 3_500,
+      submission_id: "s1",
+      module: "schreiben",
+      latency_ms_since_strip_shown: 3_500,
     });
     fireEvent.click(screen.getByTestId("status-strip-press"));
-    expect(onReady).toHaveBeenCalledWith(expect.objectContaining({ submissionId: "s1", state: "ready" }));
+    expect(onReady).toHaveBeenCalledWith(
+      expect.objectContaining({ submissionId: "s1", state: "ready" })
+    );
   });
 
   it("failed state fires onRetry", () => {
     const onRetry = vi.fn();
-    ui(<StatusStrip _signal={slot({ state: "failed", failedReason: "grader" })} _now={() => 0} onRetry={onRetry} />);
+    ui(
+      <StatusStrip
+        _signal={slot({ state: "failed", failedReason: "grader" })}
+        _now={() => 0}
+        onRetry={onRetry}
+      />
+    );
     fireEvent.click(screen.getByTestId("status-strip-press"));
     expect(onRetry).toHaveBeenCalled();
   });
@@ -59,8 +87,13 @@ describe("StatusStrip", () => {
 
 describe("PriorityTaskCard", () => {
   const props = {
-    priorityLabel: "Priorité", skill: "Sprachbausteine", title: "Exercices du jour",
-    subtitle: "4 exercices ciblés", body: "corps", ctaLabel: "Commencer", durationLabel: "10 min",
+    priorityLabel: "Priorité",
+    skill: "Sprachbausteine",
+    title: "Exercices du jour",
+    subtitle: "4 exercices ciblés",
+    body: "corps",
+    ctaLabel: "Commencer",
+    durationLabel: "10 min",
     onCtaPress: vi.fn(),
   };
   it("active branch composes 'CTA · duration' and is enabled (S9 Task 9.6 wired the drill session)", () => {
@@ -70,7 +103,13 @@ describe("PriorityTaskCard", () => {
     expect(cta).not.toBeDisabled();
   });
   it("empty branch renders the calm placeholder with a disabled CTA", () => {
-    ui(<PriorityTaskCard {...props} empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }} testID="pt" />);
+    ui(
+      <PriorityTaskCard
+        {...props}
+        empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }}
+        testID="pt"
+      />
+    );
     expect(screen.getByText("Rien à corriger")).toBeInTheDocument();
     expect(screen.getByTestId("pt-empty-cta")).toBeDisabled();
   });
@@ -95,9 +134,15 @@ describe("PriorityTaskCard", () => {
   });
 
   it("empty branch: card root carries a role=group summary from the empty copy", () => {
-    ui(<PriorityTaskCard {...props} empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }} testID="pt" />);
-    expect(
-      screen.getByRole("group", { name: "Rien à corriger. b" })
-    ).toBe(screen.getByTestId("pt"));
+    ui(
+      <PriorityTaskCard
+        {...props}
+        empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }}
+        testID="pt"
+      />
+    );
+    expect(screen.getByRole("group", { name: "Rien à corriger. b" })).toBe(
+      screen.getByTestId("pt")
+    );
   });
 });

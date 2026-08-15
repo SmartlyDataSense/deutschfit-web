@@ -762,9 +762,9 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
     expect(focusChips).toHaveTextContent("aussprache");
 
     // Personalized model card carries model_answer_de.
-    expect(screen.getByTestId("sprechen-session-module-result-personalized-model")).toHaveTextContent(
-      "Meine Wohnung liegt im Zentrum der Stadt."
-    );
+    expect(
+      screen.getByTestId("sprechen-session-module-result-personalized-model")
+    ).toHaveTextContent("Meine Wohnung liegt im Zentrum der Stadt.");
 
     // Transcript card carries transcript_de.
     expect(screen.getByTestId("sprechen-session-module-result-transcript")).toHaveTextContent(

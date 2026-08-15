@@ -18,14 +18,35 @@ import { fetchHistory } from "@/learner/core/api/history";
 import { fetchDailyDrill } from "@/learner/core/api/dailyDrill";
 
 const homePayload = {
-  currentLevel: "b1", targetLevel: "b1",
-  countdown: { daysRemaining: 42, examDateLabel: "17 juin 2026", preparationPct: 50, targetScore: 80 },
-  priorityTask: { skill: "", title: "", level: "", teil: "", body: "", durationMinutes: 0, pointsDelta: 0, attempts: 0, bestScore: 0 },
+  currentLevel: "b1",
+  targetLevel: "b1",
+  countdown: {
+    daysRemaining: 42,
+    examDateLabel: "17 juin 2026",
+    preparationPct: 50,
+    targetScore: 80,
+  },
+  priorityTask: {
+    skill: "",
+    title: "",
+    level: "",
+    teil: "",
+    body: "",
+    durationMinutes: 0,
+    pointsDelta: 0,
+    attempts: 0,
+    bestScore: 0,
+  },
   todayStats: { taskCount: 0, minutes: 0 },
 };
 
 describe("S3 wire clients", () => {
-  beforeEach(() => { invokeFn.mockReset(); from.mockClear(); update.mockClear(); eq.mockClear(); });
+  beforeEach(() => {
+    invokeFn.mockReset();
+    from.mockClear();
+    update.mockClear();
+    eq.mockClear();
+  });
 
   it("fetchAccueilHome GETs accueil-home and validates the payload", async () => {
     invokeFn.mockResolvedValue(homePayload);
@@ -54,15 +75,30 @@ describe("S3 wire clients", () => {
   it("fetchHistory POSTs cursor/limit and coerces legacy rows (status/board/title → null/'' defaults)", async () => {
     invokeFn.mockResolvedValue({
       pinnedDiagnostic: null,
-      feed: [{
-        id: "r1", kind: "schreiben", createdAt: "2026-08-01T10:00:00Z", score: 18, scoreMax: 24,
-        level: "b1.2", deepLinkRoute: { screen: "Feedback", params: { runId: "r1" } },
-      }],
+      feed: [
+        {
+          id: "r1",
+          kind: "schreiben",
+          createdAt: "2026-08-01T10:00:00Z",
+          score: 18,
+          scoreMax: 24,
+          level: "b1.2",
+          deepLinkRoute: { screen: "Feedback", params: { runId: "r1" } },
+        },
+      ],
       nextCursor: "abc",
     });
     const page = await fetchHistory({ cursor: "prev", limit: 20 });
-    expect(invokeFn).toHaveBeenCalledWith("history-get", { method: "POST", body: { cursor: "prev", limit: 20 } });
-    expect(page.feed[0]).toMatchObject({ status: null, errorMessage: null, board: "", title: null });
+    expect(invokeFn).toHaveBeenCalledWith("history-get", {
+      method: "POST",
+      body: { cursor: "prev", limit: 20 },
+    });
+    expect(page.feed[0]).toMatchObject({
+      status: null,
+      errorMessage: null,
+      board: "",
+      title: null,
+    });
     expect(page.nextCursor).toBe("abc");
   });
 
@@ -70,7 +106,8 @@ describe("S3 wire clients", () => {
     invokeFn.mockResolvedValue({ items: [1, 2, 3], reason: "ok" });
     await expect(fetchDailyDrill(5)).resolves.toEqual({ itemCount: 3, reason: "ok" });
     expect(invokeFn).toHaveBeenCalledWith("drill-recommend", {
-      method: "POST", body: { surface: "home_daily", max_items: 5 },
+      method: "POST",
+      body: { surface: "home_daily", max_items: 5 },
     });
     invokeFn.mockRejectedValue(new Error("net"));
     await expect(fetchDailyDrill()).resolves.toEqual({ itemCount: 0, reason: "error" });

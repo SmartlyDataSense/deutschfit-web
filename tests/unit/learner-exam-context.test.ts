@@ -57,12 +57,24 @@ describe("examContext store", () => {
     mockUserId = "user-1";
     maybeSingle.mockReset();
     upsert.mockReset();
-    useExamContextStore.setState({ board: "goethe", level: "b1", source: "onboarding", isLoaded: false });
+    useExamContextStore.setState({
+      board: "goethe",
+      level: "b1",
+      source: "onboarding",
+      isLoaded: false,
+    });
   });
 
   it("hydrate seeds from localStorage then lets the server win on drift", async () => {
-    store[EXAM_CONTEXT_STORAGE_KEY] = JSON.stringify({ board: "telc", level: "b2", source: "settings" });
-    maybeSingle.mockResolvedValue({ data: { exam_board: "goethe", exam_level: "b1" }, error: null });
+    store[EXAM_CONTEXT_STORAGE_KEY] = JSON.stringify({
+      board: "telc",
+      level: "b2",
+      source: "settings",
+    });
+    maybeSingle.mockResolvedValue({
+      data: { exam_board: "goethe", exam_level: "b1" },
+      error: null,
+    });
 
     await useExamContextStore.getState().hydrate();
 
@@ -72,7 +84,10 @@ describe("examContext store", () => {
     expect(s.board).toBe("goethe");
     expect(s.level).toBe("b1");
     // localStorage rewritten with the server value:
-    expect(JSON.parse(store[EXAM_CONTEXT_STORAGE_KEY]!)).toMatchObject({ board: "goethe", level: "b1" });
+    expect(JSON.parse(store[EXAM_CONTEXT_STORAGE_KEY]!)).toMatchObject({
+      board: "goethe",
+      level: "b1",
+    });
   });
 
   it("setExamContext clamps the combo, persists locally, upserts user_profiles, notifies subscribers", async () => {
@@ -81,13 +96,15 @@ describe("examContext store", () => {
     const unsub = subscribeExamContext((snap) => seen.push(snap));
 
     // testdaf does not ship c2 → clamped to b2 (normaliseExamSelection).
-    await useExamContextStore.getState().setExamContext({ board: "testdaf", level: "c2", source: "onboarding" });
+    await useExamContextStore
+      .getState()
+      .setExamContext({ board: "testdaf", level: "c2", source: "onboarding" });
 
     expect(useExamContextStore.getState().level).toBe("b2");
     expect(from).toHaveBeenCalledWith("user_profiles");
     expect(upsert).toHaveBeenCalledWith(
       { user_id: "user-1", exam_board: "testdaf", exam_level: "b2" },
-      { onConflict: "user_id" },
+      { onConflict: "user_id" }
     );
     expect(seen).toHaveLength(1);
     unsub();
@@ -96,7 +113,7 @@ describe("examContext store", () => {
   it("setExamContext throws when the server upsert fails (post-F-6 semantics) but keeps the optimistic local value", async () => {
     upsert.mockResolvedValue({ error: { message: "rls_denied" } });
     await expect(
-      useExamContextStore.getState().setExamContext({ board: "telc", level: "b1" }),
+      useExamContextStore.getState().setExamContext({ board: "telc", level: "b1" })
     ).rejects.toThrow("rls_denied");
     expect(useExamContextStore.getState().board).toBe("telc"); // optimistic write stays
   });
