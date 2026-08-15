@@ -2,16 +2,32 @@
  * PostHog analytics gating (`src/learner/core/analytics/posthog.ts`).
  *
  * `posthog-js` is mocked at the module boundary — same precedent as
- * `learner-session.test.ts` mocking `getBrowserClient`. Covers:
+ * `learner-session.test.ts` mocking `getBrowserClient`. Vitest intercepts
+ * the module's dynamic `import("posthog-js")` through this same manual
+ * mock factory (not just static imports), so the lazy-load path below is
+ * exercised against the same `mockInstance`/`init` doubles as before.
+ *
+ * Covers:
  *   - no-op behaviour (no client constructed, no throw) when
  *     `NEXT_PUBLIC_POSTHOG_KEY` is unset — the dev/test safety contract.
  *   - client construction as a *named* instance ("learner") with
- *     autocapture/pageview capture off, once a key is present.
+ *     autocapture/pageview capture off, once a key is present — behind the
+ *     lazy `import("posthog-js")`, so assertions await the load.
  *   - `initPostHog()` idempotency.
  *   - `trackEvent` / `identifyUser` / `resetAnalyticsUser` forward to the
- *     underlying client when one exists.
+ *     underlying client once the lazy chunk resolves.
+ *   - source-scan: no top-level *value* import of `posthog-js` (only
+ *     `import type`) — that's the whole point of this task, keeping it out
+ *     of the first-load bundle.
+ *   - the sign-out race: `identifyUser` then `resetAnalyticsUser` called
+ *     back-to-back before the chunk resolves must still end with `reset`
+ *     landing after `identify` (never dropped), because `resetAnalyticsUser`
+ *     funnels through the same shared load promise instead of no-opping on
+ *     `!client`.
  *   - `getPostHogHost()` default vs. env override.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockInstance, init } = vi.hoisted(() => {
@@ -50,6 +66,11 @@ function setEnv(key: string | undefined, host?: string): void {
   } else {
     process.env.NEXT_PUBLIC_POSTHOG_HOST = host;
   }
+}
+
+/** Flushes the module's internal `import("posthog-js")` chain (mocked, but still async). */
+async function flush(): Promise<void> {
+  await (vi.dynamicImportSettled?.() ?? new Promise((r) => setTimeout(r, 0)));
 }
 
 beforeEach(() => {
@@ -94,15 +115,17 @@ describe("getPostHogKey", () => {
 describe("no key configured — every export is a silent no-op", () => {
   beforeEach(() => setEnv(undefined));
 
-  it("initPostHog() never constructs a client", () => {
+  it("initPostHog() never constructs a client", async () => {
     initPostHog();
+    await flush();
     expect(init).not.toHaveBeenCalled();
   });
 
-  it("trackEvent / identifyUser / resetAnalyticsUser never throw and never touch the SDK", () => {
+  it("trackEvent / identifyUser / resetAnalyticsUser never throw and never touch the SDK", async () => {
     expect(() => trackEvent("app_opened", { cold_start: true })).not.toThrow();
     expect(() => identifyUser("user-1")).not.toThrow();
     expect(() => resetAnalyticsUser()).not.toThrow();
+    await flush();
     expect(init).not.toHaveBeenCalled();
     expect(mockInstance.capture).not.toHaveBeenCalled();
     expect(mockInstance.identify).not.toHaveBeenCalled();
@@ -113,8 +136,9 @@ describe("no key configured — every export is a silent no-op", () => {
 describe("key configured — client is constructed as a named, explicit-track-only instance", () => {
   beforeEach(() => setEnv("phc_test_key"));
 
-  it("initPostHog() calls posthog.init once with the learner instance name and autocapture/pageview off", () => {
+  it("initPostHog() calls posthog.init once with the learner instance name and autocapture/pageview off", async () => {
     initPostHog();
+    await flush();
     expect(init).toHaveBeenCalledTimes(1);
     expect(init).toHaveBeenCalledWith(
       "phc_test_key",
@@ -127,38 +151,96 @@ describe("key configured — client is constructed as a named, explicit-track-on
     );
   });
 
-  it("initPostHog() is idempotent — a second call does not re-init", () => {
+  it("initPostHog() is idempotent — a second call does not re-init", async () => {
     initPostHog();
     initPostHog();
+    await flush();
     expect(init).toHaveBeenCalledTimes(1);
   });
 
-  it("trackEvent forwards to the underlying client's capture()", () => {
+  it("trackEvent forwards to the underlying client's capture()", async () => {
     trackEvent("signin_succeeded", { method: "password" });
+    await flush();
     expect(mockInstance.capture).toHaveBeenCalledWith("signin_succeeded", { method: "password" });
   });
 
-  it("identifyUser forwards userId + traits to identify()", () => {
+  it("identifyUser forwards userId + traits to identify()", async () => {
     identifyUser("user-1", { email: "marie@example.com" });
+    await flush();
     expect(mockInstance.identify).toHaveBeenCalledWith("user-1", { email: "marie@example.com" });
   });
 
-  it("resetAnalyticsUser forwards to reset() once a client exists", () => {
-    // Force client construction first (reset() only acts on an existing client).
+  it("resetAnalyticsUser forwards to reset() once the (lazily-loaded) client exists", async () => {
     trackEvent("app_opened");
     resetAnalyticsUser();
+    await flush();
     expect(mockInstance.reset).toHaveBeenCalledTimes(1);
   });
 
-  it("resetAnalyticsUser is a no-op if no client was ever constructed", () => {
+  it("resetAnalyticsUser lazily loads the client and calls reset() even if nothing loaded it first — a freshly-loaded client's reset is harmless", async () => {
+    // Unlike the old synchronous `if (!client) return` shape, reset now
+    // funnels through the same shared load promise as identify/capture:
+    // no-opping here would be the sign-out race the brief calls out (see
+    // the "sign-out race" describe block below for the ordering pin).
     resetAnalyticsUser();
-    expect(mockInstance.reset).not.toHaveBeenCalled();
+    await flush();
+    expect(init).toHaveBeenCalledTimes(1);
+    expect(mockInstance.reset).toHaveBeenCalledTimes(1);
   });
 
-  it("only constructs the client once across multiple calls (lazy singleton)", () => {
+  it("only constructs the client once across multiple calls (lazy singleton)", async () => {
     trackEvent("app_opened");
     identifyUser("user-1");
     resetAnalyticsUser();
+    await flush();
     expect(init).toHaveBeenCalledTimes(1);
+  });
+
+  it("buffers a burst of calls issued before the chunk resolves, then replays them in call order", async () => {
+    initPostHog();
+    trackEvent("app_opened");
+    identifyUser("u1");
+    await flush();
+    expect(init).toHaveBeenCalledTimes(1);
+    expect(mockInstance.capture).toHaveBeenCalledTimes(1);
+    expect(mockInstance.identify).toHaveBeenCalledTimes(1);
+    const captureOrder = mockInstance.capture.mock.invocationCallOrder[0]!;
+    const identifyOrder = mockInstance.identify.mock.invocationCallOrder[0]!;
+    expect(captureOrder).toBeLessThan(identifyOrder);
+  });
+
+  describe("sign-out race: identify immediately followed by reset, before the chunk resolves", () => {
+    it("still calls both, with reset landing LAST — never a signed-out device left identified", async () => {
+      // The regression this pins: a `resetAnalyticsUser` that early-returns
+      // on `if (!client)` would silently drop this reset (client is still
+      // `null` at this point — the import() promise hasn't settled), and
+      // the queued `identify` would land after sign-out, leaving a shared
+      // device identified as the previous user. Do NOT assert "reset was
+      // never called" — that pins the regression as correct.
+      identifyUser("u1");
+      resetAnalyticsUser();
+      await flush();
+
+      expect(mockInstance.identify).toHaveBeenCalledTimes(1);
+      expect(mockInstance.reset).toHaveBeenCalledTimes(1);
+
+      const identifyOrder = mockInstance.identify.mock.invocationCallOrder[0]!;
+      const resetOrder = mockInstance.reset.mock.invocationCallOrder[0]!;
+      expect(resetOrder).toBeGreaterThan(identifyOrder);
+    });
+  });
+});
+
+describe("source scan — posthog-js must not be a top-level value import", () => {
+  it("only `import type { PostHog } from \"posthog-js\"` appears; no value import", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/learner/core/analytics/posthog.ts"),
+      "utf-8"
+    );
+    const valueImportPattern = /^import\s+(?!type\b)[^;]*["']posthog-js["']/m;
+    expect(valueImportPattern.test(source)).toBe(false);
+    // Sanity: the type-only import (or the dynamic import) is still present,
+    // so this isn't passing because the module stopped referencing the SDK.
+    expect(/posthog-js/.test(source)).toBe(true);
   });
 });

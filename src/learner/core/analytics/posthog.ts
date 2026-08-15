@@ -34,7 +34,7 @@
  *     are both off — the learner app only ever emits the explicit,
  *     typed events below, same discipline as mobile.
  */
-import posthog, { type PostHog } from "posthog-js";
+import type { PostHog } from "posthog-js"; // type-only — erased at build time, never bundled
 
 // ─── Event catalogue (mirrors mobile's events.ts) ──────────────────────────
 
@@ -530,6 +530,38 @@ let client: PostHog | null = null;
 let initialised = false;
 let missingKeyLogged = false;
 
+/**
+ * Shared load-and-init promise for the lazily-imported `posthog-js` chunk.
+ *
+ * `posthog-js` is a heavy dependency (~76 kB gz) that every export below
+ * used to pull into the first-load bundle of every learner route via a
+ * top-level `import posthog from "posthog-js"`. It's now loaded on demand
+ * via dynamic `import()`, split into its own chunk, and fetched only once
+ * `initPostHog()` (or any tracking call) actually runs client-side.
+ *
+ * All five exports below — `initPostHog`, `trackEvent`, `identifyUser`,
+ * `resetAnalyticsUser` — stay synchronous, fire-and-forget, at the call
+ * site (no `await` anywhere in ~30 call sites changes). Internally they all
+ * funnel through this *one* shared `loadClient()` promise. Because
+ * `.then()` callbacks on the same promise run in the order they were
+ * registered, this preserves relative ordering for free: if
+ * `identifyUser("u1")` is called before `trackEvent(...)`, `identify()`
+ * lands before `capture()` on the real client once the chunk resolves —
+ * same guarantee the old synchronous code gave implicitly.
+ *
+ * This also closes what would otherwise be a sign-out race:
+ * `resetAnalyticsUser()` funnels through this exact same promise instead of
+ * checking `if (!client) return`. If `identifyUser("u1")` and
+ * `resetAnalyticsUser()` are called back-to-back before the chunk has
+ * resolved, an early-return-on-`!client` reset would silently no-op — the
+ * queued `identify` would then land *after* "sign-out", leaving a
+ * shared-device session identified as the previous user. Funneling through
+ * `loadClient()` guarantees `reset()` is queued after `identify()` and
+ * still runs — a reset on a freshly-loaded client is harmless, dropping a
+ * queued reset is not.
+ */
+let loadPromise: Promise<PostHog | null> | null = null;
+
 export function getPostHogKey(): string | undefined {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   return typeof key === "string" && key.length > 0 ? key : undefined;
@@ -540,9 +572,17 @@ export function getPostHogHost(): string {
   return typeof host === "string" && host.length > 0 ? host : "https://eu.i.posthog.com";
 }
 
-function ensureClient(): PostHog | null {
-  if (client) return client;
-  if (typeof window === "undefined") return null;
+/**
+ * Resolves to the singleton `posthog-js` client, lazily importing and
+ * initialising it on first call. Every subsequent call (whether or not the
+ * first has settled yet) returns the same promise/client — see the
+ * `loadPromise` doc comment above for why every export funnels through
+ * this one function.
+ */
+function loadClient(): Promise<PostHog | null> {
+  if (client) return Promise.resolve(client);
+  if (loadPromise) return loadPromise;
+  if (typeof window === "undefined") return Promise.resolve(null);
 
   const apiKey = getPostHogKey();
   if (!apiKey) {
@@ -553,75 +593,97 @@ function ensureClient(): PostHog | null {
       );
       missingKeyLogged = true;
     }
-    return null;
+    return Promise.resolve(null);
   }
 
-  client = posthog.init(
-    apiKey,
-    {
-      api_host: getPostHogHost(),
-      // Explicit-track-only, same discipline as mobile: no autocapture, no
-      // automatic pageview events. Isolation from any future marketing
-      // PostHog integration is via the named instance above, not this flag,
-      // but keeping both off avoids noisy defaults regardless.
-      autocapture: false,
-      capture_pageview: false,
-    },
-    POSTHOG_INSTANCE_NAME
-  );
-  return client;
+  loadPromise = import("posthog-js")
+    .then(({ default: posthog }) => {
+      client = posthog.init(
+        apiKey,
+        {
+          api_host: getPostHogHost(),
+          // Explicit-track-only, same discipline as mobile: no autocapture, no
+          // automatic pageview events. Isolation from any future marketing
+          // PostHog integration is via the named instance above, not this flag,
+          // but keeping both off avoids noisy defaults regardless.
+          autocapture: false,
+          capture_pageview: false,
+        },
+        POSTHOG_INSTANCE_NAME
+      );
+      return client;
+    })
+    .catch((err: unknown) => {
+      console.warn("[analytics] posthog-js failed to load:", err);
+      loadPromise = null;
+      return null;
+    });
+  return loadPromise;
 }
 
 /**
- * Called once from `LearnerProviders` on app boot. Eagerly constructs the
- * client (if a key is configured) so the first `identifyUser()` /
- * `trackEvent()` call doesn't pay the cold-start cost. No-ops (including no
- * console noise beyond the one-time missing-key warning) when
- * `NEXT_PUBLIC_POSTHOG_KEY` is unset — dev/test safety.
+ * Called once from `LearnerProviders` on app boot. Kicks off the lazy
+ * `posthog-js` chunk load (if a key is configured) so the first
+ * `identifyUser()` / `trackEvent()` call doesn't have to trigger it itself.
+ * No-ops (including no console noise beyond the one-time missing-key
+ * warning) when `NEXT_PUBLIC_POSTHOG_KEY` is unset — dev/test safety.
  */
 export function initPostHog(): void {
   if (initialised) return;
   initialised = true;
-  ensureClient();
+  void loadClient();
 }
 
 export function trackEvent<N extends AnalyticsEventName>(
   name: N,
   properties?: AnalyticsEventProperties<N>
 ): void {
-  const c = ensureClient();
-  if (!c) return;
-  try {
-    c.capture(name, properties as Record<string, unknown> | undefined);
-  } catch (err) {
-    console.warn("[analytics] capture failed:", err);
-  }
+  void loadClient().then((c) => {
+    if (!c) return;
+    try {
+      c.capture(name, properties as Record<string, unknown> | undefined);
+    } catch (err) {
+      console.warn("[analytics] capture failed:", err);
+    }
+  });
 }
 
 /** Attaches a stable Supabase user id to the analytics session. Called on sign-in / warm-start with an authenticated session. */
 export function identifyUser(userId: string, traits?: IdentifyTraits): void {
-  const c = ensureClient();
-  if (!c) return;
-  try {
-    c.identify(userId, traits as Record<string, unknown> | undefined);
-  } catch (err) {
-    console.warn("[analytics] identify failed:", err);
-  }
+  void loadClient().then((c) => {
+    if (!c) return;
+    try {
+      c.identify(userId, traits as Record<string, unknown> | undefined);
+    } catch (err) {
+      console.warn("[analytics] identify failed:", err);
+    }
+  });
 }
 
-/** Drops the current identified user. Called on sign-out so the anon session is clean for the next user on a shared device. */
+/**
+ * Drops the current identified user. Called on sign-out so the anon session
+ * is clean for the next user on a shared device.
+ *
+ * Deliberately funnels through the same `loadClient()` promise as
+ * `identifyUser`/`trackEvent` rather than short-circuiting on `!client` —
+ * see the `loadPromise` doc comment above for the sign-out race this
+ * avoids.
+ */
 export function resetAnalyticsUser(): void {
-  if (!client) return;
-  try {
-    client.reset();
-  } catch (err) {
-    console.warn("[analytics] reset failed:", err);
-  }
+  void loadClient().then((c) => {
+    if (!c) return;
+    try {
+      c.reset();
+    } catch (err) {
+      console.warn("[analytics] reset failed:", err);
+    }
+  });
 }
 
 /** Test-only: forget everything so each test case starts clean. */
 export function __resetPostHogForTests(): void {
   client = null;
+  loadPromise = null;
   initialised = false;
   missingKeyLogged = false;
 }
