@@ -104,15 +104,41 @@
    * wash. Five call sites duplicated `bg-[var(--color-premium-black)]/60`
    * (ConfirmExamChangeModal, SettingsPickerRow, ProfilScreen,
    * SchreibenEditorScreen, ExamTypeScreen); the "promote once a second
-   * modal ships" threshold was crossed four modals ago. Derived via
-   * `color-mix` off the existing `--color-premium-black` — not a new hex
-   * value — following the same pattern as `.learner-glass-surface` below.
-   * Web-only composite, NOT mirrored into `src/theme/tokens.ts`: mobile's
-   * modal overlays are RN `View`s with an inline `rgba(...)` style, not a
-   * shared palette token, so there is nothing on the mobile side to mirror
-   * here.
+   * modal ships" threshold was crossed four modals ago.
+   *
+   * Port-fidelity correction (review round 1): mobile DOES have a named,
+   * actively-consumed equivalent — `tokens.palette.overlayScrim` /
+   * `theme.overlayScrim` = `rgba(15, 16, 18, 0.44)`
+   * (deutschfit-mobile/src/theme/tokens.ts:23,61), used by
+   * ConfirmExamChangeModal, SettingsPickerRow, ExamTypeScreen,
+   * CoachSideMenu, SprechenAwaitingPopup, WordPickerSheet, LevelChip and
+   * SubgenreSelect. This file's own `src/theme/tokens.ts` already carries
+   * the byte-identical mirror (added in the same 2026-08-08 copy as
+   * everything else there) but nothing consumed it — the initial version
+   * of this token independently picked 60% instead. 60% had no rationale
+   * in any commit body and no design-mock spec backs it either
+   * (deutschfit-design-assets has no scrim/overlay spec at all); mobile's
+   * named, multi-site token is the only real spec that exists, so this
+   * resolves toward it per the project's standing port-fidelity default.
+   * `44%` of `--color-premium-black` (`#0F1012` = `rgb(15, 16, 18)`) via
+   * `color-mix` reproduces that exact `rgba(15, 16, 18, 0.44)` — same
+   * technique as `.learner-glass-surface` below, still not a new hex
+   * value. Two of the five web call sites (ProfilScreen's sign-out
+   * dialog, which mirrors a native `Alert.alert` with no CSS backdrop on
+   * mobile at all; SchreibenEditorScreen's confirm-submit modal, whose
+   * mobile counterpart uses an orphaned inline `rgba(0,0,0,0.4)` that
+   * predates — and never adopted — the shared token) have no exact 1:1
+   * mobile match; both take the shared token too rather than mint a third
+   * scrim shade, for one consistent web scrim language instead of
+   * replicating mobile's own untokenized drift.
+   *
+   * Still web-only and NOT mirrored as a CSS property into
+   * `src/theme/tokens.ts` — that file already has the source value
+   * (`overlayScrim`) this token is numerically derived from; duplicating
+   * the composite here would just be two copies of the same number to
+   * keep in sync.
    */
-  --color-overlay-scrim: color-mix(in srgb, var(--color-premium-black) 60%, transparent);
+  --color-overlay-scrim: color-mix(in srgb, var(--color-premium-black) 44%, transparent);
 
   /*
    * `--tracking-wide` — mirrors mobile's `tokens.typography.trackingWide`
@@ -152,6 +178,20 @@
    * defines anywhere.
    */
   --coach-drawer-max-width: 320px;
+
+  /*
+   * `--onboarding-radio-outer-size` / `--onboarding-radio-inner-size`
+   * (review round 1, minor 2) — mirror mobile's `RADIO_OUTER = 22` /
+   * `RADIO_INNER = 10` constants
+   * (deutschfit-mobile/src/features/onboarding/screens/OnboardingDiagnosticScreen.tsx:54-55),
+   * the diagnostic screen's radio-button dot geometry. Promoted instead
+   * of allowlisted: unlike ScoreHeaderCard/Waveform's genuinely one-off
+   * pixel values, each of these appears twice in DiagnosticScreen.tsx
+   * (`h-[Npx] w-[Npx]` on the same element) — the same "recurs across 2+
+   * sites" bar `--control-height-lg` was promoted on.
+   */
+  --onboarding-radio-outer-size: 22px;
+  --onboarding-radio-inner-size: 10px;
 }
 
 @theme inline {

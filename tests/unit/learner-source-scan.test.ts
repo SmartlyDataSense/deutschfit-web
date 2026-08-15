@@ -59,20 +59,37 @@ const GLOBALS_CSS_PATH = path.resolve(__dirname, "../../src/app/globals.css");
  *     so a `}` that closes an object literal *inside* the interpolation
  *     doesn't prematurely pop back out to the template text.
  *
- * What this deliberately does NOT model: regex literals (`/like\/this/g`).
- * Telling a regex-opening `/` apart from a division operator needs a real
- * parser (it depends on what token precedes it), and getting it wrong in
- * either direction is bad — but not equally bad. Treating a division as a
- * regex-open could swallow real code as "opaque regex" and hide a literal
- * inside it (a silent miss). Leaving `/` as an ordinary "code" character
- * (this scanner's actual behavior) can only ever under-strip: a `/* `-like
- * run that happens to sit inside a genuine regex literal would get read as
- * a real block-comment start, producing a false positive that a human
- * dismisses on inspection, not a silently-missed literal. Per the task
- * brief's instruction to err toward not-stripping when robustness is in
- * question, that's the direction this takes — and a grep of this tree
- * turned up no regex literals containing `/*` or `//` in the first place,
- * so the gap is theoretical here, not live.
+ * What this deliberately does NOT model: regex literals (`/like\/this/g`)
+ * as their own state. Telling a regex-opening `/` apart from a division
+ * operator needs a real parser (it depends on what token precedes it), and
+ * building that was judged out of scope here.
+ *
+ * That gap is NOT harmless by default, though — review round 1 disproved an
+ * earlier version of this comment that claimed it could only ever
+ * under-strip. Counter-example: `url.split(/\//)`. Every `/` inside a JS/TS
+ * regex body other than its two delimiters must be backslash-escaped
+ * (an unescaped `/` mid-pattern would terminate the regex), so `\/`
+ * followed by the closing delimiter's `/` puts two adjacent raw `/`
+ * characters mid-regex — exactly what the naive "code" state reads as a
+ * line-comment opener, blanking the rest of the line (or, for `\/*`-shaped
+ * regex content, everything up to the next stray `*\/` anywhere later in
+ * the file). That's a real silent miss: `url.split(/\//); const bg = "#1a1714"`
+ * would have lost the hex literal entirely.
+ *
+ * Fix: any `/` immediately preceded by a single backslash is never treated
+ * as opening a comment (see `precededByBackslash` below) — since escaping is
+ * the *only* way a bare `/` can legally appear inside a regex body, this
+ * covers every internal regex slash, not just the one probe case. It does
+ * not turn this into a real regex tokenizer: the two regex *delimiter*
+ * slashes themselves are still ordinary "code" characters with no opaque
+ * span between them, so a contrived delimiter-adjacent case could in theory
+ * still confuse it. Per the brief's instruction to err toward not-stripping
+ * when robustness is in question, an unhandled case here means treating
+ * something as ordinary code (at worst a stray false-positive comment
+ * match investigated and dismissed by a human), never treating regex
+ * content as an opaque span that swallows real code. A grep of this tree
+ * found no regex literals containing `/*` or `//`-forming sequences beyond
+ * the ones now covered by the guard, so no further gap is live today.
  */
 function stripComments(src: string): string {
   type Frame =
@@ -89,6 +106,11 @@ function stripComments(src: string): string {
   // (`noUncheckedIndexedAccess` types raw `src[i]` as `string | undefined`).
   const at = (idx: number): string => src.charAt(idx);
   const top = (): Frame => stack[stack.length - 1] as Frame; // stack invariant: never empties — see below
+  // True when `idx` is a `/` that is itself an escaped regex-body slash
+  // (`\/`), not a real comment-opening `/`. See the regex-literal note in
+  // this function's doc comment for why "preceded by one backslash" is a
+  // sound (not just convenient) test for that.
+  const precededByBackslash = (idx: number): boolean => idx > 0 && at(idx - 1) === "\\";
 
   while (i < n) {
     const frame = top();
@@ -129,16 +151,21 @@ function stripComments(src: string): string {
       // frame.kind === "code" (only variant left: string/template both
       // `continue` on every path above, so this branch is never entered
       // with those kinds)
-      if (c === "/" && at(i + 1) === "/") {
+      if (c === "/" && at(i + 1) === "/" && !precededByBackslash(i)) {
         while (i < n && at(i) !== "\n") {
           out.push(" ");
           i += 1;
         }
         continue;
       }
-      if (c === "/" && at(i + 1) === "*") {
+      if (c === "/" && at(i + 1) === "*" && !precededByBackslash(i)) {
         out.push(" ", " ");
         i += 2;
+        // Only the *opening* `/*` needs the escaped-regex-slash guard: a
+        // real block comment always closes at its first `*/`, same as
+        // real JS, and once we're legitimately inside one, comment prose
+        // is free to contain `\*/`-shaped text (e.g. explaining an escape
+        // sequence) without that text un-closing the comment early.
         while (i < n && !(at(i) === "*" && at(i + 1) === "/")) {
           out.push(at(i) === "\n" ? "\n" : " ");
           i += 1;
@@ -279,26 +306,11 @@ const ALLOWLIST: readonly AllowlistEntry[] = [
     literal: "h-[3px]",
     reason: "mobile parity: ACCENT_UNDERLINE_HEIGHT=3 in OnboardingDiagnosticScreen.tsx:53",
   },
-  {
-    file: "onboarding/screens/DiagnosticScreen.tsx",
-    literal: "h-[22px]",
-    reason: "mobile parity: RADIO_OUTER=22 in mobile OnboardingDiagnosticScreen.tsx:54",
-  },
-  {
-    file: "onboarding/screens/DiagnosticScreen.tsx",
-    literal: "w-[22px]",
-    reason: "mobile parity: RADIO_OUTER=22 in mobile OnboardingDiagnosticScreen.tsx:54",
-  },
-  {
-    file: "onboarding/screens/DiagnosticScreen.tsx",
-    literal: "h-[10px]",
-    reason: "mobile parity: RADIO_INNER=10 in mobile OnboardingDiagnosticScreen.tsx:55",
-  },
-  {
-    file: "onboarding/screens/DiagnosticScreen.tsx",
-    literal: "w-[10px]",
-    reason: "mobile parity: RADIO_INNER=10 in mobile OnboardingDiagnosticScreen.tsx:55",
-  },
+  // RADIO_OUTER (22) / RADIO_INNER (10) — h-[Npx] + w-[Npx] paired at two
+  // sites each in this file — were promoted to --onboarding-radio-outer-size
+  // / --onboarding-radio-inner-size in globals.css instead of allowlisted
+  // (review round 1, minor 2): they recur, same bar `--control-height-lg`
+  // was promoted on, unlike the true one-offs below.
 ];
 
 const allowlistKey = (file: string, literal: string): string => `${file}::${literal}`;
@@ -312,7 +324,7 @@ describe("S13 Task 6 · overlay-scrim token", () => {
   it("globals.css defines --color-overlay-scrim, derived via color-mix (no new hex)", () => {
     const css = fs.readFileSync(GLOBALS_CSS_PATH, "utf-8");
     expect(css).toMatch(
-      /--color-overlay-scrim:\s*color-mix\(in srgb, var\(--color-premium-black\) 60%, transparent\);/
+      /--color-overlay-scrim:\s*color-mix\(in srgb, var\(--color-premium-black\) 44%, transparent\);/
     );
   });
 
@@ -451,5 +463,37 @@ describe("stripComments", () => {
     const stripped = stripComments(src);
     expect(stripped).not.toContain("#365");
     expect(stripped).toContain("#1a1714");
+  });
+
+  // Review round 1, minor 3: a regex literal's escaped body slash (`\/`)
+  // landing right next to its closing delimiter's `/` puts two raw `/`
+  // characters back to back mid-regex — exactly the shape the naive "code"
+  // state used to misread as a line-comment opener, blanking the rest of
+  // the line (including a real hex literal on the same line). These pin
+  // the exact reviewer-supplied probes plus the `/*`-forming analog.
+  it("does not misread an escaped regex-body slash before the closing delimiter as a line comment", () => {
+    const src = 'const segs = url.split(/\\//); const bg = "#1a1714";';
+    expect(stripComments(src)).toBe(src);
+  });
+
+  it("does not misread a global escaped-slash regex as a line comment either", () => {
+    const src = 'path.replace(/\\//g, "-"); const bg = "#1a1714";';
+    expect(stripComments(src)).toBe(src);
+  });
+
+  it("does not misread an escaped regex-body slash immediately before a literal * as a block-comment opener", () => {
+    const src = 'const trimmed = s.replace(/\\/*/, ""); const bg = "#1a1714";';
+    expect(stripComments(src)).toBe(src);
+  });
+
+  it("still closes a real block comment at its first */ even if the comment prose contains an escaped-slash-shaped run", () => {
+    // The opening-side guard must not leak into the closing-side scan: a
+    // genuine comment explaining an escape sequence should still end where
+    // it visibly ends, not run on to the next accidental */ in the file.
+    const src = 'const a = 1; /* explains \\*/ escaping */ const bg = "#1a1714";';
+    const stripped = stripComments(src);
+    expect(stripped).not.toContain("explains");
+    expect(stripped).toContain("#1a1714");
+    expect(stripped).toContain("const bg =");
   });
 });
