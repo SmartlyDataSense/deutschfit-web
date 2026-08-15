@@ -6,6 +6,7 @@ vi.mock("@/learner/core/api/client", async (importOriginal) => ({
   invokeFn: (...a: unknown[]) => invokeFn(...a),
 }));
 
+import { ApiError } from "@/learner/core/api/client";
 import { getDiagnosticQuestions } from "@/learner/onboarding/services/getDiagnosticQuestions";
 import { submitDiagnostic } from "@/learner/onboarding/services/submitDiagnostic";
 
@@ -99,5 +100,32 @@ describe("submitDiagnostic", () => {
     invokeFn.mockResolvedValue({ error: "whatever" });
     await expect(submitDiagnostic({ attemptId: ATTEMPT, answers: {} }))
       .rejects.toThrow(); // server-shaped error string in a 200 body
+  });
+
+  // M-2.7 regression pin — the generic malformed-body test above only
+  // exercises the top-level `payload.error` string branch (line 101 of
+  // submitDiagnostic.ts). It never exercises the structural-validation
+  // branch (line 102-111: missing/wrong-typed required fields), so a
+  // regression there (e.g. dropping a required-field check) could ship
+  // silently.
+  it("throws the structural malformed-response code when a required field is missing", async () => {
+    invokeFn.mockResolvedValue({
+      ...result,
+      // weaknessTags dropped entirely -> fails the `Array.isArray` check.
+      weaknessTags: undefined,
+    });
+    await expect(submitDiagnostic({ attemptId: ATTEMPT, answers: {} }))
+      .rejects.toThrow("diagnostic_submit_malformed_response");
+  });
+
+  // M-2.7 regression pin — `submitDiagnostic` has no try/catch around the
+  // `invokeFn` call, so a thrown `ApiError` (transport/HTTP failure) must
+  // propagate unchanged, not be swallowed or re-wrapped. Nothing pinned
+  // this passthrough before.
+  it("propagates an ApiError from the transport unchanged", async () => {
+    const apiErrorInstance = new ApiError(500, "internal_error", "boom");
+    invokeFn.mockRejectedValue(apiErrorInstance);
+    await expect(submitDiagnostic({ attemptId: ATTEMPT, answers: {} }))
+      .rejects.toBe(apiErrorInstance);
   });
 });
