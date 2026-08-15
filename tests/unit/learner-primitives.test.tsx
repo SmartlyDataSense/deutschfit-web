@@ -121,6 +121,31 @@ describe("Card", () => {
     expect(screen.getByTestId("card").className).toMatch(/bg-bg-card/);
     expect(screen.getByText("content")).toBeInTheDocument();
   });
+
+  // S13 Task 5 · Step 2: `ariaLabel` gives a non-interactive Card a
+  // recognized accessibility host — mobile `accessibilityLabel` parity
+  // (mobile Card.tsx sets `accessibilityRole="button"` only when
+  // `onPress` is set, and `accessibilityLabel` either way).
+  it("non-clickable: ariaLabel renders role=group with that aria-label (no ariaLabel = no role/label at all)", () => {
+    const { rerender } = render(<Card testID="card">content</Card>);
+    expect(screen.getByTestId("card")).not.toHaveAttribute("role");
+    expect(screen.getByTestId("card")).not.toHaveAttribute("aria-label");
+    rerender(
+      <Card testID="card" ariaLabel="Résumé de la carte">
+        content
+      </Card>
+    );
+    expect(screen.getByRole("group", { name: "Résumé de la carte" })).toBe(screen.getByTestId("card"));
+  });
+
+  it("clickable: ariaLabel sets aria-label on the button (already has an implicit role)", () => {
+    render(
+      <Card testID="card" onClick={() => {}} ariaLabel="Résumé de la carte">
+        content
+      </Card>
+    );
+    expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(screen.getByTestId("card"));
+  });
 });
 
 describe("ProgressBar", () => {

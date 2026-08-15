@@ -74,4 +74,30 @@ describe("PriorityTaskCard", () => {
     expect(screen.getByText("Rien à corriger")).toBeInTheDocument();
     expect(screen.getByTestId("pt-empty-cta")).toBeDisabled();
   });
+
+  // S13 Task 5 · Step 2 (S3-3.7 + 3.8): the card root is never itself
+  // interactive (no role="button"/tabIndex — the inner CTA button is the
+  // single focusable control) but still needs an accessible name
+  // summarising the card, via the new `Card ariaLabel` (mobile parity:
+  // PriorityTaskCard.tsx passes `accessibilityLabel` to `Card` the same
+  // way).
+  it("active branch: card root has no role=button/tabIndex; carries a role=group summary; the CTA is the single focusable control", () => {
+    ui(<PriorityTaskCard {...props} testID="pt" />);
+    const card = screen.getByTestId("pt");
+    expect(card).not.toHaveAttribute("role", "button");
+    expect(card).not.toHaveAttribute("tabIndex");
+    expect(
+      screen.getByRole("group", {
+        name: "Priorité. Sprachbausteine. Exercices du jour. 4 exercices ciblés. corps",
+      })
+    ).toBe(card);
+    expect(screen.getByTestId("pt-cta").tagName).toBe("BUTTON");
+  });
+
+  it("empty branch: card root carries a role=group summary from the empty copy", () => {
+    ui(<PriorityTaskCard {...props} empty={{ title: "Rien à corriger", body: "b", ctaLabel: "c" }} testID="pt" />);
+    expect(
+      screen.getByRole("group", { name: "Rien à corriger. b" })
+    ).toBe(screen.getByTestId("pt"));
+  });
 });

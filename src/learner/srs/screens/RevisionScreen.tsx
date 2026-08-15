@@ -33,7 +33,7 @@ function daysOverdue(nextDue: Date, now: Date): number {
 }
 
 export function RevisionScreen() {
-  const { t } = useTranslation(["srs"]);
+  const { t } = useTranslation(["srs", "common"]);
   const router = useRouter();
   const locale = useLocale();
   const { cards, loading, error } = useDueCards({ limit: 20 });
@@ -43,14 +43,19 @@ export function RevisionScreen() {
   const title = t("srs:revision.title");
 
   if (loading) {
+    // S13 Task 5 · Step 3 (S10-T5): a screen reader landing mid-load must
+    // hear "loading", not the destination title read out for content
+    // that isn't there yet — the skeletons are labelled with
+    // `common:status.loading`, not `title`.
+    const loadingLabel = t("common:status.loading");
     return (
       <div
         className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-4 px-4 py-8 lg:px-8"
         data-testid="srs-revision-screen"
       >
-        <Skeleton.Block width="50%" height={28} aria-label={title} />
-        <Skeleton.Card aria-label={title} />
-        <Skeleton.Block width="100%" height={12} aria-label={title} />
+        <Skeleton.Block width="50%" height={28} aria-label={loadingLabel} />
+        <Skeleton.Card aria-label={loadingLabel} />
+        <Skeleton.Block width="100%" height={12} aria-label={loadingLabel} />
       </div>
     );
   }

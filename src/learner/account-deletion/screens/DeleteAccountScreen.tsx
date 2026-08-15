@@ -44,13 +44,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useTranslation } from "react-i18next";
+import clsx from "clsx";
 
 import { invokeFn } from "@/learner/core/api/client";
 import { resetAnalyticsUser, trackEvent } from "@/learner/core/analytics/posthog";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { wipeLocalState } from "@/learner/core/storage/wipe";
 import { Icon } from "@/learner/core/icons/Icon";
-import { AppText, Input } from "@/learner/ui/primitives";
+import { AppText, FOCUS_RING_CLASSES, Input } from "@/learner/ui/primitives";
 
 const CONFIRM_TOKEN = "DELETE";
 
@@ -210,7 +211,10 @@ export function DeleteAccountScreen() {
             type="button"
             data-testid="delete-account-error-retry"
             onClick={() => setFailed(false)}
-            className="mt-1 min-h-11 self-start rounded-full border border-line-strong px-4 transition hover:bg-cream-deep"
+            className={clsx(
+              "mt-1 min-h-11 self-start rounded-full border border-line-strong px-4 transition hover:bg-cream-deep",
+              FOCUS_RING_CLASSES
+            )}
           >
             <AppText size="body" weight="medium" tone="primary">
               {t("settings:account.deleteFailedRetry")}
@@ -226,7 +230,10 @@ export function DeleteAccountScreen() {
           disabled={!tokenMatches || deleting}
           onClick={handleConfirm}
           aria-busy={deleting}
-          className="min-h-11 rounded-full bg-warning-red px-4 transition hover:opacity-90 disabled:opacity-45"
+          className={clsx(
+            "min-h-11 rounded-full bg-warning-red px-4 transition hover:opacity-90 disabled:opacity-45",
+            FOCUS_RING_CLASSES
+          )}
         >
           <AppText size="body" weight="semi" tone="inverse">
             {t("settings:account.deleteConfirmCta")}
@@ -237,7 +244,10 @@ export function DeleteAccountScreen() {
           data-testid="delete-account-cancel"
           onClick={() => router.back()}
           disabled={deleting}
-          className="min-h-11 rounded-full px-4 transition hover:bg-cream-deep disabled:opacity-50"
+          className={clsx(
+            "min-h-11 rounded-full px-4 transition hover:bg-cream-deep disabled:opacity-50",
+            FOCUS_RING_CLASSES
+          )}
         >
           <AppText size="body" weight="medium" tone="primary">
             {t("common:actions.cancel")}

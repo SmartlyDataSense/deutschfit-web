@@ -189,4 +189,27 @@ describe("DiagnosticScreen", () => {
     await waitFor(() => screen.getByTestId("onboarding-diagnostic-screen"));
     expect(getDiagnosticQuestions).toHaveBeenCalledTimes(2);
   });
+
+  // S13 Task 5 · Step 1 (M-2.9): the options list must expose ARIA
+  // radiogroup semantics — the question prompt as the group's accessible
+  // name, each option a `radio` with exactly one `aria-checked="true"`
+  // once a selection is made.
+  it("exposes the options as a radiogroup named by the question prompt, each option a radio with exactly one checked", async () => {
+    ui();
+    await waitFor(() => screen.getByTestId("onboarding-diagnostic-cta"));
+
+    const group = screen.getByRole("radiogroup");
+    expect(group).toHaveAccessibleName("Stem l1");
+
+    const radiosBefore = screen.getAllByRole("radio");
+    expect(radiosBefore).toHaveLength(2);
+    expect(radiosBefore.every((r) => r.getAttribute("aria-checked") === "false")).toBe(true);
+
+    fireEvent.click(screen.getByTestId("onboarding-diagnostic-option-a"));
+
+    const radiosAfter = screen.getAllByRole("radio");
+    const checked = radiosAfter.filter((r) => r.getAttribute("aria-checked") === "true");
+    expect(checked).toHaveLength(1);
+    expect(checked[0]).toBe(screen.getByTestId("onboarding-diagnostic-option-a"));
+  });
 });

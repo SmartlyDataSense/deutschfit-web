@@ -17,7 +17,7 @@ export type {
   AppTextFamily,
 } from "./AppText";
 
-export { AppButton } from "./AppButton";
+export { AppButton, FOCUS_RING_CLASSES } from "./AppButton";
 export type { AppButtonProps, AppButtonVariant } from "./AppButton";
 
 export { Chip } from "./Chip";

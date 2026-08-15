@@ -314,11 +314,16 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
           family="serif"
           className="mt-2"
           testID="onboarding-diagnostic-question"
+          id="diagnostic-question"
         >
           {current.stemDe}
         </AppText>
 
-        <div className="mt-2 flex flex-col gap-2">
+        <div
+          className="mt-2 flex flex-col gap-2"
+          role="radiogroup"
+          aria-labelledby="diagnostic-question"
+        >
           {current.options.map((opt) => {
             const isSelected = selected === opt.key;
             return (

@@ -57,8 +57,9 @@ export function PriorityTaskCard({
   testID,
 }: PriorityTaskCardProps) {
   if (empty) {
+    const a11yEmpty = `${empty.title}. ${empty.body}`;
     return (
-      <Card testID={testID}>
+      <Card testID={testID} ariaLabel={a11yEmpty}>
         <AppText family="serif" size="h3" weight="bold" className="mt-2">
           {empty.title}
         </AppText>
@@ -79,8 +80,9 @@ export function PriorityTaskCard({
   }
 
   const composedCta = `${ctaLabel} · ${durationLabel}`;
+  const a11y = `${priorityLabel}. ${skill}. ${title}. ${subtitle}. ${body}`;
   return (
-    <Card testID={testID}>
+    <Card testID={testID} ariaLabel={a11y}>
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <div className="self-start rounded-[var(--radius-full)] border border-cta bg-bg-hero px-3 py-0.5">
           <AppText tone="cta" size="caption" weight="semi">

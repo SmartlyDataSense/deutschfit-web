@@ -78,6 +78,18 @@ afterEach(() => {
 });
 
 describe("RevisionScreen", () => {
+  // S13 Task 5 · Step 3 (S10-T5): the loading-state skeletons must expose
+  // an accessible name of "Chargement…" (`common:status.loading`), not
+  // the screen title — a screen reader landing mid-load should hear
+  // "loading", not the destination title read out prematurely for
+  // content that isn't there yet.
+  it("loading-state skeletons are labelled 'Chargement…', not the screen title", () => {
+    renderWithI18n(<RevisionScreen />);
+    const loadingLabelled = screen.getAllByLabelText("Chargement…");
+    expect(loadingLabelled.length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByLabelText("Réviser")).toBeNull();
+  });
+
   it("renders the empty state when no cards are due", async () => {
     renderWithI18n(<RevisionScreen />);
     await waitFor(() => {
