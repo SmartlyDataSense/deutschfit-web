@@ -179,6 +179,12 @@ export async function getCoachPlan(): Promise<CoachPlanResponse> {
     data = await invokeFn<RawPlanEnvelope>("coach-weekly-plan", { method: "POST", body: {} });
   } catch (err) {
     if (err instanceof ApiError) {
+      // S13 Task 7 (S9-9.1): `err.code` (e.g. an edge-function error slug)
+      // surfaces raw as the thrown Error's message rather than being
+      // mapped through an i18n catalogue — mobile-parity choice, ports
+      // `deutschfit-mobile`'s coach plan client the same way. Callers
+      // that want learner-facing copy are responsible for mapping known
+      // codes themselves.
       throw new Error(err.code || "coach_plan_failed");
     }
     throw err instanceof Error ? err : new Error("coach_plan_failed");

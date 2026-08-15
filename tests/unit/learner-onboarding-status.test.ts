@@ -11,10 +11,15 @@ vi.mock("@/lib/supabase/browser", () => ({ getBrowserClient: () => ({ from }) })
 import { hasDiagnosticOnServer, readOnboardedAt } from "@/learner/core/onboarding/onboardingStatus";
 
 describe("onboardingStatus server primitives", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("readOnboardedAt returns the stamp, null for missing row / empty value, throws on error", async () => {
-    maybeSingle.mockResolvedValueOnce({ data: { onboarded_at: "2026-05-22T10:00:00Z" }, error: null });
+    maybeSingle.mockResolvedValueOnce({
+      data: { onboarded_at: "2026-05-22T10:00:00Z" },
+      error: null,
+    });
     await expect(readOnboardedAt("u1")).resolves.toBe("2026-05-22T10:00:00Z");
     expect(from).toHaveBeenCalledWith("user_profiles");
 

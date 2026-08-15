@@ -21,7 +21,10 @@ vi.mock("@/lib/supabase/browser", () => ({
   getBrowserClient: () => ({ auth: { getSession }, from }),
 }));
 
-import { readUserObjectives, updateUserObjectives } from "@/learner/settings/services/userObjectives";
+import {
+  readUserObjectives,
+  updateUserObjectives,
+} from "@/learner/settings/services/userObjectives";
 
 beforeEach(() => {
   vi.clearAllMocks();

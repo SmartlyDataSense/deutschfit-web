@@ -38,7 +38,9 @@ async function login(page: Page) {
 }
 
 test.describe("Practice hub + Lesen (qa1, real backend)", () => {
-  test("apprendre grid → practice hub renders rows with chips (IDB-only, tolerant of fresh browser)", async ({ page }) => {
+  test("apprendre grid → practice hub renders rows with chips (IDB-only, tolerant of fresh browser)", async ({
+    page,
+  }) => {
     test.setTimeout(120_000);
     await login(page);
     await page.goto("/fr/app/apprendre");
@@ -49,7 +51,9 @@ test.describe("Practice hub + Lesen (qa1, real backend)", () => {
     await page.screenshot({ path: "test-results/s4-practice-hub.png", fullPage: true });
   });
 
-  test("untimed lesen practice: pick a set, first pick locks, progress persists across reload", async ({ page }) => {
+  test("untimed lesen practice: pick a set, first pick locks, progress persists across reload", async ({
+    page,
+  }) => {
     test.setTimeout(180_000);
     await login(page);
     await page.goto("/fr/app/apprendre/practice/lesen");
@@ -98,7 +102,9 @@ test.describe("Practice hub + Lesen (qa1, real backend)", () => {
     await page.screenshot({ path: "test-results/s4-practice-session.png", fullPage: true });
   });
 
-  test("graded lesen drill: modelltest picker → live session → results (429 local-fallback is a legitimate branch)", async ({ page }) => {
+  test("graded lesen drill: modelltest picker → live session → results (429 local-fallback is a legitimate branch)", async ({
+    page,
+  }) => {
     test.setTimeout(240_000);
     await login(page);
     await page.goto("/fr/app/examen/lesen");
@@ -116,7 +122,7 @@ test.describe("Practice hub + Lesen (qa1, real backend)", () => {
     if (await emptyState.isVisible().catch(() => false)) {
       test.skip(
         true,
-        "No published Lesen Modelltest content on dev yet — see deutschfit-backend issue (Lesen mirror of the Hören backfill). Re-run once content lands; single metered submit."
+        "No published Lesen Modelltest content on dev yet — backend#414 (Lesen mirror of the Hören backfill). Re-run once content lands; single metered submit."
       );
     }
     await expect(picker).toBeVisible({ timeout: 30_000 });

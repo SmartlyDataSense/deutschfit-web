@@ -64,7 +64,9 @@ describe("installAcknowledgeAdapter", () => {
     markCorrectionReady("s2");
     acknowledgeReadiness({ submissionId: "s2", module: "schreiben", acknowledgedAt: 2 });
     await flush();
-    expect(JSON.parse(data[SERVER_ACK_QUEUE_KEY]!)).toEqual([{ submissionId: "s2", module: "schreiben" }]);
+    expect(JSON.parse(data[SERVER_ACK_QUEUE_KEY]!)).toEqual([
+      { submissionId: "s2", module: "schreiben" },
+    ]);
 
     acknowledgeOnServer.mockResolvedValue(undefined);
     window.dispatchEvent(new Event("online"));

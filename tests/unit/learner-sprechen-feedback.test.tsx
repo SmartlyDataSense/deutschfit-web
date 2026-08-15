@@ -476,6 +476,25 @@ describe("SprechenFeedbackScreen — graded, v2 bilan", () => {
       })
     );
   });
+
+  // S7-7.9 regression pin — a non-null `feedback_blocked_reason` must
+  // render the blocked banner. Nothing exercised this branch before: the
+  // shared `gradedV2Data` fixture always carries `feedback_blocked_reason:
+  // null`, so a regression in the banner's render gate or its i18n key
+  // interpolation could ship silently.
+  it("renders the blocked banner when feedback_blocked_reason is non-null", () => {
+    setPolling("graded", {
+      ...gradedV2Data,
+      feedback_json: {
+        ...gradedV2Data.feedback_json,
+        feedback_blocked_reason: "transcript_unreliable",
+      },
+    });
+    render();
+    expect(screen.getByTestId("sprechen-feedback-blocked-banner")).toHaveTextContent(
+      "La transcription n'est pas assez fiable."
+    );
+  });
 });
 
 // Constraint 9 — mobile's SprechenFeedbackScreen has no secondary

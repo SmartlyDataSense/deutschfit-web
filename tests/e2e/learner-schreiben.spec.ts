@@ -244,7 +244,6 @@ test.describe
     await page.getByTestId("schreiben-custom-prompt-cancel").click();
     await page.waitForURL(/\/schreiben(\?.*)?$/, { timeout: 20_000 });
 
-    // eslint-disable-next-line no-console
     console.log(`[schreiben e2e][a] prompt-create requests fired: ${promptCreateRequests.length}`);
     expect(promptCreateRequests.length).toBe(0);
   });
@@ -269,7 +268,6 @@ test.describe
 
     const pillText = await page.getByTestId("schreiben-word-pill").innerText();
     const { min, max } = extractWordBounds(pillText);
-    // eslint-disable-next-line no-console
     console.log(`[schreiben e2e][b] prompt ${promptId} word bounds: ${min}-${max}`);
 
     // See header note: `Textarea`'s testid is on the wrapper div — the
@@ -301,7 +299,6 @@ test.describe
     await expect(rehydratedInput).toHaveValue(draftText, { timeout: 15_000 });
 
     // No submit anywhere in this spec — zero quota burn.
-    // eslint-disable-next-line no-console
     console.log(`[schreiben e2e][b] submissions-create requests fired: ${submitRequests.length}`);
     expect(submitRequests.length).toBe(0);
   });
@@ -332,7 +329,6 @@ test.describe
     const { min, max } = extractWordBounds(pillText);
     const target = Math.min(Math.round((min + max) / 2), GERMAN_CORPUS.length);
     const draftText = germanText(target);
-    // eslint-disable-next-line no-console
     console.log(
       `[schreiben e2e][c] prompt ${promptId} word bounds: ${min}-${max}, submitting ${target} words`
     );
@@ -354,7 +350,6 @@ test.describe
     await page.getByTestId("schreiben-confirm-confirm").click();
     const submitResponse = await submitResponsePromise;
 
-    // eslint-disable-next-line no-console
     console.log(
       `[schreiben e2e][c] submissions-create requests fired: ${submitRequests.length}, response status: ${submitResponse.status()}`
     );
@@ -367,7 +362,6 @@ test.describe
       await expect(page.getByTestId("schreiben-error-rate_limit_exceeded")).toBeVisible({
         timeout: 15_000,
       });
-      // eslint-disable-next-line no-console
       console.log("[schreiben e2e][c] terminal branch: 429 rate_limited (submit-time)");
       return;
     }
@@ -404,7 +398,6 @@ test.describe
         : (await failed.isVisible().catch(() => false))
           ? "failed"
           : "timeout";
-    // eslint-disable-next-line no-console
     console.log(`[schreiben e2e][c] terminal feedback branch: ${branch}`);
 
     // Product lock: no paywall copy on any branch (Constraint 11).

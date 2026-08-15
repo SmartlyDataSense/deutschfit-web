@@ -76,7 +76,7 @@ export function SettingsPickerRow<T extends string>({
       {open ? (
         <div
           data-testid={`${testID}-backdrop`}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-premium-black)]/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay-scrim)] p-4"
           onClick={() => setOpen(false)}
         >
           <div
@@ -84,7 +84,7 @@ export function SettingsPickerRow<T extends string>({
             aria-modal="true"
             aria-label={label}
             data-testid={`${testID}-modal`}
-            className="max-h-[70vh] w-full max-w-sm overflow-y-auto rounded-[var(--radius-lg)] bg-bg-card p-4"
+            className="max-h-[var(--modal-max-height)] w-full max-w-sm overflow-y-auto rounded-[var(--radius-lg)] bg-bg-card p-4"
             onClick={(event) => event.stopPropagation()}
           >
             <AppText size="caption" weight="semi" tone="tertiary" className="uppercase">

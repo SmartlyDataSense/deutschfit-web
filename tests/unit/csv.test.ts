@@ -13,10 +13,10 @@ describe("toCsv", () => {
   });
 
   it("renders nullish cells as empty strings", () => {
-    const out = toCsv([{ a: null as string | null, b: undefined as string | undefined }], [
-      "a",
-      "b",
-    ]);
+    const out = toCsv(
+      [{ a: null as string | null, b: undefined as string | undefined }],
+      ["a", "b"]
+    );
     // Header line + one data line "" (no quoting needed for empty)
     expect(out.split("\n")).toEqual(["a,b", ","]);
   });

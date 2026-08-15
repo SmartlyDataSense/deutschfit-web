@@ -20,6 +20,18 @@ import { AppText, type AppTextTone } from "./AppText";
  */
 export type AppButtonVariant = "solid" | "outline" | "ghost" | "premium";
 
+/**
+ * The focus-visible ring convention every clickable primitive should use
+ * — exported so non-`AppButton` controls (raw `<button>`s that can't take
+ * `AppButton`'s own `min-h-11 px-6` layout without changing their row)
+ * can reuse it without duplicating the token string. There is no
+ * danger-tone ring anywhere in the token system, so destructive controls
+ * intentionally take this same CTA-coloured ring — see the S13 Task 5
+ * commit body for the precedent.
+ */
+export const FOCUS_RING_CLASSES =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2";
+
 export interface AppButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "className" | "disabled" | "onClick"
@@ -100,7 +112,7 @@ export function AppButton({
       className={clsx(
         "inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] px-6",
         "transition disabled:cursor-not-allowed",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2",
+        FOCUS_RING_CLASSES,
         isDisabled ? spec.bgDisabled : spec.bgIdle,
         className
       )}

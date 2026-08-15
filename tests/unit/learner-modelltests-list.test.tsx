@@ -200,7 +200,9 @@ describe("ModelltestsListScreen — S8 Task 8.4 (board/level-filtered full-simul
     // byte-identical to mobile. Do not "fix" this during a future edit.
     expect(screen.getByText("Keine Prüfungen verfügbar")).toBeInTheDocument();
     expect(
-      screen.getByText("Aucun modelltest publié pour l'instant. Tire vers le bas pour actualiser ou reviens plus tard.")
+      screen.getByText(
+        "Aucun modelltest publié pour l'instant. Tire vers le bas pour actualiser ou reviens plus tard."
+      )
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("modelltestsList.empty-cta"));

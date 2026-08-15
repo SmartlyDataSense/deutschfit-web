@@ -314,11 +314,16 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
           family="serif"
           className="mt-2"
           testID="onboarding-diagnostic-question"
+          id="diagnostic-question"
         >
           {current.stemDe}
         </AppText>
 
-        <div className="mt-2 flex flex-col gap-2">
+        <div
+          className="mt-2 flex flex-col gap-2"
+          role="radiogroup"
+          aria-labelledby="diagnostic-question"
+        >
           {current.options.map((opt) => {
             const isSelected = selected === opt.key;
             return (
@@ -339,11 +344,13 @@ export function DiagnosticScreen({ attemptId, level, mode }: DiagnosticScreenPro
                 <span
                   data-testid={`onboarding-diagnostic-option-${opt.key}-radio`}
                   className={clsx(
-                    "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-2",
+                    "flex h-[var(--onboarding-radio-outer-size)] w-[var(--onboarding-radio-outer-size)] shrink-0 items-center justify-center rounded-full border-2",
                     isSelected ? "border-cta bg-bg-premium" : "border-line-strong bg-bg-card"
                   )}
                 >
-                  {isSelected ? <span className="h-[10px] w-[10px] rounded-full bg-cta" /> : null}
+                  {isSelected ? (
+                    <span className="h-[var(--onboarding-radio-inner-size)] w-[var(--onboarding-radio-inner-size)] rounded-full bg-cta" />
+                  ) : null}
                 </span>
                 <span className="flex-1">
                   <AppText

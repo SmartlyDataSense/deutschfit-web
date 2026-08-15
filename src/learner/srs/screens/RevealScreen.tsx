@@ -41,7 +41,7 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
   const router = useRouter();
   const locale = useLocale();
   const { cards, loading, error } = useDueCards({ limit: 20 });
-  const { submit, submitting } = useSubmitReview();
+  const { submit, submitting, error: rateError } = useSubmitReview();
 
   const card = cards.find((c) => c.id === cardId);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -60,8 +60,13 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
       await submit({ cardId: card.id, rating: value });
       router.replace(`/${locale}/app/srs`);
     } catch {
-      // useSubmitReview exposes `error`; buttons re-enable on failure
-      // (mobile parity, no toast).
+      // S13 Task 7 (S10-T5): `useSubmitReview` already tracks `error` and
+      // clears `submitting` in its `finally` — the buttons re-enable on
+      // their own via the `disabled={submitting}` prop below. This catch
+      // only stops the rejection from propagating past the click handler;
+      // the error text itself renders from `rateError` under the action
+      // row (mobile parity has no toast — an inline message is the web
+      // equivalent).
     }
   };
 
@@ -148,7 +153,12 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
       data-testid="srs-reveal-screen"
     >
       <div>
-        <AppText tone="coach" size="caption" weight="semi" className="uppercase tracking-[0.8px]">
+        <AppText
+          tone="coach"
+          size="caption"
+          weight="semi"
+          className="uppercase tracking-[var(--tracking-wide)]"
+        >
           {card.prompt.subjectLabel}
         </AppText>
         <AppText as="h1" family="serif" size="h1" weight="bold">
@@ -178,6 +188,12 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
         durations={durations}
         onSelect={(v) => void handleRate(v)}
       />
+
+      {rateError ? (
+        <AppText testID="srs-reveal-rate-error" tone="warning" size="body" role="alert">
+          {t("srs:revision.rateError")}
+        </AppText>
+      ) : null}
     </div>
   );
 }

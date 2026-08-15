@@ -27,11 +27,8 @@ async function rules(): Promise<HeaderRule[]> {
 
 describe("next.config.ts headers()", () => {
   it("still serves the .well-known association files as JSON", async () => {
-    const wellKnown = (await rules()).find(
-      (r) => r.source === "/.well-known/:file*",
-    );
-    expect(wellKnown, "the App Links / Universal Links rule was dropped")
-      .toBeDefined();
+    const wellKnown = (await rules()).find((r) => r.source === "/.well-known/:file*");
+    expect(wellKnown, "the App Links / Universal Links rule was dropped").toBeDefined();
     expect(wellKnown!.headers).toContainEqual({
       key: "Content-Type",
       value: "application/json",
@@ -42,9 +39,7 @@ describe("next.config.ts headers()", () => {
     const sw = (await rules()).find((r) => r.source === "/sw.js");
     expect(sw).toBeDefined();
     // A cached service worker pins stale push-handling logic for up to 24h.
-    expect(sw!.headers.find((h) => h.key === "Cache-Control")?.value).toContain(
-      "no-store",
-    );
+    expect(sw!.headers.find((h) => h.key === "Cache-Control")?.value).toContain("no-store");
     expect(sw!.headers).toContainEqual({
       key: "Service-Worker-Allowed",
       value: "/",

@@ -445,7 +445,7 @@ export function SchreibenEditorScreen({ promptId }: SchreibenEditorScreenProps) 
           role="dialog"
           aria-modal="true"
           data-testid="schreiben-confirm-submit"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-premium-black)]/60 px-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay-scrim)] px-6"
           onClick={handleCancelConfirm}
         >
           <div

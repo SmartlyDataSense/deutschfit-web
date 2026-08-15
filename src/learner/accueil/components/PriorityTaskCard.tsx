@@ -18,6 +18,16 @@
  * `router.push(.../drill/session)` by `AccueilScreen`; the empty-branch
  * CTA stays `disabled` — there is still nothing to navigate to when no
  * priority task exists.
+ *
+ * Deliberately does NOT pass `ariaLabel` to `Card` on either branch (S13
+ * final-fixes finding 2). An earlier version composed a label restating
+ * every visible child ("<priorité>. <skill>. <title>. <subtitle>.
+ * <body>") and passed it to `Card`'s non-clickable `role="group"` path —
+ * `role="group"` is not children-presentational on web (unlike mobile's
+ * `accessible` View), so a screen reader announced that composed name
+ * and then re-read every descendant a second time. The children already
+ * expose the same text as independently-readable nodes, in the same
+ * order, so no wrapper accessible name is needed here at all.
  */
 import { AppButton, AppText, Card, Chip } from "@/learner/ui/primitives";
 

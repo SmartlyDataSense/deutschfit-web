@@ -107,7 +107,11 @@ describe("reserveUpload", () => {
       expires_in: 900,
     });
 
-    await reserveUpload({ examSlug: "goethe-b1-sprechen", teil: 1, clientSubmissionId: "client-2" });
+    await reserveUpload({
+      examSlug: "goethe-b1-sprechen",
+      teil: 1,
+      clientSubmissionId: "client-2",
+    });
 
     expect(invokeFnMock).toHaveBeenCalledWith("sprechen-upload", {
       method: "POST",
@@ -223,7 +227,11 @@ describe("getSprechenAudioUrl", () => {
   });
 
   it("posts { submission_id } and returns { url, ttl_sec }", async () => {
-    invokeFnMock.mockResolvedValueOnce({ submission_id: "sub-1", url: "https://signed", ttl_sec: 600 });
+    invokeFnMock.mockResolvedValueOnce({
+      submission_id: "sub-1",
+      url: "https://signed",
+      ttl_sec: 600,
+    });
 
     const result = await getSprechenAudioUrl("sub-1");
 
@@ -296,7 +304,11 @@ describe("facade re-exports (examApi)", () => {
       storage_path: "path",
       expires_in: 900,
     };
-    const finalizeResult: FacadeFinalizeResult = { submission_id: "id", status: "queued", replay: false };
+    const finalizeResult: FacadeFinalizeResult = {
+      submission_id: "id",
+      status: "queued",
+      replay: false,
+    };
     const submission: FacadeSprechenSubmission = {
       id: "id",
       user_id: "u",

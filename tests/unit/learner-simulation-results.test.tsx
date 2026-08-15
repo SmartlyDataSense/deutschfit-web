@@ -226,7 +226,12 @@ describe("SimulationResultsScreen — S8 Task 8.8 Cycle B", () => {
     seedFinalizedRun();
     renderWithI18n(<SimulationResultsScreen />);
 
-    const rowIds = ["competence-row-lesen", "competence-row-hoeren", "competence-row-schreiben", "competence-row-sprechen"];
+    const rowIds = [
+      "competence-row-lesen",
+      "competence-row-hoeren",
+      "competence-row-schreiben",
+      "competence-row-sprechen",
+    ];
     for (const id of rowIds) {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     }
@@ -357,7 +362,9 @@ describe("SimulationResultsScreen — S8 Task 8.8 Cycle B", () => {
   it("legends render 'Acquis' and 'À consolider'", () => {
     seedFinalizedRun();
     renderWithI18n(<SimulationResultsScreen />);
-    expect(within(screen.getByTestId("simulation-legend-correct")).getByText("Acquis")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("simulation-legend-correct")).getByText("Acquis")
+    ).toBeInTheDocument();
     expect(
       within(screen.getByTestId("simulation-legend-skipped")).getByText("À consolider")
     ).toBeInTheDocument();

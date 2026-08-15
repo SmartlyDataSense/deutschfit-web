@@ -66,7 +66,11 @@ import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
 import { __resetLearnerDbForTests } from "@/learner/core/db";
 import { useExamContextStore, type ExamContextState } from "@/learner/core/exam/examContext";
-import { DEFAULT_EXAM_BOARD, DEFAULT_EXAM_LEVEL, DEFAULT_EXAM_SOURCE } from "@/learner/core/exam/examTypes";
+import {
+  DEFAULT_EXAM_BOARD,
+  DEFAULT_EXAM_LEVEL,
+  DEFAULT_EXAM_SOURCE,
+} from "@/learner/core/exam/examTypes";
 import { ProfilScreen } from "@/learner/profil/screens/ProfilScreen";
 import frProfil from "@/learner/locales/fr/profil.json";
 
@@ -325,7 +329,9 @@ describe("ProfilScreen (S11.4)", () => {
   // assertion goes red.
   it("suggestions row copy tracks the profil i18n catalog", async () => {
     ui();
-    await waitFor(() => expect(screen.getByTestId("profil-settings-suggestions")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("profil-settings-suggestions")).toBeInTheDocument()
+    );
     const row = screen.getByTestId("profil-settings-suggestions");
     expect(row).toHaveTextContent(frProfil.settings.suggestions);
     expect(row).toHaveAttribute("aria-label", frProfil.settings.suggestionsA11y);

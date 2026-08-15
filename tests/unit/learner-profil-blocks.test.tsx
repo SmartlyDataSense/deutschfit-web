@@ -62,7 +62,12 @@ describe("SettingsRow (S11.3)", () => {
 
   it("href + disabled renders a non-navigable, non-interactive row (no live href)", () => {
     render(
-      <SettingsRow label="Confidentialité" href="/fr/legal/privacy" disabled testID="row-disabled-link" />
+      <SettingsRow
+        label="Confidentialité"
+        href="/fr/legal/privacy"
+        disabled
+        testID="row-disabled-link"
+      />
     );
     const row = screen.getByTestId("row-disabled-link");
     expect(row.tagName).not.toBe("A");
@@ -120,7 +125,13 @@ describe("SettingsPickerRow (S11.3)", () => {
   it("marks the selected option via aria-checked, highlight and check mark", () => {
     const onChange = vi.fn();
     render(
-      <SettingsPickerRow label="Niveau CECR" value="b1" options={options} onChange={onChange} testID="picker" />
+      <SettingsPickerRow
+        label="Niveau CECR"
+        value="b1"
+        options={options}
+        onChange={onChange}
+        testID="picker"
+      />
     );
     fireEvent.click(screen.getByTestId("picker-trigger"));
     const selectedOption = screen.getByTestId("picker-b1");
@@ -136,7 +147,13 @@ describe("SettingsPickerRow (S11.3)", () => {
   it("disabled options do not fire onChange and show their caveat", () => {
     const onChange = vi.fn();
     render(
-      <SettingsPickerRow label="Niveau CECR" value="b1" options={options} onChange={onChange} testID="picker" />
+      <SettingsPickerRow
+        label="Niveau CECR"
+        value="b1"
+        options={options}
+        onChange={onChange}
+        testID="picker"
+      />
     );
     fireEvent.click(screen.getByTestId("picker-trigger"));
     expect(screen.getByText("Bientôt disponible")).toBeInTheDocument();
@@ -147,7 +164,13 @@ describe("SettingsPickerRow (S11.3)", () => {
   it("backdrop click closes without selecting", () => {
     const onChange = vi.fn();
     render(
-      <SettingsPickerRow label="Niveau CECR" value="b1" options={options} onChange={onChange} testID="picker" />
+      <SettingsPickerRow
+        label="Niveau CECR"
+        value="b1"
+        options={options}
+        onChange={onChange}
+        testID="picker"
+      />
     );
     fireEvent.click(screen.getByTestId("picker-trigger"));
     fireEvent.click(screen.getByTestId("picker-backdrop"));

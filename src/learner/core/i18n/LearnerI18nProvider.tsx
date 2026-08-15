@@ -1,8 +1,8 @@
 "use client";
 
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { I18nextProvider } from "react-i18next";
-import { initLearnerI18n } from "./index";
+import { initLearnerI18n, whenEnReady } from "./index";
 
 export interface LearnerI18nProviderProps {
   readonly children: ReactNode;
@@ -18,9 +18,45 @@ export interface LearnerI18nProviderProps {
  * Client-side provider wrapping the learner app in its own i18next
  * instance. Must be mounted above any component calling `useTranslation()`
  * from `react-i18next` within `src/learner/**`.
+ *
+ * `fr` (the default) is bundled statically and resolves synchronously, so
+ * the `fr` path renders `children` immediately — no gating, no frame where
+ * this renders `null` (SSR paints whatever the initial state is, so a `fr`
+ * boot must never depend on an effect running first). `en` is a lazy
+ * fallback catalog (see `index.ts`): when the resolved boot language is
+ * `"en"`, this withholds `children` for one frame until `whenEnReady()`
+ * resolves, so an `/en/…` visit never flashes a raw i18n key before the
+ * catalogs land.
  */
 export function LearnerI18nProvider({ children, lng }: LearnerI18nProviderProps) {
   const instance = useMemo(() => initLearnerI18n(lng), [lng]);
+  const [enReady, setEnReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    // `whenEnReady()` is designed to never reject — a failed EN chunk load
+    // is caught internally (`index.ts`) so this always resolves. The
+    // `.catch` below is defense in depth only: if that internal contract
+    // is ever broken by a future change, this still flips `enReady` and
+    // renders `children` instead of leaving the provider hung on `null`
+    // forever (see the class doc comment above for why that must never
+    // happen on an `/en/…` boot).
+    void whenEnReady()
+      .then(() => {
+        if (!cancelled) setEnReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setEnReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isEnBoot = instance.language === "en";
+  if (isEnBoot && !enReady) {
+    return null;
+  }
 
   return <I18nextProvider i18n={instance}>{children}</I18nextProvider>;
 }

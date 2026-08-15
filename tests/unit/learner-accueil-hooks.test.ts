@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/learner/core/auth/useLearnerSession", () => ({
   useLearnerSession: { getState: () => ({ session: null }) },
@@ -62,6 +62,15 @@ const page = (rows: string[], next: string | null): HistoryPayload => ({
 beforeEach(() => {
   __resetReadinessForTest();
   __setUserIdResolverForTest(() => null);
+});
+
+// `vitest.config.ts` sets `globals: false`, so RTL's automatic
+// cleanup-after-each cannot self-register (it needs a global `afterEach`
+// to hook into) — every file that calls `render`/`renderHook` must
+// explicitly unmount here, or hook instances (and their store
+// subscriptions) leak across tests.
+afterEach(() => {
+  cleanup();
 });
 
 describe("useAccueilHome", () => {

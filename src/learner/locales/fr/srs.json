@@ -11,6 +11,7 @@
     "emptyBody": "Tu es à jour. Reviens demain ou entraîne une autre compétence.",
     "errorTitle": "Erreur",
     "errorBody": "Impossible de charger les cartes. Réessaie.",
+    "rateError": "Ta réponse n'a pas été enregistrée. Réessaie.",
     "remainingLabel": "restantes",
     "positionLabel": "Carte {{current}} / {{total}}"
   },

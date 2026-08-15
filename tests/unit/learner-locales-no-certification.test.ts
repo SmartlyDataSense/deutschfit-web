@@ -94,11 +94,9 @@ describe("F-3 guardrail · no certification names in i18n strings", () => {
       }
     }
     if (violations.length > 0) {
-      const detail = violations
-        .map((v) => `  - ${v.key} = ${JSON.stringify(v.value)}`)
-        .join("\n");
+      const detail = violations.map((v) => `  - ${v.key} = ${JSON.stringify(v.value)}`).join("\n");
       throw new Error(
-        `Found ${violations.length} certification-name leak(s) in locale '${lang}':\n${detail}\n\nIf this string really must mention a board, add its full key (e.g. "common:examBoards.goethe") to the ALLOWLIST in tests/unit/learner-locales-no-certification.test.ts and explain why in the comment block above the set.`,
+        `Found ${violations.length} certification-name leak(s) in locale '${lang}':\n${detail}\n\nIf this string really must mention a board, add its full key (e.g. "common:examBoards.goethe") to the ALLOWLIST in tests/unit/learner-locales-no-certification.test.ts and explain why in the comment block above the set.`
       );
     }
   });

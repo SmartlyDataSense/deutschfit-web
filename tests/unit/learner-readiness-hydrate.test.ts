@@ -55,7 +55,11 @@ describe("readiness hydration (boot + foreground)", () => {
     });
     __setFetchUnacknowledgedForTest(async () => emptyServer);
     await hydrateOnBoot();
-    expect(getReadiness()).toMatchObject({ submissionId: "sub-1", state: "in-flight", startedAt: 123 });
+    expect(getReadiness()).toMatchObject({
+      submissionId: "sub-1",
+      state: "in-flight",
+      startedAt: 123,
+    });
   });
 
   it("server graded + local in-flight → flips to ready (server wins the terminal)", async () => {
@@ -71,7 +75,14 @@ describe("readiness hydration (boot + foreground)", () => {
       acknowledged_at: null,
     });
     __setFetchUnacknowledgedForTest(async () => ({
-      sprechen: [{ id: "sub-1", status: "graded", created_at: "2026-08-09T00:00:00Z", graded_at: "2026-08-09T00:01:00Z" }],
+      sprechen: [
+        {
+          id: "sub-1",
+          status: "graded",
+          created_at: "2026-08-09T00:00:00Z",
+          graded_at: "2026-08-09T00:01:00Z",
+        },
+      ],
       writing: [],
     }));
     await hydrateOnBoot();
@@ -80,11 +91,19 @@ describe("readiness hydration (boot + foreground)", () => {
 
   it("server-only rows seed the slot; newest created_at wins; graded seeds in-flight then ready", async () => {
     __setFetchUnacknowledgedForTest(async () => ({
-      sprechen: [{ id: "old", status: "pending", created_at: "2026-08-01T00:00:00Z", graded_at: null }],
-      writing: [{ id: "new", status: "graded", created_at: "2026-08-09T00:00:00Z", graded_at: null }],
+      sprechen: [
+        { id: "old", status: "pending", created_at: "2026-08-01T00:00:00Z", graded_at: null },
+      ],
+      writing: [
+        { id: "new", status: "graded", created_at: "2026-08-09T00:00:00Z", graded_at: null },
+      ],
     }));
     await hydrateOnBoot();
-    expect(getReadiness()).toMatchObject({ submissionId: "new", module: "schreiben", state: "ready" });
+    expect(getReadiness()).toMatchObject({
+      submissionId: "new",
+      module: "schreiben",
+      state: "ready",
+    });
   });
 
   it("server failure installs local (if any) + tracks hydrate_failed; signed-out is a no-op", async () => {
@@ -92,7 +111,10 @@ describe("readiness hydration (boot + foreground)", () => {
       throw new Error("net");
     });
     await hydrateOnBoot();
-    expect(trackEvent).toHaveBeenCalledWith("hydrate_failed", { phase: "boot", reason: "server_fetch" });
+    expect(trackEvent).toHaveBeenCalledWith("hydrate_failed", {
+      phase: "boot",
+      reason: "server_fetch",
+    });
     expect(getReadiness()).toBeNull();
 
     __setUserIdResolverForTest(() => null);

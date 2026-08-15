@@ -50,7 +50,7 @@ import enCommon from "../../src/learner/locales/en/common.json";
  */
 export function collectStringValues(
   input: unknown,
-  prefix = "",
+  prefix = ""
 ): { readonly path: string; readonly value: string }[] {
   const out: { path: string; value: string }[] = [];
   if (typeof input === "string") {
@@ -59,12 +59,7 @@ export function collectStringValues(
   }
   if (Array.isArray(input)) {
     input.forEach((entry, idx) => {
-      out.push(
-        ...collectStringValues(
-          entry,
-          prefix ? `${prefix}[${idx}]` : `[${idx}]`,
-        ),
-      );
+      out.push(...collectStringValues(entry, prefix ? `${prefix}[${idx}]` : `[${idx}]`));
     });
     return out;
   }
@@ -149,10 +144,7 @@ interface Violation {
   readonly label: string;
 }
 
-function findViolations(
-  resource: unknown,
-  locale: string,
-): readonly Violation[] {
+function findViolations(resource: unknown, locale: string): readonly Violation[] {
   const violations: Violation[] = [];
   const entries = collectStringValues(resource);
   for (const { path, value } of entries) {
@@ -175,17 +167,14 @@ describe("brand-voice lint — sprechen namespace", () => {
       a: "x",
       nested: { b: "y", arr: ["z1", { c: "z2" }] },
     };
-    const collected = collectStringValues(sample).map(({ path, value }) => [
-      path,
-      value,
-    ]);
+    const collected = collectStringValues(sample).map(({ path, value }) => [path, value]);
     expect(collected).toEqual(
       expect.arrayContaining([
         ["a", "x"],
         ["nested.b", "y"],
         ["nested.arr[0]", "z1"],
         ["nested.arr[1].c", "z2"],
-      ]),
+      ])
     );
     expect(collected).toHaveLength(4);
   });
@@ -217,9 +206,7 @@ describe("brand-voice lint — sprechen namespace", () => {
     const planted = { ok: "Bilan prêt.", bad: "C'est parti !" };
     const violations = findViolations(planted, "test");
     const labels = violations.map((v) => v.label);
-    expect(labels).toEqual(
-      expect.arrayContaining(["c'est parti", "exclamation mark (!)"]),
-    );
+    expect(labels).toEqual(expect.arrayContaining(["c'est parti", "exclamation mark (!)"]));
   });
 });
 

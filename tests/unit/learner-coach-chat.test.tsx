@@ -282,9 +282,7 @@ describe("CoachChatScreen (S9 Task 9.4)", () => {
       duration_ms: 0,
       outcome: "offline",
     });
-    expect(
-      trackEventMock.mock.calls.some(([name]) => name === "coach_message_sent")
-    ).toBe(false);
+    expect(trackEventMock.mock.calls.some(([name]) => name === "coach_message_sent")).toBe(false);
   });
 
   it("fires coach_message_sent then coach_message_received{outcome:success} on a successful submit", async () => {
@@ -304,11 +302,12 @@ describe("CoachChatScreen (S9 Task 9.4)", () => {
     await waitFor(() => expect(sendCoachMessageMock).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText("Guten Tag!")).toBeInTheDocument());
 
-    const sentIndex = trackEventMock.mock.calls.findIndex(([name]) => name === "coach_message_sent");
+    const sentIndex = trackEventMock.mock.calls.findIndex(
+      ([name]) => name === "coach_message_sent"
+    );
     const receivedIndex = trackEventMock.mock.calls.findIndex(
       ([name, props]) =>
-        name === "coach_message_received" &&
-        (props as { outcome?: string })?.outcome === "success"
+        name === "coach_message_received" && (props as { outcome?: string })?.outcome === "success"
     );
     expect(sentIndex).toBeGreaterThanOrEqual(0);
     expect(receivedIndex).toBeGreaterThan(sentIndex);

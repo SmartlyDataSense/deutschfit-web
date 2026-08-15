@@ -24,7 +24,12 @@ export function SRSExplanationPanel({ body, overlineLabel, testID }: SRSExplanat
       aria-label={`${overlineLabel}. ${body}`}
       className="rounded-[var(--radius-md)] bg-bg-content p-4"
     >
-      <AppText tone="coach" size="caption" weight="semi" className="uppercase tracking-[0.8px]">
+      <AppText
+        tone="coach"
+        size="caption"
+        weight="semi"
+        className="uppercase tracking-[var(--tracking-wide)]"
+      >
         {overlineLabel}
       </AppText>
       <AppText size="body" className="mt-1">

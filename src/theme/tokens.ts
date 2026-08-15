@@ -35,6 +35,10 @@ export const palette = {
   textTertiary: "#6E6257",
   lineSoft: "#E0D3B8",
   lineStrong: "#BDAE91",
+  // Not consumed directly here (Tailwind arbitrary-value classNames read
+  // CSS custom properties, not JS constants) — `app/globals.css`'s
+  // `--color-overlay-scrim` is derived from this same rgb/alpha pair via
+  // `color-mix`. Keep the two in sync if mobile's value ever changes.
   overlayScrim: "rgba(15, 16, 18, 0.44)",
 } as const;
 

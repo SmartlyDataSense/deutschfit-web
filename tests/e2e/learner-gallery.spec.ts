@@ -31,6 +31,18 @@ const VIEWPORTS: Array<{ name: "mobile" | "desktop"; width: number; height: numb
 ];
 
 test.describe("learner primitives gallery", () => {
+  // The gallery route 404s unless the build that `webServer` produced was
+  // given `NEXT_PUBLIC_ENABLE_GALLERY=1` — and that value is inlined at
+  // build time, so it must be present in the environment that launches
+  // Playwright, not just at request time. A plain `npm run e2e` does not
+  // set it, so without this guard both tests fail on a 404 that says
+  // nothing about the primitives. Run `npm run e2e:gallery` to exercise
+  // them for real.
+  test.skip(
+    process.env.NEXT_PUBLIC_ENABLE_GALLERY !== "1",
+    "NEXT_PUBLIC_ENABLE_GALLERY is not set — the gallery route 404s in this build. By design: run `npm run e2e:gallery` to cover it."
+  );
+
   for (const viewport of VIEWPORTS) {
     test(`renders every primitive section at ${viewport.name} (${viewport.width}x${viewport.height})`, async ({
       page,

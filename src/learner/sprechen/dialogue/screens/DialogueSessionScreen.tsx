@@ -101,7 +101,7 @@ function formatClock(totalSec: number): string {
 // set (`failed` included deliberately: no in-screen retry for a turn
 // failure, only for the boot failure below; `graded` is transient, the
 // screen routes away as soon as the graded effect fires).
-const BUSY_PHASES: ReadonlySet<DialoguePhase> = new Set([
+export const BUSY_PHASES: ReadonlySet<DialoguePhase> = new Set([
   "starting",
   "uploading",
   "partner_responding",

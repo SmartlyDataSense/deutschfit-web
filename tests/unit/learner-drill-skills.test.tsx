@@ -164,9 +164,19 @@ describe("DrillSkillProfileScreen", () => {
     mockOrder.mockResolvedValueOnce({
       data: [
         // renforcer
-        { concept_code: "akkusativ", p_mastery: 0.4, attempts: 5, drill_skill: { name_fr: "Akkusativ" } },
+        {
+          concept_code: "akkusativ",
+          p_mastery: 0.4,
+          attempts: 5,
+          drill_skill: { name_fr: "Akkusativ" },
+        },
         // maitrise
-        { concept_code: "perfekt", p_mastery: 0.9, attempts: 6, drill_skill: { name_fr: "Perfekt" } },
+        {
+          concept_code: "perfekt",
+          p_mastery: 0.9,
+          attempts: 6,
+          drill_skill: { name_fr: "Perfekt" },
+        },
         // not_assessed
         { concept_code: "dativ", p_mastery: 0, attempts: 0, drill_skill: { name_fr: "Dativ" } },
         // no "progres" row on purpose — that bucket must be omitted entirely.
@@ -194,9 +204,7 @@ describe("DrillSkillProfileScreen", () => {
     expect(screen.getByTestId("drill-skill-profile-bucket-renforcer")).toHaveTextContent(
       "À renforcer"
     );
-    expect(screen.getByTestId("drill-skill-profile-bucket-maitrise")).toHaveTextContent(
-      "Maîtrisé"
-    );
+    expect(screen.getByTestId("drill-skill-profile-bucket-maitrise")).toHaveTextContent("Maîtrisé");
     expect(screen.getByTestId("drill-skill-profile-bucket-not_assessed")).toHaveTextContent(
       "Pas encore évalué"
     );
@@ -207,8 +215,12 @@ describe("DrillSkillProfileScreen", () => {
 
     renderScreen();
 
-    await waitFor(() => expect(screen.getByTestId("drill-skill-profile-empty")).toBeInTheDocument());
-    expect(screen.getByText("Fais une première séance pour voir tes points ici.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("drill-skill-profile-empty")).toBeInTheDocument()
+    );
+    expect(
+      screen.getByText("Fais une première séance pour voir tes points ici.")
+    ).toBeInTheDocument();
   });
 
   it("renders the error state when the fetch rejects", async () => {
@@ -216,7 +228,9 @@ describe("DrillSkillProfileScreen", () => {
 
     renderScreen();
 
-    await waitFor(() => expect(screen.getByTestId("drill-skill-profile-error")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("drill-skill-profile-error")).toBeInTheDocument()
+    );
     expect(
       screen.getByText("Impossible de charger tes points pour le moment.")
     ).toBeInTheDocument();
@@ -225,7 +239,12 @@ describe("DrillSkillProfileScreen", () => {
   it("renders a CTA linking to /{locale}/app/drill/session", async () => {
     mockOrder.mockResolvedValueOnce({
       data: [
-        { concept_code: "akkusativ", p_mastery: 0.4, attempts: 5, drill_skill: { name_fr: "Akkusativ" } },
+        {
+          concept_code: "akkusativ",
+          p_mastery: 0.4,
+          attempts: 5,
+          drill_skill: { name_fr: "Akkusativ" },
+        },
       ],
       error: null,
     });

@@ -23,11 +23,22 @@ import type { ReactElement } from "react";
 // `vi.hoisted` — `vi.mock` factories are hoisted above the rest of the
 // module, so any mock fn they reference must be built via `vi.hoisted`
 // (same TDZ rationale as `learner-sprechen-topic-picker.test.tsx`).
-const { pushMock, replaceMock, listDialogueTeileMock, hydrateExamContextMock } = vi.hoisted(() => ({
+const {
+  pushMock,
+  replaceMock,
+  listDialogueTeileMock,
+  hydrateExamContextMock,
+  useDialogueSessionOverride,
+} = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
   listDialogueTeileMock: vi.fn(),
   hydrateExamContextMock: vi.fn(),
+  // Step-3 (S7-7.11) BUSY_PHASES gate pin — a settable escape hatch so one
+  // dedicated describe block can force `useDialogueSession`'s return value
+  // to an arbitrary phase without disturbing every other test in this file,
+  // which all drive the REAL hook through `sessionDeps`.
+  useDialogueSessionOverride: { current: null as ((deps?: unknown) => unknown) | null },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -51,6 +62,21 @@ vi.mock("@/learner/core/exam/examContext", async (importOriginal) => {
   return { ...actual, hydrateExamContext: hydrateExamContextMock };
 });
 
+// Partial mock: keep the real `useDialogueSession` for every test in this
+// file EXCEPT the BUSY_PHASES gate describe block below, which flips
+// `useDialogueSessionOverride.current` to force an arbitrary phase.
+vi.mock("@/learner/sprechen/dialogue/hooks/useDialogueSession", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/learner/sprechen/dialogue/hooks/useDialogueSession")>();
+  return {
+    ...actual,
+    useDialogueSession: (...args: [deps?: unknown]) =>
+      useDialogueSessionOverride.current
+        ? useDialogueSessionOverride.current(...args)
+        : actual.useDialogueSession(...(args as Parameters<typeof actual.useDialogueSession>)),
+  };
+});
+
 import { useExamContextStore } from "@/learner/core/exam/examContext";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { initLearnerI18n } from "@/learner/core/i18n";
@@ -60,12 +86,19 @@ import type {
   DialogueTeilConfig,
   DialogueTurnResult,
 } from "@/learner/core/api/examApi";
-import type { DialogueDeps } from "@/learner/sprechen/dialogue/hooks/useDialogueSession";
+import {
+  INITIAL_DIALOGUE_STATE,
+  type DialogueDeps,
+  type UseDialogueSessionApi,
+} from "@/learner/sprechen/dialogue/hooks/useDialogueSession";
 import type { NativePlayer } from "@/learner/sprechen/hooks/useAudioReplay";
 import type { NativeRecorder } from "@/learner/sprechen/hooks/useRecorder";
 import { useDialogueResult } from "@/learner/sprechen/dialogue/resultStore";
 import { DialogueFeedbackScreen } from "@/learner/sprechen/dialogue/screens/DialogueFeedbackScreen";
-import { DialogueSessionScreen } from "@/learner/sprechen/dialogue/screens/DialogueSessionScreen";
+import {
+  BUSY_PHASES,
+  DialogueSessionScreen,
+} from "@/learner/sprechen/dialogue/screens/DialogueSessionScreen";
 import { DialogueTeilPickerScreen } from "@/learner/sprechen/dialogue/screens/DialogueTeilPickerScreen";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 
@@ -484,6 +517,55 @@ describe("DialogueSessionScreen (S7 Task 7.11)", () => {
     // not push a second replace.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(replaceMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DialogueSessionScreen — BUSY_PHASES gate (Step 3 / S7-7.11 regression pin)
+//
+// Iterates the module's REAL exported `BUSY_PHASES` set (not a copy — a
+// hand-copied list would diverge silently the next time a phase is added
+// to/removed from the set) via a controllable `useDialogueSession` stub,
+// so each phase can be asserted in isolation without driving the full
+// async start/record/upload/finalize flow through every one of them.
+// ---------------------------------------------------------------------------
+
+describe("DialogueSessionScreen — BUSY_PHASES gate (S7 Task 7.11, Step 3)", () => {
+  afterEach(() => {
+    useDialogueSessionOverride.current = null;
+  });
+
+  function stubSession(phase: (typeof INITIAL_DIALOGUE_STATE)["phase"]): UseDialogueSessionApi {
+    return {
+      ...INITIAL_DIALOGUE_STATE,
+      phase,
+      start: vi.fn().mockResolvedValue(undefined),
+      submitStudentTurn: vi.fn().mockResolvedValue(undefined),
+      finalize: vi.fn().mockResolvedValue(undefined),
+      markPartnerAudioConsumed: vi.fn(),
+      reset: vi.fn(),
+    };
+  }
+
+  it.each([...BUSY_PHASES])("record toggle is disabled while phase is '%s'", async (phase) => {
+    useDialogueSessionOverride.current = () => stubSession(phase);
+
+    renderSessionScreen();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("dialogue-session-record-toggle")).toBeDisabled()
+    );
+  });
+
+  it("control: 'awaiting_student' is NOT a member of BUSY_PHASES and leaves the toggle enabled", async () => {
+    expect(BUSY_PHASES.has("awaiting_student")).toBe(false);
+    useDialogueSessionOverride.current = () => stubSession("awaiting_student");
+
+    renderSessionScreen();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("dialogue-session-record-toggle")).not.toBeDisabled()
+    );
   });
 });
 

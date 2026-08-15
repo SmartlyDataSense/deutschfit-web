@@ -38,7 +38,12 @@ beforeEach(() => {
   });
   useOnboardingAnswers.getState().reset();
   markDone.mockResolvedValue(undefined);
-  useOnboardingFlagStore.setState({ userId: "user-1", done: false, hydrated: true, markDone } as never);
+  useOnboardingFlagStore.setState({
+    userId: "user-1",
+    done: false,
+    hydrated: true,
+    markDone,
+  } as never);
   upsert.mockResolvedValue({ error: null });
   profileMaybeSingle.mockResolvedValue({ data: { onboarded_at: null }, error: null });
   profileUpdateIs.mockResolvedValue({ error: null });
@@ -55,7 +60,10 @@ describe("persistOnboardingAnswers", () => {
   });
 
   it("does not re-stamp when onboarded_at is already set (multi-device replay)", async () => {
-    profileMaybeSingle.mockResolvedValue({ data: { onboarded_at: "2026-01-01T00:00:00Z" }, error: null });
+    profileMaybeSingle.mockResolvedValue({
+      data: { onboarded_at: "2026-01-01T00:00:00Z" },
+      error: null,
+    });
     const res = await persistOnboardingAnswers({ motivation: null, schedule: null });
     expect(res).toEqual({ ok: true, stampedOnboardedAt: false });
     expect(profileUpdateIs).not.toHaveBeenCalled();
@@ -68,7 +76,10 @@ describe("persistOnboardingAnswers", () => {
       reason: "unauthenticated",
     });
 
-    useLearnerSession.setState({ session: { user: { id: "user-1" } } as never, status: "authenticated" });
+    useLearnerSession.setState({
+      session: { user: { id: "user-1" } } as never,
+      status: "authenticated",
+    });
     upsert.mockResolvedValue({ error: { message: "boom" } });
     expect(await persistOnboardingAnswers({ motivation: "work", schedule: "5" })).toEqual({
       ok: false,

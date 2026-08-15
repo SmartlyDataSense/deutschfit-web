@@ -334,7 +334,7 @@ export function SprechenFeedbackScreen({ submissionId }: SprechenFeedbackScreenP
     return (
       <div
         data-testid="sprechen-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center lg:px-8"
       >
         <div
           data-testid="sprechen-feedback-in-flight-fallback"
@@ -361,7 +361,7 @@ export function SprechenFeedbackScreen({ submissionId }: SprechenFeedbackScreenP
     return (
       <div
         data-testid="sprechen-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
       >
         <EmptyState
           testID="sprechen-feedback-timeout"
@@ -404,7 +404,7 @@ export function SprechenFeedbackScreen({ submissionId }: SprechenFeedbackScreenP
     return (
       <div
         data-testid="sprechen-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
       >
         <div data-testid={rejectedTestID} className="flex w-full flex-col items-center gap-4">
           <EmptyState
@@ -429,7 +429,7 @@ export function SprechenFeedbackScreen({ submissionId }: SprechenFeedbackScreenP
     return (
       <div
         data-testid="sprechen-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
       >
         <EmptyState
           testID="sprechen-feedback-failed"

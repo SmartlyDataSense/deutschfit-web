@@ -2,7 +2,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }),
+}));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
 
 import { initLearnerI18n } from "@/learner/core/i18n";
@@ -21,7 +23,8 @@ beforeAll(() => {
   initLearnerI18n("fr");
 });
 
-const ui = (node: React.ReactNode) => render(<LearnerI18nProvider lng="fr">{node}</LearnerI18nProvider>);
+const ui = (node: React.ReactNode) =>
+  render(<LearnerI18nProvider lng="fr">{node}</LearnerI18nProvider>);
 
 describe("BrandMark", () => {
   it("renders the tone-matched monogram at the requested size", () => {

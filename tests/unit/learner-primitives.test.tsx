@@ -9,7 +9,16 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 // between every test explicitly.
 afterEach(cleanup);
 
-import { AppText, AppButton, Chip, Card, ProgressBar, TimerPill, formatMs, ScoreBadge } from "@/learner/ui/primitives";
+import {
+  AppText,
+  AppButton,
+  Chip,
+  Card,
+  ProgressBar,
+  TimerPill,
+  formatMs,
+  ScoreBadge,
+} from "@/learner/ui/primitives";
 import { Donut, arcPath, describeArc, polarToCartesian } from "@/learner/ui/primitives/Donut";
 import { SegmentedControl } from "@/learner/ui/primitives/SegmentedControl";
 import { Input } from "@/learner/ui/primitives/Input";
@@ -20,8 +29,10 @@ import { GlassSurface } from "@/learner/ui/primitives/GlassSurface";
 
 describe("AppText — variant to class mapping", () => {
   it("maps tone to the matching text-color class", () => {
+    // S13 Task 10 (axe sweep): "cta" resolves to the AA-safe `text-cta-text`
+    // shade, not the vivid decorative `text-cta` — see AppText.tsx TONE_CLASS.
     render(<AppText tone="cta">Hallo</AppText>);
-    expect(screen.getByText("Hallo").className).toMatch(/\btext-cta\b/);
+    expect(screen.getByText("Hallo").className).toMatch(/\btext-cta-text\b/);
   });
 
   it("maps size to the matching type-scale class", () => {
@@ -65,20 +76,23 @@ describe("AppText — variant to class mapping", () => {
     render(
       <AppText family="serif" numeric>
         42
-      </AppText>,
+      </AppText>
     );
     expect(screen.getByText("42").className).toMatch(/\bfont-mono\b/);
   });
 });
 
 describe("AppButton — variants + disabled/loading states", () => {
-  it.each(["solid", "outline", "ghost", "premium"] as const)("renders the %s variant", (variant) => {
-    const onClick = vi.fn();
-    render(<AppButton label={`btn-${variant}`} onClick={onClick} variant={variant} />);
-    const btn = screen.getByRole("button", { name: `btn-${variant}` });
-    fireEvent.click(btn);
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
+  it.each(["solid", "outline", "ghost", "premium"] as const)(
+    "renders the %s variant",
+    (variant) => {
+      const onClick = vi.fn();
+      render(<AppButton label={`btn-${variant}`} onClick={onClick} variant={variant} />);
+      const btn = screen.getByRole("button", { name: `btn-${variant}` });
+      fireEvent.click(btn);
+      expect(onClick).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it("disabled blocks the onClick handler", () => {
     const onClick = vi.fn();
@@ -120,6 +134,35 @@ describe("Card", () => {
     render(<Card testID="card">content</Card>);
     expect(screen.getByTestId("card").className).toMatch(/bg-bg-card/);
     expect(screen.getByText("content")).toBeInTheDocument();
+  });
+
+  // S13 Task 5 · Step 2: `ariaLabel` gives a non-interactive Card a
+  // recognized accessibility host — mobile `accessibilityLabel` parity
+  // (mobile Card.tsx sets `accessibilityRole="button"` only when
+  // `onPress` is set, and `accessibilityLabel` either way).
+  it("non-clickable: ariaLabel renders role=group with that aria-label (no ariaLabel = no role/label at all)", () => {
+    const { rerender } = render(<Card testID="card">content</Card>);
+    expect(screen.getByTestId("card")).not.toHaveAttribute("role");
+    expect(screen.getByTestId("card")).not.toHaveAttribute("aria-label");
+    rerender(
+      <Card testID="card" ariaLabel="Résumé de la carte">
+        content
+      </Card>
+    );
+    expect(screen.getByRole("group", { name: "Résumé de la carte" })).toBe(
+      screen.getByTestId("card")
+    );
+  });
+
+  it("clickable: ariaLabel sets aria-label on the button (already has an implicit role)", () => {
+    render(
+      <Card testID="card" onClick={() => {}} ariaLabel="Résumé de la carte">
+        content
+      </Card>
+    );
+    expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(
+      screen.getByTestId("card")
+    );
   });
 });
 
@@ -209,7 +252,7 @@ describe("Donut — arc math (pure functions)", () => {
           { value: 0.5, tone: "teal" },
           { value: 0.25, tone: "amber" },
         ]}
-      />,
+      />
     );
     expect(screen.getByTestId("seg")).toHaveAttribute("aria-valuenow", "0.75");
   });
@@ -226,7 +269,7 @@ describe("SegmentedControl", () => {
         ]}
         value="fr"
         onChange={onChange}
-      />,
+      />
     );
     fireEvent.click(screen.getByText("EN"));
     expect(onChange).toHaveBeenCalledWith("en");

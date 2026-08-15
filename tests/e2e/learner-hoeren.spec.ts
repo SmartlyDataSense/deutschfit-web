@@ -124,7 +124,6 @@ async function resolveAudioBranch(page: Page, label: string): Promise<"play" | "
   const branch: "play" | "missing" = (await playBtn.isVisible().catch(() => false))
     ? "play"
     : "missing";
-  // eslint-disable-next-line no-console
   console.log(`[hoeren e2e][${label}] audio branch: ${branch}`);
   return branch;
 }
@@ -196,7 +195,6 @@ test.describe("Hören practice + graded drill (qa1, real backend)", () => {
     // request (synthetic `local-<sessionId>` attempt id, fails server-side
     // before the quota check — zero rate-limit quota consumed) — log +
     // assert it never retries.
-    // eslint-disable-next-line no-console
     console.log(`[hoeren e2e][practice] hoeren-submit requests fired: ${submitRequests.length}`);
     expect(submitRequests.length).toBeLessThanOrEqual(1);
   });
@@ -258,7 +256,6 @@ test.describe("Hören practice + graded drill (qa1, real backend)", () => {
     // Product lock: no paywall copy on any branch (Constraint 11).
     await expect(page.locator("text=/premium|abonnement|upgrade/i")).toHaveCount(0);
 
-    // eslint-disable-next-line no-console
     console.log(`[hoeren e2e][graded] hoeren-submit requests fired: ${submitRequests.length}`);
     expect(submitRequests.length).toBeLessThanOrEqual(1);
 

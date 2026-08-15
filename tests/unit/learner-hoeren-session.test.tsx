@@ -560,9 +560,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
       })
     );
 
-    renderWithI18n(
-      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
-    );
+    renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
 
     fireEvent.click(screen.getByTestId("hoeren-option-a")); // Teil 1 item answered
     fireEvent.click(screen.getByTestId("hoeren-session-next"));
@@ -591,9 +589,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
       useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
     );
 
-    renderWithI18n(
-      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
-    );
+    renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
     fireEvent.click(screen.getByTestId("hoeren-option-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
@@ -621,9 +617,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
       useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
     );
 
-    renderWithI18n(
-      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
-    );
+    renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
     fireEvent.click(screen.getByTestId("hoeren-option-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
@@ -688,9 +682,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
       useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
     );
 
-    renderWithI18n(
-      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />
-    );
+    renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
     fireEvent.click(screen.getByTestId("hoeren-option-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 

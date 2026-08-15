@@ -18,7 +18,9 @@ const { push, trackEvent, setExamContext, hydrate } = vi.hoisted(() => ({
   hydrate: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }),
+}));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
 vi.mock("@/learner/core/analytics/posthog", async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -94,8 +96,15 @@ describe("ExamTypeScreen", () => {
         "/fr/app/onboarding/diagnostic?attempt=11111111-1111-4111-8111-111111111111&level=b1&board=goethe&mode=onboarding"
       )
     );
-    expect(setExamContext).toHaveBeenCalledWith({ board: "goethe", level: "b1", source: "onboarding" });
-    expect(trackEvent).toHaveBeenCalledWith("onboarding_step_completed", { step: "exam-type", index: 1 });
+    expect(setExamContext).toHaveBeenCalledWith({
+      board: "goethe",
+      level: "b1",
+      source: "onboarding",
+    });
+    expect(trackEvent).toHaveBeenCalledWith("onboarding_step_completed", {
+      step: "exam-type",
+      index: 1,
+    });
   });
 
   it("shows the save error inline and does not navigate when persistence fails", async () => {
@@ -106,7 +115,9 @@ describe("ExamTypeScreen", () => {
     fireEvent.click(screen.getByTestId("exam-level-trigger"));
     fireEvent.click(screen.getByTestId("exam-level-option-b1"));
     fireEvent.click(screen.getByTestId("onboarding-exam-type-continue"));
-    await waitFor(() => expect(screen.getByTestId("onboarding-exam-type-save-error")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("onboarding-exam-type-save-error")).toBeInTheDocument()
+    );
     expect(push).not.toHaveBeenCalled();
   });
 

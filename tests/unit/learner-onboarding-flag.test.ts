@@ -14,8 +14,12 @@ function installMemoryStorage(): Record<string, string> {
     configurable: true,
     value: {
       getItem: (k: string) => (k in data ? data[k] : null),
-      setItem: (k: string, v: string) => { data[k] = v; },
-      removeItem: (k: string) => { delete data[k]; },
+      setItem: (k: string, v: string) => {
+        data[k] = v;
+      },
+      removeItem: (k: string) => {
+        delete data[k];
+      },
     } as unknown as Storage,
   });
   return data;

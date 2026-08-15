@@ -61,7 +61,7 @@ export function DifficultyActionRow({
             aria-label={ariaLabel}
             onClick={() => onSelect(value)}
             className={clsx(
-              "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-50",
+              "flex min-h-[var(--control-height-lg)] flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-50",
               TILE_BG[value]
             )}
           >

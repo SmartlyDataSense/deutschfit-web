@@ -198,7 +198,7 @@ export function AccueilScreen() {
     if (isError) {
       return (
         <div
-          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center"
+          className="flex min-h-[var(--state-panel-min-height)] flex-col items-center justify-center gap-4 px-6 text-center"
           data-testid="accueil-error"
         >
           <EmptyState
@@ -242,7 +242,13 @@ export function AccueilScreen() {
   const { countdown } = data;
 
   const currentLevelLabel = isExamContextLoaded ? currentLevel.toUpperCase() : "";
-  const greetingLine = `Bonjour, ${userName}.`;
+  // Must go through `t` — this line is the first thing an `/en` visitor
+  // reads, and `defaultLocale` is `en`. The key exists in both catalogs
+  // ("Bonjour, {{name}}" / "Hi, {{name}}"); it was hardcoded to the French
+  // string in S3, so English users were greeted in French. The trailing
+  // period stays out of the catalog so both locales share one punctuation
+  // rule.
+  const greetingLine = `${t("dashboard:greeting.hi", { name: userName })}.`;
   const hasFutureExam = countdown.daysRemaining !== null && countdown.daysRemaining > 0;
   const teaser = hasFutureExam
     ? currentLevelLabel

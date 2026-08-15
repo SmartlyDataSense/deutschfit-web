@@ -80,7 +80,8 @@ export function CoachThreadPanel({
       data-testid={testID}
       className={clsx(
         "flex h-full w-72 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line-soft bg-bg-hero p-4",
-        isDrawer && "w-[82%] max-w-[320px] rounded-r-[var(--radius-lg)] border-r-0 shadow-lg"
+        isDrawer &&
+          "w-[82%] max-w-[var(--coach-drawer-max-width)] rounded-r-[var(--radius-lg)] border-r-0 shadow-lg"
       )}
     >
       <AppText as="h2" family="serif" size="h2" weight="bold">

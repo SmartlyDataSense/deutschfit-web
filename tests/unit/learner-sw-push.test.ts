@@ -24,10 +24,7 @@ import path from "node:path";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const SW_SOURCE = readFileSync(
-  path.resolve(__dirname, "../../public/sw.js"),
-  "utf8",
-);
+const SW_SOURCE = readFileSync(path.resolve(__dirname, "../../public/sw.js"), "utf8");
 
 const ORIGIN = "https://app.deutschfit.test";
 
@@ -48,7 +45,11 @@ interface SwHarness {
   listeners: Record<string, Listener>;
   shown: ShownNotification[];
   openWindow: ReturnType<typeof vi.fn>;
-  matchAllResult: Array<{ url: string; navigate: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn> }>;
+  matchAllResult: Array<{
+    url: string;
+    navigate: ReturnType<typeof vi.fn>;
+    focus: ReturnType<typeof vi.fn>;
+  }>;
   /** Fires the `push` listener and resolves once its waitUntil settles. */
   push(data: string | null): Promise<void>;
   /** Fires the `notificationclick` listener with the given data payload. */
@@ -161,7 +162,7 @@ describe("public/sw.js — push handler", () => {
         title: "Ta correction est prête",
         body: "Ouvre-la pour voir les points gagnés.",
         url: "/fr/app/ecrire/abc-123",
-      }),
+      })
     );
 
     expect(sw.shown).toHaveLength(1);
@@ -177,11 +178,9 @@ describe("public/sw.js — push handler", () => {
         title: "T",
         body: "B",
         url: "/fr/app/ecrire/123?from=push#feedback",
-      }),
+      })
     );
-    expect(sw.only().options.data.url).toBe(
-      "/fr/app/ecrire/123?from=push#feedback",
-    );
+    expect(sw.only().options.data.url).toBe("/fr/app/ecrire/123?from=push#feedback");
   });
 
   it.each([

@@ -137,6 +137,30 @@ describe("RevealScreen", () => {
     expect(screen.queryByTestId("srs-reveal-missing")).not.toBeInTheDocument();
   });
 
+  it("S13 Task 7 (S10-T5): surfaces a rate-submit failure and re-enables the four difficulty buttons", async () => {
+    await seedDueCard("card-1", 2);
+    renderWithI18n(<RevealScreen cardId="card-1" />);
+    await waitFor(() => {
+      expect(screen.getByTestId("srs-reveal-difficulty")).toBeInTheDocument();
+    });
+
+    const db = await getLearnerDb();
+    vi.spyOn(db.srsReviews, "put").mockRejectedValueOnce(new Error("write failed"));
+
+    const goodButton = screen.getByRole("button", { name: /Bien/ });
+    fireEvent.click(goodButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("srs-reveal-rate-error")).toBeInTheDocument();
+    });
+    expect(replaceMock).not.toHaveBeenCalled();
+    // Bare `catch {}` previously swallowed this — before the fix, nothing
+    // renders here and the assertion above fails.
+    for (const button of screen.getByTestId("srs-reveal-difficulty").querySelectorAll("button")) {
+      expect(button).not.toBeDisabled();
+    }
+  });
+
   it("persists the review before navigating away — the review row exists by the time router.replace fires", async () => {
     await seedDueCard("card-1", 2);
     renderWithI18n(<RevealScreen cardId="card-1" />);

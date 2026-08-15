@@ -92,7 +92,10 @@ describe("db clear() + wipeLocalState (S11.1)", () => {
     await db.userStats.put({ user_id: "u1", full_name: "Marie" });
     await db.srsCards.put({ id: "c1", next_due: 0 });
     await db.drillAttemptOutbox.put({ id: "o1", queued_at: 1 });
-    setFlag(EXAM_CONTEXT_STORAGE_KEY, JSON.stringify({ board: "telc", level: "b1", source: "settings" }));
+    setFlag(
+      EXAM_CONTEXT_STORAGE_KEY,
+      JSON.stringify({ board: "telc", level: "b1", source: "settings" })
+    );
     setFlag(LEARNER_ONBOARDING_DONE_LEGACY_KEY, "true");
     setFlag(learnerOnboardingDoneKeyFor("u1"), "true");
     setFlag(LEARNER_LANG_STORAGE_KEY, "fr");

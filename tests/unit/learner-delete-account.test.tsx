@@ -70,6 +70,7 @@ vi.mock("@/learner/core/auth/useLearnerSession", async (importOriginal) => {
 
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
+import { FOCUS_RING_CLASSES } from "@/learner/ui/primitives/AppButton";
 import { DeleteAccountScreen } from "@/learner/account-deletion/screens/DeleteAccountScreen";
 
 afterEach(cleanup);
@@ -244,6 +245,33 @@ describe("DeleteAccountScreen (S11.8)", () => {
     expect(confirmInput().value).toBe("DELETE"); // intent gate preserved
     // Retry only dismisses the error card — it must not itself re-fire the call.
     expect(invokeFn).toHaveBeenCalledTimes(1);
+  });
+
+  // S13 Task 5 · Step 4 (S11-T8): this is the app's danger zone — its
+  // three raw `<button>`s (the destructive confirm CTA, the cancel
+  // escape hatch, and the error-retry) must each carry the shared
+  // focus-visible ring convention, same as every `AppButton`-backed
+  // control. Swapping to `AppButton` here would impose its own
+  // `inline-flex min-h-11 px-6` layout and change these rows — the ring
+  // is applied to the raw buttons directly instead. There is no
+  // danger-tone ring in the token system, so all three (including the
+  // literally-destructive confirm CTA) take the same CTA-coloured ring
+  // by convention.
+  it("the three danger-zone buttons (confirm, cancel, retry) all carry the shared focus ring classes", async () => {
+    invokeFn.mockRejectedValue(new Error("edge 500"));
+    ui();
+    for (const cls of FOCUS_RING_CLASSES.split(" ")) {
+      expect(screen.getByTestId("delete-account-confirm-cta")).toHaveClass(cls);
+      expect(screen.getByTestId("delete-account-cancel")).toHaveClass(cls);
+    }
+    fireEvent.change(confirmInput(), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByTestId("delete-account-confirm-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("delete-account-error-retry")).toBeInTheDocument()
+    );
+    for (const cls of FOCUS_RING_CLASSES.split(" ")) {
+      expect(screen.getByTestId("delete-account-error-retry")).toHaveClass(cls);
+    }
   });
 
   it("cancel navigates back without any side effect", () => {

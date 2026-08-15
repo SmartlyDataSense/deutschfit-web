@@ -16,7 +16,13 @@ import {
 describe("examTypes (mobile parity port)", () => {
   it("ships the exact board and level sets in mobile's order", () => {
     expect(EXAM_BOARDS).toEqual([
-      "goethe", "telc", "oesd", "testdaf", "ecl", "pflege", "beruf_tourismus",
+      "goethe",
+      "telc",
+      "oesd",
+      "testdaf",
+      "ecl",
+      "pflege",
+      "beruf_tourismus",
     ]);
     expect(EXAM_LEVELS).toEqual(["a1", "a2", "b1", "b2", "c1", "c2"]);
     expect(DEFAULT_EXAM_BOARD).toBe("goethe");
@@ -37,13 +43,22 @@ describe("examTypes (mobile parity port)", () => {
     expect(isExamLevel("b1")).toBe(true);
     expect(formatExamTrackLabel("goethe", "b1")).toBe("B1"); // level-only, board debranded (F-3)
     expect(
-      classifyExamChange({ from: { board: "goethe", level: "b1" }, to: { board: "telc", level: "b2" } }),
+      classifyExamChange({
+        from: { board: "goethe", level: "b1" },
+        to: { board: "telc", level: "b2" },
+      })
     ).toBe("board"); // board dominates when both differ
     expect(
-      classifyExamChange({ from: { board: "goethe", level: "b1" }, to: { board: "goethe", level: "b2" } }),
+      classifyExamChange({
+        from: { board: "goethe", level: "b1" },
+        to: { board: "goethe", level: "b2" },
+      })
     ).toBe("level");
     expect(
-      classifyExamChange({ from: { board: "goethe", level: "b1" }, to: { board: "goethe", level: "b1" } }),
+      classifyExamChange({
+        from: { board: "goethe", level: "b1" },
+        to: { board: "goethe", level: "b1" },
+      })
     ).toBe("none");
   });
 });

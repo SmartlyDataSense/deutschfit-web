@@ -6,7 +6,10 @@ const back = vi.fn();
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace }) }));
 vi.mock("next-intl", () => ({ useLocale: () => "fr" }));
-vi.mock("@/learner/core/analytics/posthog", async (o) => ({ ...(await o<object>()), trackEvent: vi.fn() }));
+vi.mock("@/learner/core/analytics/posthog", async (o) => ({
+  ...(await o<object>()),
+  trackEvent: vi.fn(),
+}));
 
 const getDiagnosticQuestions = vi.fn();
 vi.mock("@/learner/onboarding/services/getDiagnosticQuestions", async (o) => ({
@@ -46,14 +49,24 @@ function packFixture() {
     expiresAt: "2026-08-09T11:00:00Z",
     bankExhausted: false,
     sections: [
-      { kind: "lesen", durationSec: 300, readingText: null, items: [1, 2, 3, 4].map((i) => item(`l${i}`)) },
+      {
+        kind: "lesen",
+        durationSec: 300,
+        readingText: null,
+        items: [1, 2, 3, 4].map((i) => item(`l${i}`)),
+      },
       {
         kind: "sprachbausteine",
         durationSec: 300,
         readingText: null,
         items: [1, 2, 3, 4, 5, 6].map((i) => item(`s${i}`)),
       },
-      { kind: "wortschatz", durationSec: 180, readingText: null, items: [1, 2, 3, 4, 5].map((i) => item(`w${i}`)) },
+      {
+        kind: "wortschatz",
+        durationSec: 180,
+        readingText: null,
+        items: [1, 2, 3, 4, 5].map((i) => item(`w${i}`)),
+      },
     ],
   };
 }
@@ -82,9 +95,13 @@ const ui = (mode: "onboarding" | "retake" = "onboarding") =>
 describe("DiagnosticScreen", () => {
   it("fetches the pack for (attemptId, level) and shows section 1 with a 05:00 clock", async () => {
     ui();
-    await waitFor(() => expect(screen.getByTestId("onboarding-diagnostic-screen")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("onboarding-diagnostic-screen")).toBeInTheDocument()
+    );
     expect(getDiagnosticQuestions).toHaveBeenCalledWith({ attemptId: ATTEMPT, level: "b1" });
-    expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(/LESEN · 1\/4 · 05:00/);
+    expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(
+      /LESEN · 1\/4 · 05:00/
+    );
   });
 
   it("ticks the section clock down once per second while in progress", async () => {
@@ -105,7 +122,9 @@ describe("DiagnosticScreen", () => {
     expect(screen.getByTestId("onboarding-diagnostic-cta")).toBeDisabled();
     fireEvent.click(screen.getByTestId("onboarding-diagnostic-option-a"));
     fireEvent.click(screen.getByTestId("onboarding-diagnostic-cta"));
-    await waitFor(() => expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(/2\/4/));
+    await waitFor(() =>
+      expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(/2\/4/)
+    );
     expect(useDiagnosticAttemptStore.getState().answers).toEqual({ l1: "a" });
   });
 
@@ -123,7 +142,9 @@ describe("DiagnosticScreen", () => {
       fireEvent.click(screen.getByTestId("onboarding-diagnostic-option-a"));
       fireEvent.click(screen.getByTestId("onboarding-diagnostic-cta"));
     }
-    expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(/WORTSCHATZ · 1\/5 · 03:00/);
+    expect(screen.getByTestId("onboarding-diagnostic-eyebrow").textContent).toMatch(
+      /WORTSCHATZ · 1\/5 · 03:00/
+    );
   });
 
   it("Q15 submit posts all answers + elapsed meta and routes to the result", async () => {
@@ -142,7 +163,9 @@ describe("DiagnosticScreen", () => {
       fireEvent.click(screen.getByTestId("onboarding-diagnostic-cta"));
     }
     await waitFor(() =>
-      expect(push).toHaveBeenCalledWith(`/fr/app/onboarding/result?attempt=${ATTEMPT}&mode=onboarding`)
+      expect(push).toHaveBeenCalledWith(
+        `/fr/app/onboarding/result?attempt=${ATTEMPT}&mode=onboarding`
+      )
     );
     const args = submitDiagnostic.mock.calls[0]![0] as { answers: Record<string, string> };
     expect(Object.keys(args.answers)).toHaveLength(15);
@@ -188,5 +211,28 @@ describe("DiagnosticScreen", () => {
     fireEvent.click(screen.getByTestId("onboarding-diagnostic-retry"));
     await waitFor(() => screen.getByTestId("onboarding-diagnostic-screen"));
     expect(getDiagnosticQuestions).toHaveBeenCalledTimes(2);
+  });
+
+  // S13 Task 5 · Step 1 (M-2.9): the options list must expose ARIA
+  // radiogroup semantics — the question prompt as the group's accessible
+  // name, each option a `radio` with exactly one `aria-checked="true"`
+  // once a selection is made.
+  it("exposes the options as a radiogroup named by the question prompt, each option a radio with exactly one checked", async () => {
+    ui();
+    await waitFor(() => screen.getByTestId("onboarding-diagnostic-cta"));
+
+    const group = screen.getByRole("radiogroup");
+    expect(group).toHaveAccessibleName("Stem l1");
+
+    const radiosBefore = screen.getAllByRole("radio");
+    expect(radiosBefore).toHaveLength(2);
+    expect(radiosBefore.every((r) => r.getAttribute("aria-checked") === "false")).toBe(true);
+
+    fireEvent.click(screen.getByTestId("onboarding-diagnostic-option-a"));
+
+    const radiosAfter = screen.getAllByRole("radio");
+    const checked = radiosAfter.filter((r) => r.getAttribute("aria-checked") === "true");
+    expect(checked).toHaveLength(1);
+    expect(checked[0]).toBe(screen.getByTestId("onboarding-diagnostic-option-a"));
   });
 });

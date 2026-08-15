@@ -8,10 +8,20 @@
  * the app, so the learner app always talks to its own instance.
  *
  * Locale catalogs are copied verbatim from `deutschfit-mobile`
- * (`src/locales/{fr,en}/*.json`, 16 namespaces) and bundled statically via
- * eager imports — no runtime fetch, no i18next-http-backend. `notifications`
- * (S12) is the one exception: web push has no mobile counterpart, so that
- * catalog is authored here (French first, mirrored to English).
+ * (`src/locales/{fr,en}/*.json`, 16 namespaces) — no runtime fetch, no
+ * i18next-http-backend. `notifications` (S12) is the one exception: web
+ * push has no mobile counterpart, so that catalog is authored here (French
+ * first, mirrored to English).
+ *
+ * `fr` (the default boot language) is bundled statically via eager imports,
+ * so `t()` resolves synchronously the instant `initLearnerI18n()` returns —
+ * see `initAsync: false` below. `en` is a *fallback* locale, not the default:
+ * its 17 catalogs are dynamically `import()`ed and registered via
+ * `addResourceBundle()` in the background (`whenEnReady()`), kicked off
+ * unconditionally at the end of init. This keeps ~21 kB gz of English JSON
+ * out of every learner route's first-load bundle. Callers that need EN
+ * resolved (an `/en/…` boot, or a component relying on the fr→en fallback)
+ * must `await whenEnReady()` first.
  *
  * Language resolution order:
  *   1. `lngOverride` argument passed to `initLearnerI18n()` (e.g. from
@@ -44,25 +54,6 @@ import frSimulation from "../../locales/fr/simulation.json";
 import frSprechen from "../../locales/fr/sprechen.json";
 import frSrs from "../../locales/fr/srs.json";
 import frWriting from "../../locales/fr/writing.json";
-
-// en
-import enApprendre from "../../locales/en/apprendre.json";
-import enAuth from "../../locales/en/auth.json";
-import enCoach from "../../locales/en/coach.json";
-import enCommon from "../../locales/en/common.json";
-import enDashboard from "../../locales/en/dashboard.json";
-import enDrill from "../../locales/en/drill.json";
-import enExam from "../../locales/en/exam.json";
-import enExamen from "../../locales/en/examen.json";
-import enNotifications from "../../locales/en/notifications.json";
-import enOnboarding from "../../locales/en/onboarding.json";
-import enProfil from "../../locales/en/profil.json";
-import enSchreiben from "../../locales/en/schreiben.json";
-import enSettings from "../../locales/en/settings.json";
-import enSimulation from "../../locales/en/simulation.json";
-import enSprechen from "../../locales/en/sprechen.json";
-import enSrs from "../../locales/en/srs.json";
-import enWriting from "../../locales/en/writing.json";
 
 /** localStorage key the learner app reads/writes for the persisted language choice. */
 export const LEARNER_LANG_STORAGE_KEY = "@deutschfit/lang";
@@ -116,26 +107,110 @@ const resources = {
     srs: frSrs,
     writing: frWriting,
   },
-  en: {
-    apprendre: enApprendre,
-    auth: enAuth,
-    coach: enCoach,
-    common: enCommon,
-    dashboard: enDashboard,
-    drill: enDrill,
-    exam: enExam,
-    examen: enExamen,
-    notifications: enNotifications,
-    onboarding: enOnboarding,
-    profil: enProfil,
-    schreiben: enSchreiben,
-    settings: enSettings,
-    simulation: enSimulation,
-    sprechen: enSprechen,
-    srs: enSrs,
-    writing: enWriting,
-  },
 } as const;
+
+/**
+ * Dynamic loaders for the `en` fallback catalogs — one entry per
+ * `LEARNER_NAMESPACES` member, alphabetical. Each is a code-split chunk;
+ * none of these run until `whenEnReady()` is called.
+ */
+const EN_LOADERS: Record<(typeof LEARNER_NAMESPACES)[number], () => Promise<{ default: object }>> =
+  {
+    apprendre: () => import("../../locales/en/apprendre.json"),
+    auth: () => import("../../locales/en/auth.json"),
+    coach: () => import("../../locales/en/coach.json"),
+    common: () => import("../../locales/en/common.json"),
+    dashboard: () => import("../../locales/en/dashboard.json"),
+    drill: () => import("../../locales/en/drill.json"),
+    exam: () => import("../../locales/en/exam.json"),
+    examen: () => import("../../locales/en/examen.json"),
+    notifications: () => import("../../locales/en/notifications.json"),
+    onboarding: () => import("../../locales/en/onboarding.json"),
+    profil: () => import("../../locales/en/profil.json"),
+    schreiben: () => import("../../locales/en/schreiben.json"),
+    settings: () => import("../../locales/en/settings.json"),
+    simulation: () => import("../../locales/en/simulation.json"),
+    sprechen: () => import("../../locales/en/sprechen.json"),
+    srs: () => import("../../locales/en/srs.json"),
+    writing: () => import("../../locales/en/writing.json"),
+  };
+
+let enLoad: Promise<void> | null = null;
+
+/**
+ * Idempotent, lazy load of every `en` fallback catalog. The first call
+ * kicks off all 17 dynamic imports in parallel and registers each via
+ * `addResourceBundle`; every call (including concurrent ones) returns the
+ * same settled promise. `initLearnerI18n()` calls this unconditionally at
+ * the end of init, so EN normally lands in the background right after
+ * hydration — callers only need to await it explicitly when they must be
+ * certain EN is resolvable *now* (an `/en/…` boot, or a fr→en fallback that
+ * must not flash a raw key).
+ *
+ * DO NOT remove the `learnerI18n.emit("languageChanged", ...)` below — it
+ * looks like dead code but it is load-bearing. `react-i18next`'s
+ * `useTranslation()` only re-renders a component in response to the
+ * `'languageChanged'` event; by default (`bindI18nStore: ''`) it does NOT
+ * subscribe to the store's `'added'` event that `addResourceBundle` emits.
+ * So without this explicit emit, any component that rendered *before* this
+ * promise resolved — either because a key was missing from `fr` and fell
+ * through to a not-yet-loaded `en`, or because `changeLanguage("en")` was
+ * called before this settled — is stuck showing the raw key forever: the
+ * bundles land, but nothing tells react-i18next to re-render. Firing
+ * `'languageChanged'` once here, at the single resolution point of the
+ * shared promise (never inside the `.map`, never re-triggered by a repeat
+ * call to `whenEnReady()` since `enLoad` is cached), heals every such
+ * component in one pass.
+ *
+ * Failure path: any of the 17 dynamic imports can reject (deploy skew — a
+ * stale HTML payload references a chunk hash no longer on the CDN — or a
+ * plain network blip). The `.catch` below does two things that must both
+ * happen, not just one:
+ *
+ *   1. Resets `enLoad` to `null` so the NEXT call kicks off a fresh
+ *      `Promise.all` instead of replaying this rejection forever. Without
+ *      this, `enLoad ??=` at the top of this function never reassigns
+ *      once `enLoad` holds a settled-rejected promise — every future
+ *      caller (a later `/en/…` boot, or a language switch in Settings)
+ *      gets the exact same dead promise, and `LearnerI18nProvider` (which
+ *      renders `null` until this resolves) is stuck blank for the rest of
+ *      the page session.
+ *   2. Still emits `'languageChanged'`, exactly like the success path.
+ *      `addResourceBundle` already ran inside the `.map` above for every
+ *      namespace whose import DID resolve before the rejection — those
+ *      partial results are already registered on the instance. Skipping
+ *      the emit here would strand that partial catalog: the bundles are
+ *      there, but nothing tells react-i18next to re-render, which is
+ *      worse than the happy-path emit ever being unnecessary.
+ *
+ * This function itself never rejects — a caller can always safely
+ * `.then()` it without a `.catch` of its own, though `LearnerI18nProvider`
+ * adds one anyway as defense in depth.
+ */
+export function whenEnReady(): Promise<void> {
+  enLoad ??= Promise.all(
+    LEARNER_NAMESPACES.map(async (ns) => {
+      const mod = await EN_LOADERS[ns]();
+      learnerI18n.addResourceBundle("en", ns, mod.default, true, false);
+    })
+  )
+    .then(() => {
+      // Re-render every mounted useTranslation() consumer now that `en` is
+      // fully registered — see the doc comment above for why this is
+      // required and must not be deleted.
+      learnerI18n.emit("languageChanged", learnerI18n.language);
+    })
+    .catch((err: unknown) => {
+      console.warn(
+        "[i18n] one or more en catalogs failed to load — will retry on the next call:",
+        err
+      );
+      // See the doc comment above — both of these must happen together.
+      enLoad = null;
+      learnerI18n.emit("languageChanged", learnerI18n.language);
+    });
+  return enLoad;
+}
 
 function isSupportedLng(value: string | null | undefined): value is LearnerLng {
   return value === "fr" || value === "en";
@@ -189,12 +264,20 @@ export function initLearnerI18n(lngOverride?: string): i18n {
     defaultNS: "common",
     ns: LEARNER_NAMESPACES,
     interpolation: { escapeValue: false },
-    // Resources are bundled statically (no backend, no async loading) —
-    // initialize synchronously so `t()` is usable immediately after this
+    // `fr` resources are bundled statically (no backend, no async loading)
+    // — initialize synchronously so `t()` is usable immediately after this
     // call returns, without awaiting the init promise. (i18next v22+
-    // renamed this option from `initImmediate` to `initAsync`.)
+    // renamed this option from `initImmediate` to `initAsync`.) This
+    // guarantee is FR-only: `en` is not in `resources` above and is not
+    // registered until `whenEnReady()` resolves — see the kick-off below.
     initAsync: false,
   });
+
+  // Kick off the background EN load unconditionally, regardless of the
+  // resolved boot language. This way a later `changeLanguage("en")` or a
+  // fr→en key fallback finds the catalogs already loaded rather than
+  // triggering a fresh (and slower) load on demand.
+  void whenEnReady();
 
   return learnerI18n;
 }

@@ -86,7 +86,8 @@ function trackMeteredRequests(page: Page): {
   return { uploadRequests, dialogueStartRequests };
 }
 
-test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, metered recording submit (qa1, real backend)", () => {
+test.describe
+  .serial("Sprechen topic picker, dialogue picker, custom topic, metered recording submit (qa1, real backend)", () => {
   test("(a) zero-quota — picker renders, subgenre/level/search filters, zero sprechen-upload calls", async ({
     page,
   }) => {
@@ -120,9 +121,9 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     // then a search term — exercises the picker's client-side filtering
     // without ever touching a topic card (no `sprechen-upload` risk here).
     await page.getByTestId("sprechen-topic-picker-subgenre-trigger").click();
-    await expect(
-      page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByTestId("sprechen-topic-picker-subgenre-vortrag").click();
     await expect(page.getByTestId("sprechen-topic-picker-subgenre-trigger-listbox")).toHaveCount(0);
 
@@ -141,7 +142,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
 
     await page.screenshot({ path: "test-results/s7-sprechen-picker.png", fullPage: true });
 
-    // eslint-disable-next-line no-console
     console.log(
       `[sprechen e2e][a] sprechen-upload requests: ${uploadRequests.length}, sprechen-dialogue-start requests: ${dialogueStartRequests.length}`
     );
@@ -165,7 +165,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     await expect(list.or(empty).or(error).first()).toBeVisible({ timeout: 30_000 });
 
     if (await empty.isVisible().catch(() => false)) {
-      // eslint-disable-next-line no-console
       console.log(
         "[sprechen e2e][b] dialogue-teil-picker-empty rendered — qa1's board/level has no cert_dialogue_teile rows (pass)"
       );
@@ -173,12 +172,10 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
       // Not one of the brief's two named branches, but a rendered state
       // like the picker's own error card — log and let the run continue
       // rather than fail on a transient real-backend hiccup.
-      // eslint-disable-next-line no-console
       console.log("[sprechen e2e][b] dialogue-teil-picker-error rendered");
     } else {
       const cardCount = await page.locator('[data-testid^="dialogue-teil-card-"]').count();
       expect(cardCount).toBeGreaterThan(0);
-      // eslint-disable-next-line no-console
       console.log(`[sprechen e2e][b] ${cardCount} dialogue teil card(s) rendered — never clicked`);
       await page.screenshot({
         path: "test-results/s7-sprechen-dialogue-picker.png",
@@ -188,7 +185,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
 
     // Constraint 12 — this spec NEVER clicks a teil card, so a
     // `sprechen-dialogue-start` call here would be a genuine defect.
-    // eslint-disable-next-line no-console
     console.log(
       `[sprechen e2e][b] sprechen-upload requests: ${uploadRequests.length}, sprechen-dialogue-start requests: ${dialogueStartRequests.length}`
     );
@@ -241,7 +237,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     await page.getByTestId("sprechen-custom-topic-cancel").click();
     await expect(page.getByTestId("sprechen-custom-topic")).not.toBeVisible({ timeout: 10_000 });
 
-    // eslint-disable-next-line no-console
     console.log(
       `[sprechen e2e][c] topic-create requests: ${topicCreateRequests.length}, sprechen-upload requests: ${uploadRequests.length}, sprechen-dialogue-start requests: ${dialogueStartRequests.length}`
     );
@@ -270,7 +265,9 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     const error = page.getByTestId("sprechen-topic-picker-error");
     await expect(list.or(empty).or(error).first()).toBeVisible({ timeout: 30_000 });
 
-    const topicCardCount = await page.locator('button[data-testid^="sprechen-topic-card-"]').count();
+    const topicCardCount = await page
+      .locator('button[data-testid^="sprechen-topic-card-"]')
+      .count();
     test.skip(topicCardCount === 0, "dev has no sprechen topics — backend content gap");
 
     // First topic card — clicking it (not a direct `page.goto` to the
@@ -309,7 +306,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     await page.getByTestId("sprechen-session-review-submit").click();
     const uploadResponse = await uploadResponsePromise;
 
-    // eslint-disable-next-line no-console
     console.log(
       `[sprechen e2e][d] sprechen-upload requests fired: ${uploadRequests.length}, response status: ${uploadResponse.status()}`
     );
@@ -328,7 +324,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
         .getByTestId("sprechen-session-error-code")
         .innerText()
         .catch(() => "(error-code node not visible)");
-      // eslint-disable-next-line no-console
       console.log(
         `[sprechen e2e][d] terminal branch: 429 rate_limited (reserve-time) — fallback banner error code: ${errorCodeText}`
       );
@@ -340,7 +335,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     const body = (await uploadResponse.json()) as { submission_id: string };
     const submissionId = body.submission_id;
     expect(submissionId).toBeTruthy();
-    // eslint-disable-next-line no-console
     console.log(`[sprechen e2e][d] submission_id: ${submissionId}`);
 
     // Upload → finalize completes internally in the session hook; the
@@ -381,7 +375,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
         .getByTestId("sprechen-session-error-code")
         .innerText()
         .catch(() => "(error-code node not visible)");
-      // eslint-disable-next-line no-console
       console.log(
         `[sprechen e2e][d] terminal branch: post-reserve fallback (never reached /fr/app) — session fallback banner error code: ${errorCodeText}`
       );
@@ -392,7 +385,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
     }
 
     if (postUploadOutcome === "unresolved") {
-      // eslint-disable-next-line no-console
       console.warn(
         `[sprechen e2e][d] LOUD: neither the /fr/app redirect nor the fallback banner appeared within ${POST_UPLOAD_BUDGET_MS}ms of a successful sprechen-upload response — treating as a pass per P13 (the metered call itself already fired exactly once), but this is worth investigating (possible hung PUT/finalize).`
       );
@@ -435,7 +427,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
 
       if (branch !== null) break;
 
-      // eslint-disable-next-line no-console
       console.log(
         `[sprechen e2e][d] poll iteration ${i + 1}/${MAX_ITERATIONS}: still in-flight (the screen's own 1s auto-bounce is the retry signal) — backing off 15s`
       );
@@ -447,7 +438,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
       // pass-branch (task brief P13: every terminal surface, and this
       // exhaustion case, is a PASS). Logged loudly per the brief.
       branch = "timeout-budget-exhausted";
-      // eslint-disable-next-line no-console
       console.warn(
         `[sprechen e2e][d] LOUD: submission ${submissionId} still in-flight after ${MAX_ITERATIONS} polling iterations — treating as the timeout pass-branch, NOT a failure (fake-tone audio normally lands rejected/graded well inside this budget on dev)`
       );
@@ -455,7 +445,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
       await expect(anyTerminal).toBeVisible({ timeout: 5_000 });
     }
 
-    // eslint-disable-next-line no-console
     console.log(`[sprechen e2e][d] terminal feedback branch: ${branch}`);
 
     // Product lock: no paywall copy on any branch (Constraint 11).
@@ -481,7 +470,6 @@ test.describe.serial("Sprechen topic picker, dialogue picker, custom topic, mete
 
     await expect(page.locator("text=/premium|abonnement|upgrade/i")).toHaveCount(0);
 
-    // eslint-disable-next-line no-console
     console.log(
       `[sprechen e2e][e] sprechen-upload requests: ${uploadRequests.length}, sprechen-dialogue-start requests: ${dialogueStartRequests.length}`
     );

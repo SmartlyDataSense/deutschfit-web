@@ -8,11 +8,7 @@ vi.mock("@/learner/core/api/client", async (importOriginal) => {
 
 import { fetchUserStats } from "@/learner/profil/api";
 import { emptyProfilStats } from "@/learner/profil/data/fixtures";
-import {
-  commitToCache,
-  hydrateFromCache,
-  rowToStats,
-} from "@/learner/profil/hooks/useProfilStats";
+import { commitToCache, hydrateFromCache, rowToStats } from "@/learner/profil/hooks/useProfilStats";
 import { getLearnerDb, __resetLearnerDbForTests } from "@/learner/core/db";
 import type { UserStatsRow } from "@/learner/core/db/types";
 

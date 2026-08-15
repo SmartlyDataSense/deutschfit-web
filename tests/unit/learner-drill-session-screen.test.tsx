@@ -121,7 +121,9 @@ describe("DrillEmptyState onRetry (error branch)", () => {
       retryButton.click();
     });
 
-    await waitFor(() => expect(screen.getByTestId("drill-session-question-label")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("drill-session-question-label")).toBeInTheDocument()
+    );
     expect(screen.queryByTestId("drill-session-empty")).not.toBeInTheDocument();
   });
 });

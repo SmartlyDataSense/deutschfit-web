@@ -117,7 +117,7 @@ export function LoginForm() {
   // the form.
   if (status === "loading" || status === "authenticated") {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="flex min-h-80 items-center justify-center">
         <AppText as="span" size="h2" weight="bold" family="serif">
           DeutschFit
         </AppText>

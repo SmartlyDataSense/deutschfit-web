@@ -35,7 +35,10 @@ test.describe("learner nav — responsive shell (dev backend)", () => {
       await expect(page.getByTestId(`learner-tab-${id}`)).toBeVisible();
     }
     await expect(page.getByTestId("learner-tab-accueil")).toHaveAttribute("aria-current", "page");
-    await expect(page.getByTestId("learner-tab-apprendre")).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByTestId("learner-tab-apprendre")).not.toHaveAttribute(
+      "aria-current",
+      "page"
+    );
   });
 
   test("desktop viewport (1440x900): Sidebar visible, TabBar hidden, wordmark + 5 sections + sign-out", async ({
@@ -58,13 +61,22 @@ test.describe("learner nav — responsive shell (dev backend)", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
 
-    await expect(page.getByTestId("learner-sidebar-accueil")).toHaveAttribute("aria-current", "page");
+    await expect(page.getByTestId("learner-sidebar-accueil")).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
 
     await page.getByTestId("learner-sidebar-apprendre").click();
     await page.waitForURL("**/fr/app/apprendre");
     await expect(page.getByRole("heading", { name: "Pratique" })).toBeVisible();
-    await expect(page.getByTestId("learner-sidebar-apprendre")).toHaveAttribute("aria-current", "page");
-    await expect(page.getByTestId("learner-sidebar-accueil")).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByTestId("learner-sidebar-apprendre")).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    await expect(page.getByTestId("learner-sidebar-accueil")).not.toHaveAttribute(
+      "aria-current",
+      "page"
+    );
 
     // Same route, mobile surface: resize down and confirm TabBar agrees.
     await page.setViewportSize({ width: 390, height: 844 });

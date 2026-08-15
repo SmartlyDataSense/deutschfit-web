@@ -153,7 +153,11 @@ export interface NavTabTint {
 export function resolveTabTint(tabId: NavTabId, isActive: boolean): NavTabTint {
   if (tabId === "coach") {
     return {
-      textClass: "text-coach",
+      // S13 Task 10 (axe sweep): label text uses the AA-safe `-text`
+      // shade; the icon (`iconVar`) stays the vivid brand teal — axe's
+      // color-contrast rule only evaluates text nodes, and mobile's own
+      // contrast.test.ts documents plain `coach` as decorative-only.
+      textClass: "text-coach-text",
       iconVar: "var(--color-coach)",
       ...(isActive ? { pillClass: "bg-coach/10" } : {}),
     };
@@ -161,7 +165,7 @@ export function resolveTabTint(tabId: NavTabId, isActive: boolean): NavTabTint {
 
   if (isActive) {
     return {
-      textClass: "text-nav-active",
+      textClass: "text-nav-active-text",
       iconVar: "var(--color-nav-active)",
       pillClass: "bg-nav-active/10",
     };

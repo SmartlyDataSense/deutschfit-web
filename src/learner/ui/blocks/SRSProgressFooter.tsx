@@ -40,7 +40,7 @@ export function SRSProgressFooter({
           tone="tertiary"
           size="caption"
           weight="semi"
-          className="uppercase tracking-[0.8px]"
+          className="uppercase tracking-[var(--tracking-wide)]"
         >
           {positionLabel}
         </AppText>
@@ -48,7 +48,7 @@ export function SRSProgressFooter({
           tone="tertiary"
           size="caption"
           weight="semi"
-          className="uppercase tracking-[0.8px]"
+          className="uppercase tracking-[var(--tracking-wide)]"
         >
           {remainingLabel}
         </AppText>
