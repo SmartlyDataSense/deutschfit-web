@@ -198,7 +198,7 @@ export function AccueilScreen() {
     if (isError) {
       return (
         <div
-          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center"
+          className="flex min-h-[var(--state-panel-min-height)] flex-col items-center justify-center gap-4 px-6 text-center"
           data-testid="accueil-error"
         >
           <EmptyState

@@ -197,11 +197,11 @@ export function ExamTypeScreen() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-premium-black)]/60 px-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay-scrim)] px-6"
           onClick={() => setOpenDropdown(null)}
         >
           <div
-            className="max-h-[70vh] w-full max-w-sm overflow-y-auto rounded-[var(--radius-lg)] bg-bg-card p-4 shadow-lg"
+            className="max-h-[var(--modal-max-height)] w-full max-w-sm overflow-y-auto rounded-[var(--radius-lg)] bg-bg-card p-4 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <AppText
@@ -293,7 +293,7 @@ function DropdownOption({ testID, label, selected, onClick }: DropdownOptionProp
       aria-checked={selected}
       onClick={onClick}
       className={clsx(
-        "flex min-h-[52px] w-full items-center justify-between rounded-[var(--radius-sm)] border-b border-line-soft px-2 text-left",
+        "flex min-h-[var(--control-height-lg)] w-full items-center justify-between rounded-[var(--radius-sm)] border-b border-line-soft px-2 text-left",
         "transition hover:opacity-90",
         selected ? "bg-bg-hero" : "bg-transparent"
       )}

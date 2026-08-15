@@ -148,7 +148,12 @@ export function RevealScreen({ cardId }: RevealScreenProps) {
       data-testid="srs-reveal-screen"
     >
       <div>
-        <AppText tone="coach" size="caption" weight="semi" className="uppercase tracking-[0.8px]">
+        <AppText
+          tone="coach"
+          size="caption"
+          weight="semi"
+          className="uppercase tracking-[var(--tracking-wide)]"
+        >
           {card.prompt.subjectLabel}
         </AppText>
         <AppText as="h1" family="serif" size="h1" weight="bold">

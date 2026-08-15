@@ -204,7 +204,7 @@ export function ProfilScreen() {
 
       {confirmingSignOut ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-premium-black)]/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay-scrim)] p-4"
           onClick={dismissSignOutDialog}
         >
           <div

@@ -258,7 +258,7 @@ export function FeedbackScreen({ submissionId }: FeedbackScreenProps) {
     return (
       <div
         data-testid="schreiben-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center lg:px-8"
       >
         <AppText tone="secondary" size="body">
           {t("writing:feedback.pending")}
@@ -271,7 +271,7 @@ export function FeedbackScreen({ submissionId }: FeedbackScreenProps) {
     return (
       <div
         data-testid="schreiben-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
       >
         <EmptyState
           testID="schreiben-feedback-timeout"
@@ -288,7 +288,7 @@ export function FeedbackScreen({ submissionId }: FeedbackScreenProps) {
     return (
       <div
         data-testid="schreiben-feedback-screen"
-        className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
+        className="mx-auto flex min-h-[var(--state-panel-min-height)] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 lg:px-8"
       >
         <EmptyState
           testID="schreiben-feedback-failed"

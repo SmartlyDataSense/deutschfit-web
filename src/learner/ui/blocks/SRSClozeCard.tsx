@@ -46,7 +46,7 @@ export function SRSClozeCard({
           tone="tertiary"
           size="caption"
           weight="semi"
-          className="uppercase tracking-[0.8px]"
+          className="uppercase tracking-[var(--tracking-wide)]"
         >
           {subjectLabel}
         </AppText>
@@ -63,7 +63,7 @@ export function SRSClozeCard({
         tone="coach"
         size="caption"
         weight="semi"
-        className="mt-4 uppercase tracking-[0.8px]"
+        className="mt-4 uppercase tracking-[var(--tracking-wide)]"
       >
         {instructionLabel}
       </AppText>

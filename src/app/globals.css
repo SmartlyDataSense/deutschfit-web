@@ -98,6 +98,60 @@
    */
   --empty-state-max-width: 320px;
   --empty-state-action-min-width: 180px;
+
+  /*
+   * `--color-overlay-scrim` (S13 Task 6, M-2.6) — full-screen modal scrim
+   * wash. Five call sites duplicated `bg-[var(--color-premium-black)]/60`
+   * (ConfirmExamChangeModal, SettingsPickerRow, ProfilScreen,
+   * SchreibenEditorScreen, ExamTypeScreen); the "promote once a second
+   * modal ships" threshold was crossed four modals ago. Derived via
+   * `color-mix` off the existing `--color-premium-black` — not a new hex
+   * value — following the same pattern as `.learner-glass-surface` below.
+   * Web-only composite, NOT mirrored into `src/theme/tokens.ts`: mobile's
+   * modal overlays are RN `View`s with an inline `rgba(...)` style, not a
+   * shared palette token, so there is nothing on the mobile side to mirror
+   * here.
+   */
+  --color-overlay-scrim: color-mix(in srgb, var(--color-premium-black) 60%, transparent);
+
+  /*
+   * `--tracking-wide` — mirrors mobile's `tokens.typography.trackingWide`
+   * (deutschfit-mobile/src/theme/tokens.ts:102, value `0.8`). Used by the
+   * SRS review surfaces (SRSClozeCard, SRSExplanationPanel,
+   * SRSProgressFooter, RevealScreen) for the uppercase eyebrow tracking
+   * that mobile's `letterSpacing: typography.trackingWide` produces.
+   */
+  --tracking-wide: 0.8px;
+
+  /*
+   * `--control-height-lg` — mirrors the `minHeight: 52` convention shared
+   * by mobile's DifficultyActionRow (src/ui/blocks/DifficultyActionRow.tsx)
+   * and the onboarding ExamTypeScreen's option rows
+   * (src/features/onboarding/screens/ExamTypeScreen.tsx), i.e. the large
+   * tappable-control height used for CTA-weight rows.
+   */
+  --control-height-lg: 52px;
+
+  /*
+   * `--state-panel-min-height` / `--modal-max-height` — web-only, no
+   * mobile mirror source (RN has no viewport-height unit): the former
+   * sizes the centered loading/empty/error placeholder on Accueil,
+   * Schreiben-Feedback and Sprechen-Feedback screens so it doesn't
+   * collapse to content height; the latter caps the scrollable body of
+   * the SettingsPickerRow / ExamTypeScreen bottom-sheet-style modals so
+   * they never grow past the viewport.
+   */
+  --state-panel-min-height: 60vh;
+  --modal-max-height: 70vh;
+
+  /*
+   * `--coach-drawer-max-width` — web-only: CoachThreadPanel's
+   * `variant="drawer"` restructures mobile's CoachSideMenu (a full-screen
+   * RN modal) into a web slide-in panel; 320px is this component's own
+   * upper bound on the `82%`-of-viewport drawer width, not a value mobile
+   * defines anywhere.
+   */
+  --coach-drawer-max-width: 320px;
 }
 
 @theme inline {
