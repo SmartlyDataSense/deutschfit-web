@@ -8,9 +8,18 @@
  * `location · lang1 · lang2`; premium pill with the exam label (level
  * only — F-3 debranding). Pill is an inline span (S10 precedent: no new
  * exported primitives for one-off pills).
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
+ * (fix-round web#58 sweep). An earlier version composed
+ * `${fullName}. ${locationA11y}. ${examPill}.` and put it on the outer
+ * `role="group"` div — `role="group"` is not children-presentational on
+ * web (unlike mobile's `accessible` View), so a screen reader announced
+ * that composed name and then re-read the name/subtitle/pill a second
+ * time as it continued into the group. Those are already independently
+ * readable `AppText`/`<span>` children in the same order, so no wrapper
+ * accessible name is needed — same treatment as `PriorityTaskCard`
+ * (commit `1ea9e6a`).
  */
-import { useTranslation } from "react-i18next";
-
 import { AppText } from "@/learner/ui/primitives";
 import type { ProfilStats } from "../data/fixtures";
 
@@ -25,21 +34,14 @@ export function IdentityCard({
   examPill,
   testID = "profil-identity-card",
 }: IdentityCardProps) {
-  const { t } = useTranslation(["profil"]);
   const subtitle = `${stats.location}${
     stats.languages.length ? ` · ${stats.languages.join(" · ")}` : ""
   }`;
-  const locationA11y = t("profil:identity.locationA11y", {
-    location: stats.location,
-    languages: stats.languages.join(", "),
-  });
   const initial = stats.fullName.trim().charAt(0).toUpperCase() || "·";
 
   return (
     <div
       data-testid={testID}
-      role="group"
-      aria-label={`${stats.fullName}. ${locationA11y}. ${examPill}.`}
       className="flex items-center gap-4 rounded-[var(--radius-lg)] bg-bg-card p-4"
     >
       <div

@@ -403,9 +403,20 @@ export function AccueilScreen() {
  * Bug 3 — slim inline exam-date picker, ported from
  * `deutschfit-mobile/src/features/accueil/screens/AccueilScreen.tsx`'s
  * `ExamDatePickerInline`. Replaces the dark countdown hero on the
- * no-date / past-date branch. `role="group"` (not `role="button"`) on the
- * outer card since it wraps a nested interactive toggle + calendar —
- * same idiom as `CountdownHeroCard`'s non-clickable branch.
+ * no-date / past-date branch.
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label` (fix-
+ * round web#58 sweep). This used to carry `role="group"` +
+ * `aria-label={isOpen ? closeA11y : openA11y}` on the outer card — the
+ * exact same string already lives on the nested toggle `<button>`'s own
+ * `aria-label`/`aria-expanded`. `role="group"` is not children-
+ * presentational on web (unlike mobile's `accessible` View), so a screen
+ * reader announced the composed name on the group and then re-announced
+ * the identical name on the toggle button a second time as it continued
+ * in. The toggle button is a real interactive control with its own
+ * accessible name and state; the outer card needs no wrapper role or
+ * label at all — same treatment as `CountdownHeroCard`'s non-clickable
+ * branch and `PriorityTaskCard` (commit `1ea9e6a`).
  */
 interface ExamDatePickerInlineProps {
   readonly label: string;
@@ -430,12 +441,7 @@ function ExamDatePickerInline({
   };
 
   return (
-    <div
-      className="rounded-3xl bg-bg-premium p-6 text-on-premium"
-      data-testid={testID}
-      role="group"
-      aria-label={isOpen ? closeA11y : openA11y}
-    >
+    <div className="rounded-3xl bg-bg-premium p-6 text-on-premium" data-testid={testID}>
       <button
         type="button"
         aria-expanded={isOpen}

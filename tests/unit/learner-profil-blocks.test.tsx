@@ -119,6 +119,34 @@ describe("IdentityCard (S11.3)", () => {
     expect(initial.className).toContain("text-coach-ink");
     expect(initial.className).not.toContain("text-text-primary");
   });
+
+  // web#58 (fix round 1): the outer wrapper used to carry `role="group"`
+  // plus a composed `aria-label` (`${fullName}. ${locationA11y}.
+  // ${examPill}.`) duplicating exactly what its `AppText`/`<span>`
+  // children already render. `role="group"` is not children-
+  // presentational on web, so a screen reader announced the composed
+  // name and then re-read the name/subtitle/pill a second time. This
+  // pins the wrapper carrying no role or aria-label at all — the
+  // children read on their own.
+  it("carries no wrapper role/aria-label — content reads naturally, not duplicated", () => {
+    renderWithI18n(
+      <IdentityCard
+        stats={{
+          ...emptyProfilStats,
+          fullName: "Marie Dupont",
+          location: "Douala",
+          languages: ["Français", "Anglais"],
+        }}
+        examPill="B1"
+        testID="profil-identity-card"
+      />
+    );
+    const card = screen.getByTestId("profil-identity-card");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
+    expect(screen.getByText("Douala · Français · Anglais")).toBeInTheDocument();
+  });
 });
 
 describe("SettingsPickerRow (S11.3)", () => {
