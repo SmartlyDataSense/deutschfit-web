@@ -289,7 +289,7 @@
         "secondaryCta": "Back"
       },
       "tooShort": {
-        "title": "Bitte nimm eine längere Aufnahme auf.",
+        "title": "Please record a longer take.",
         "body": "We only assess recordings long enough to give reliable feedback. Try again with a longer take (at least 10 seconds of speech).",
         "primaryCta": "Try again",
         "secondaryCta": "Back to overview"
