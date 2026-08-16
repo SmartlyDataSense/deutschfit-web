@@ -94,6 +94,7 @@ export interface HoerenSessionScreenProps {
 }
 
 interface OptionRowProps {
+  readonly itemId: string;
   readonly optKey: string;
   readonly text: string;
   readonly picked: boolean;
@@ -101,13 +102,13 @@ interface OptionRowProps {
   readonly onSelect: () => void;
 }
 
-function OptionRow({ optKey, text, picked, disabled, onSelect }: OptionRowProps) {
+function OptionRow({ itemId, optKey, text, picked, disabled, onSelect }: OptionRowProps) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={picked}
-      data-testid={`hoeren-option-${optKey}`}
+      data-testid={`hoeren-option-${itemId}-${optKey}`}
       disabled={disabled}
       onClick={onSelect}
       className={clsx(
@@ -518,6 +519,7 @@ export function HoerenSessionScreen({
               {item.options.map((opt) => (
                 <OptionRow
                   key={opt.key}
+                  itemId={item.id}
                   optKey={opt.key}
                   text={opt.text}
                   picked={(player.answers[item.id] ?? null) === opt.key}
