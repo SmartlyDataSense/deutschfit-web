@@ -41,11 +41,13 @@ import { test, expect, type Page } from "@playwright/test";
 //     when the current Teil isn't the last); `hoeren-session-submit`
 //     replaces it on the last Teil. Every item's options render inline in
 //     the current Teil at once (no click-to-open gap chips like Lesen's
-//     Cloze parts) — each item is its own `role="radiogroup"`, and because
-//     option keys ("a"/"b"/"c"...) repeat across items in the same Teil,
-//     `hoeren-option-<key>` testids are NOT unique DOM-wide within a Teil.
-//     The answer loop below scopes to each `radiogroup` individually rather
-//     than blindly clicking `[data-testid^="hoeren-option-"]` first-match.
+//     Cloze parts) — each item is its own `role="radiogroup"`. Option
+//     testids are `hoeren-option-<itemId>-<key>` (web#28 fix — previously
+//     `hoeren-option-<key>`, which collided DOM-wide within a Teil whenever
+//     two items shared an option alphabet). The answer loop below still
+//     scopes to each `radiogroup` individually rather than blindly clicking
+//     `[data-testid^="hoeren-option-"]` first-match — belt-and-suspenders
+//     now, but it also reads closer to how a learner actually interacts.
 //   - `HoerenAudioPlayer`'s branch testids are `hoeren-audio-player-play`
 //     (playable branch) and `hoeren-audio-player-missing` (no/failed
 //     signed URL) — confirmed in `HoerenAudioPlayer.tsx:59-72`. Per the
@@ -79,8 +81,8 @@ async function login(page: Page) {
 
 /**
  * Answers every item in the CURRENT Teil (each item is its own
- * `role="radiogroup"`; option testids repeat per item, so each group is
- * scoped individually — see the header selector note) then advances: click
+ * `role="radiogroup"`, scoped individually — see the header selector note)
+ * then advances: click
  * `hoeren-session-next` if present, or stop (leaving `hoeren-session-submit`
  * visible for the caller to click once) once the last Teil is reached.
  * Bounded by `MAX_PARTS` so a wiring bug can't spin the loop forever.

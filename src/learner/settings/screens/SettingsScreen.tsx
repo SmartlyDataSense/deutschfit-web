@@ -18,7 +18,7 @@
  * never rendered on web (monetization-adjacent and wrong here — see
  * `project_no_inapp_paywall_web_only`).
  */
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useTranslation } from "react-i18next";
@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import packageJson from "../../../../package.json";
 import { AppText } from "@/learner/ui/primitives";
 import { Icon } from "@/learner/core/icons/Icon";
+import { isAnalyticsOptedOut, setAnalyticsOptOut } from "@/learner/core/analytics/posthog";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { formatExamTrackLabel } from "@/learner/core/exam/examTypes";
 import { getBackendInfo } from "@/learner/core/api/backendEnv";
@@ -73,6 +74,17 @@ export function SettingsScreen() {
   // exam meta sticks on the unhydrated goethe/b1 fallback.
   useEffect(() => {
     void hydrateExamContext();
+  }, []);
+
+  // web#52 — local mirror of the persisted opt-out flag. Starts `false` on
+  // both server and first client render (SSR-safe, no hydration mismatch —
+  // same shape as `useExamContextStore`'s `isLoaded`/mount-effect pair
+  // above), then reads the real value from localStorage once mounted.
+  // `posthog.ts` keeps no in-memory cache of its own, so this is the only
+  // place the value is held for rendering.
+  const [analyticsOptedOut, setAnalyticsOptedOutState] = useState(false);
+  useEffect(() => {
+    setAnalyticsOptedOutState(isAnalyticsOptedOut());
   }, []);
 
   const go = (suffix: string) => () => router.push(`/${locale}${suffix}`);
@@ -256,39 +268,28 @@ export function SettingsScreen() {
         <AppText size="caption" weight="semi" tone="tertiary" className="mt-2 uppercase">
           {t("settings:sections.analytics")}
         </AppText>
-        <div className="flex min-h-14 w-full items-center justify-between gap-3 rounded-[var(--radius-md)] bg-bg-card px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <AppText size="body" weight="medium" tone="tertiary">
-              {t("settings:analytics.optOutLabel")}
-            </AppText>
-            <AppText size="caption" tone="tertiary">
-              {t("settings:analytics.optOutHint")}
-            </AppText>
-          </div>
-          <span className="rounded-full bg-bg-hero px-2 py-0.5">
-            <AppText size="caption" tone="tertiary">
-              {t("settings:analytics.comingSoon")}
-            </AppText>
-          </span>
+        <div className="flex flex-col rounded-[var(--radius-lg)] bg-bg-card">
           {/*
-            Inert by construction, not just by appearance: no
-            `onChange`/`onClick` handler is wired at all, so there is no
-            code path — reachable or not — that could ever write an
-            opt-out flag from this control. `disabled` additionally
-            blocks it from the DOM's own click/keyboard activation.
-            Mobile parity note: mobile's underlying `useAnalyticsOptOut`
-            core stays wired (only its UI affordance is gated); the web
-            port has no analytics-opt-out storage key at all yet, so
-            there's nothing to wire even inertly.
+            web#52 — live now: checked mirrors the persisted opt-out flag
+            (`isAnalyticsOptedOut()`, hydrated on mount above) and the
+            handler both persists the new value and propagates it to an
+            already-initialised PostHog client via its own
+            `opt_out_capturing()`/`opt_in_capturing()` API — all inside
+            `setAnalyticsOptOut()` (`@/learner/core/analytics/posthog`).
+            Mobile parity note: mobile's own toggle stays `disabled` for
+            v1.0 (a separate, documented product decision, MVP Final Spec
+            Wave A5) — this fix only concerns the web control actually
+            doing something when it is not disabled.
           */}
-          <input
-            type="checkbox"
-            role="switch"
-            disabled
-            readOnly
-            checked={false}
-            aria-label={t("settings:analytics.optOutLabel")}
-            data-testid="settings-analytics-optout-switch"
+          <SettingsToggleRow
+            label={t("settings:analytics.optOutLabel")}
+            hint={t("settings:analytics.optOutHint")}
+            checked={analyticsOptedOut}
+            onChange={(next) => {
+              setAnalyticsOptOut(next);
+              setAnalyticsOptedOutState(next);
+            }}
+            testID="settings-analytics-optout"
           />
         </div>
       </section>

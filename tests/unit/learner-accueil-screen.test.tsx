@@ -160,6 +160,29 @@ describe("AccueilScreen", () => {
     expect(screen.getByTestId("accueil-exam-date-status")).toBeInTheDocument();
   });
 
+  // web#58 (fix round 1): `ExamDatePickerInline`'s outer card used to
+  // carry `role="group"` plus `aria-label={isOpen ? closeA11y :
+  // openA11y}` — the exact same string as the nested toggle button's own
+  // `aria-label`. `role="group"` is not children-presentational on web,
+  // so a screen reader announced the composed name on the group and then
+  // re-announced the identical name on the toggle button a second time.
+  // This pins the outer card carrying no role/aria-label at all — the
+  // toggle button already carries its own accessible name and state.
+  it("no-date payload's exam-date picker card carries no wrapper role/aria-label — the toggle button owns its own name", async () => {
+    fetchAccueilHome.mockResolvedValue({
+      ...homeWithDate,
+      countdown: { daysRemaining: null, examDateLabel: null, preparationPct: 0, targetScore: 80 },
+    });
+    ui();
+    await waitFor(() => expect(screen.getByTestId("accueil-exam-date-picker")).toBeInTheDocument());
+    const card = screen.getByTestId("accueil-exam-date-picker");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    const toggle = screen.getByTestId("accueil-exam-date-picker-toggle");
+    expect(toggle).toHaveAttribute("aria-label");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("hard error state with retry when the initial fetch fails", async () => {
     fetchAccueilHome.mockRejectedValueOnce(new Error("net")).mockResolvedValueOnce(homeWithDate);
     ui();

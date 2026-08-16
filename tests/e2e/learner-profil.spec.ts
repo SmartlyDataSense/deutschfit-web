@@ -83,8 +83,58 @@ test.describe("S11 profil + settings", () => {
     await page.getByTestId("profil-settings-button").click();
     await page.waitForURL("**/fr/app/profil/settings");
     await expect(page.getByTestId("settings-language-fr")).toBeVisible();
-    await expect(page.getByTestId("settings-analytics-optout-switch")).toBeDisabled();
     await expect(page.getByTestId("settings-backend-env-row")).toBeVisible();
+  });
+
+  // web#52 — the analytics opt-out is a LIVE control now. Until commit
+  // c1b0391 it was an inert `<input disabled readOnly>` under the testID
+  // `settings-analytics-optout-switch`, and this file pinned it as
+  // `toBeDisabled()`. Both halves of that pin are wrong today: the element
+  // is gone (SettingsToggleRow renders `${testID}-toggle`) and the control
+  // is deliberately enabled. Asserting "enabled" alone would only stop the
+  // suite failing — so this walks the actual guarantee instead: the flag
+  // persists to localStorage and survives a reload.
+  //
+  // Browser-local only: `@deutschfit/analytics-opt-out` is a device
+  // preference, never account state, so unlike the language and exam-track
+  // legs this cannot strand the shared qa1 fixture. It is restored anyway.
+  test("analytics opt-out toggle is live: flips, persists, and survives a reload", async ({
+    page,
+  }) => {
+    trackGuardedRequests(page);
+    await login(page);
+    await page.goto("/fr/app/profil/settings");
+
+    const toggle = page.getByTestId("settings-analytics-optout-toggle");
+    await expect(toggle).toBeVisible({ timeout: 15_000 });
+    await expect(toggle).toBeEnabled();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    try {
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-checked", "true");
+      expect(await page.evaluate(() => localStorage.getItem("@deutschfit/analytics-opt-out"))).toBe(
+        "true"
+      );
+
+      // The real guarantee: the preference is not component state.
+      await page.reload();
+      await expect(page.getByTestId("settings-analytics-optout-toggle")).toHaveAttribute(
+        "aria-checked",
+        "true"
+      );
+    } finally {
+      // Opting back in removes the key outright (not "false") — the
+      // convention `isAnalyticsOptedOut()` reads.
+      await page.getByTestId("settings-analytics-optout-toggle").click();
+      await expect(page.getByTestId("settings-analytics-optout-toggle")).toHaveAttribute(
+        "aria-checked",
+        "false"
+      );
+      expect(await page.evaluate(() => localStorage.getItem("@deutschfit/analytics-opt-out"))).toBe(
+        null
+      );
+    }
   });
 
   test("language radio flips locale prefix and back", async ({ page }) => {

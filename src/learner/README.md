@@ -117,9 +117,31 @@ stuck showing the raw i18next key forever, even after the bundle lands.
 ## Dexie (IndexedDB)
 
 `core/db/schema.ts` defines an 11-table Dexie schema (`deutschfit-learner`,
-version 1), mirroring `deutschfit-mobile`'s Drizzle schemas so the web app
+version 3), mirroring `deutschfit-mobile`'s Drizzle schemas so the web app
 persists the same shapes offline that mobile does. Table names are
 camelCase; row field names stay `snake_case` to mirror mobile 1:1.
+`srsCards`/`srsReviews` use a `(user_id, id)` composite primary key
+(schema v3, web#44) for per-account isolation on a shared browser.
+
+**Dexie cannot change a primary key in place.** Declaring a new keyPath on
+an existing store makes `open()` reject at schema-diff time
+(`UpgradeError: Not yet support for changing primary key`) before any
+`.upgrade()` callback runs, with or without rows in the store — and since
+`Dexie#open()` is all-or-nothing, that takes down persistence for _every_
+table. So the SRS tables are **dropped at `version(2)`** (`stores({
+srsCards: null, srsReviews: null })`) and **recreated at `version(3)`**.
+Losing the pre-v3 SRS rows is fine because they are locally-derived and
+re-derivable; do not copy this shape for a table whose rows are the only
+copy. `version(1)` is a frozen literal snapshot of what actually shipped —
+never re-derive it from the live constants, or Dexie ends up diffing real
+on-disk databases against a schema that never existed. Any future table
+change means a new `.version()` block plus a `LEARNER_DB_VERSION` bump.
+
+The whole 1 → 3 chain is pinned against a real IndexedDB in
+`tests/unit/learner-db-migration.test.ts` (via the `fake-indexeddb`
+devDependency). `tests/unit/learner-db.test.ts` deliberately keeps the
+no-`indexedDB` jsdom environment for the schema-string and fallback
+contract — keep the two in separate files.
 
 Tables: `writingDrafts`, `srsCards`, `srsReviews`, `contentCache`,
 `userStats`, `mockExamCache`, `cachedTopics`, `activeSubmission`,
@@ -149,6 +171,11 @@ The following are approved for use in `src/learner/**`:
   `@supabase/ssr`, `@supabase/supabase-js`, `clsx`, `resend`, `next-intl`
 
 **No other third-party runtime dependency without explicit sign-off first.**
+
+This list is **runtime** deps. Test-only additions still need sign-off but
+do not ship in a bundle. One exists: `fake-indexeddb` (devDependency,
+pinned exact), signed off solely so `tests/unit/learner-db-migration.test.ts`
+can open a real IndexedDB and pin the v1 → v3 upgrade chain.
 
 ### Icons
 

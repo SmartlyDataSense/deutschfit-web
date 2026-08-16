@@ -95,6 +95,58 @@ describe("IdentityCard (S11.3)", () => {
     expect(screen.getByText("Douala · Français · Anglais")).toBeInTheDocument();
     expect(screen.getByTestId("profil-identity-card-exam-pill")).toHaveTextContent("B1");
   });
+
+  // web#57: `tone="coachInk"` (`text-coach-ink`, white) must reliably win
+  // on the avatar-circle initial — `className="text-coach-ink"` used to
+  // lose silently to AppText's default `tone="primary"`
+  // (`text-text-primary`) because clsx() attribute order doesn't drive
+  // the CSS cascade; Tailwind's generated stylesheet rule order does.
+  it("avatar initial carries the coach-ink tone, not the default primary tone", () => {
+    renderWithI18n(
+      <IdentityCard
+        stats={{
+          ...emptyProfilStats,
+          fullName: "Marie Dupont",
+          location: "Douala",
+          languages: [],
+        }}
+        examPill="B1"
+        testID="profil-identity-card"
+      />
+    );
+    const avatar = screen.getByTestId("profil-identity-card-avatar");
+    const initial = within(avatar).getByText("M");
+    expect(initial.className).toContain("text-coach-ink");
+    expect(initial.className).not.toContain("text-text-primary");
+  });
+
+  // web#58 (fix round 1): the outer wrapper used to carry `role="group"`
+  // plus a composed `aria-label` (`${fullName}. ${locationA11y}.
+  // ${examPill}.`) duplicating exactly what its `AppText`/`<span>`
+  // children already render. `role="group"` is not children-
+  // presentational on web, so a screen reader announced the composed
+  // name and then re-read the name/subtitle/pill a second time. This
+  // pins the wrapper carrying no role or aria-label at all — the
+  // children read on their own.
+  it("carries no wrapper role/aria-label — content reads naturally, not duplicated", () => {
+    renderWithI18n(
+      <IdentityCard
+        stats={{
+          ...emptyProfilStats,
+          fullName: "Marie Dupont",
+          location: "Douala",
+          languages: ["Français", "Anglais"],
+        }}
+        examPill="B1"
+        testID="profil-identity-card"
+      />
+    );
+    const card = screen.getByTestId("profil-identity-card");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
+    expect(screen.getByText("Douala · Français · Anglais")).toBeInTheDocument();
+  });
 });
 
 describe("SettingsPickerRow (S11.3)", () => {

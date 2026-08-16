@@ -11,8 +11,7 @@
   },
   "analytics": {
     "optOutLabel": "Désactiver les statistiques d'usage",
-    "optOutHint": "Aucun événement n'est envoyé lorsque ceci est activé.",
-    "comingSoon": "Bientôt disponible"
+    "optOutHint": "Aucun événement n'est envoyé lorsque ceci est activé."
   },
   "appearance": {
     "system": "Système",

@@ -2,8 +2,11 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 import { getLearnerDb, __resetLearnerDbForTests } from "../../src/learner/core/db";
+import { useLearnerSession } from "../../src/learner/core/auth/useLearnerSession";
 import { DAY_MS } from "../../src/learner/core/srs/sm2";
 import { RevealScreen } from "../../src/learner/srs/screens/RevealScreen";
+
+const TEST_USER_ID = "user-a";
 
 const { pushMock, replaceMock, backMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
@@ -19,6 +22,7 @@ async function seedDueCard(id: string, overdueDays: number): Promise<void> {
   const db = await getLearnerDb();
   await db.srsCards.put({
     id,
+    user_id: TEST_USER_ID,
     card_type: "grammar_connector",
     prompt: {
       kind: "cloze",
@@ -46,6 +50,10 @@ beforeEach(() => {
   pushMock.mockReset();
   replaceMock.mockReset();
   backMock.mockReset();
+  useLearnerSession.setState({
+    session: { user: { id: TEST_USER_ID } } as never,
+    status: "authenticated",
+  });
 });
 
 afterEach(() => {
@@ -82,7 +90,7 @@ describe("RevealScreen", () => {
     const db = await getLearnerDb();
     const reviews = await db.srsReviews.toArray();
     expect(reviews).toHaveLength(1);
-    const card = (await db.srsCards.get("card-1")) as { next_due: number };
+    const card = (await db.srsCards.get([TEST_USER_ID, "card-1"])) as { next_due: number };
     expect(card.next_due).toBeGreaterThan(Date.now());
   });
 
@@ -98,7 +106,7 @@ describe("RevealScreen", () => {
 
   it("renders the error state (not the missing state) when the due-queue query fails", async () => {
     const db = await getLearnerDb();
-    vi.spyOn(db.srsCards, "toArray").mockRejectedValueOnce(new Error("boom"));
+    vi.spyOn(db.srsCards, "whereEquals").mockRejectedValueOnce(new Error("boom"));
 
     renderWithI18n(<RevealScreen cardId="card-1" />);
 
@@ -114,12 +122,12 @@ describe("RevealScreen", () => {
   it("does not flash the missing-card state while the due-queue query is still in flight", async () => {
     await seedDueCard("card-1", 2);
     const db = await getLearnerDb();
-    const realToArray = db.srsCards.toArray.bind(db.srsCards);
+    const realWhereEquals = db.srsCards.whereEquals.bind(db.srsCards);
     let resolvePending: (rows: unknown[]) => void = () => {};
     const pending = new Promise<unknown[]>((resolve) => {
       resolvePending = resolve;
     });
-    vi.spyOn(db.srsCards, "toArray").mockReturnValueOnce(pending as Promise<never[]>);
+    vi.spyOn(db.srsCards, "whereEquals").mockReturnValueOnce(pending as Promise<never[]>);
 
     renderWithI18n(<RevealScreen cardId="card-1" />);
 
@@ -129,7 +137,7 @@ describe("RevealScreen", () => {
     expect(screen.queryByTestId("srs-reveal-missing")).not.toBeInTheDocument();
     expect(screen.getByTestId("srs-reveal-screen")).toBeInTheDocument();
 
-    resolvePending(await realToArray());
+    resolvePending(await realWhereEquals("user_id", TEST_USER_ID));
 
     await waitFor(() => {
       expect(screen.getByTestId("srs-reveal-options")).toBeInTheDocument();

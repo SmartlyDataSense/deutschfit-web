@@ -106,7 +106,7 @@
       "header": "YOUR EXERCISES",
       "emptyBody": "You haven't completed any exercises yet.",
       "emptyCta": "Start with a Sprachbausteine drill",
-      "emptyCtaPill": "Bientôt"
+      "emptyCtaPill": "Soon"
     },
     "kind": {
       "schreiben": "Schreiben",
@@ -141,5 +141,5 @@
   },
   "wip": "WIP — D10 design pass pending",
   "wipA11y": "Placeholder screen. The final design lands with task D10.",
-  "comingSoon": "Bientôt disponible"
+  "comingSoon": "Coming soon"
 }

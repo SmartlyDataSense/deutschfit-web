@@ -8,28 +8,28 @@
   },
   "hub": {
     "eyebrow": "Betreuer",
-    "titleLead": "Que veux-tu",
-    "titleAccent": "travailler",
-    "titleTrail": "aujourd'hui ?",
-    "subtitle": "Choisis un mode. Chacun reprend tes points faibles repérés dans tes expressions.",
-    "available": "Disponible",
-    "comingSoon": "À venir",
+    "titleLead": "What do you want",
+    "titleAccent": "to work on",
+    "titleTrail": "today?",
+    "subtitle": "Pick a mode. Each one revisits the weak points spotted in your writing and speaking.",
+    "available": "Available",
+    "comingSoon": "Coming soon",
     "tiles": {
       "discuter": {
-        "title": "Discuter",
-        "description": "Pose une question, échange librement"
+        "title": "Discuss",
+        "description": "Ask a question, talk freely"
       },
       "exercices": {
-        "title": "Exercices ciblés",
-        "description": "Tes points à renforcer, en court"
+        "title": "Targeted exercises",
+        "description": "Your weak points, in short bursts"
       },
       "correction": {
-        "title": "Comprendre une correction",
-        "description": "Reprends une copie, ligne par ligne"
+        "title": "Understand a correction",
+        "description": "Revisit a graded answer, line by line"
       },
       "oral": {
-        "title": "Entraînement à l'oral guidé",
-        "description": "Conversation guidée, à ton rythme"
+        "title": "Guided speaking practice",
+        "description": "Guided conversation, at your pace"
       }
     }
   },

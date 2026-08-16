@@ -266,8 +266,9 @@ async function completeLesenLeg(page: Page): Promise<Landing> {
 
 /** Answers every item in the CURRENT Teil (adapted verbatim from
  * `learner-hoeren.spec.ts` — each item is its own `role="radiogroup"`,
- * option testids repeat per item so each group is scoped individually)
- * then advances: `hoeren-session-next` if present, or stops once
+ * scoped individually; option testids are `hoeren-option-<itemId>-<key>`,
+ * unique per item since web#28) then advances: `hoeren-session-next` if
+ * present, or stops once
  * `hoeren-session-submit` is visible (last Teil). Bounded by `MAX_PARTS`. */
 async function answerAllHoerenTeile(page: Page): Promise<void> {
   const MAX_PARTS = 12;

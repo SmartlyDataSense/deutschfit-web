@@ -94,6 +94,7 @@ export interface HoerenSessionScreenProps {
 }
 
 interface OptionRowProps {
+  readonly itemId: string;
   readonly optKey: string;
   readonly text: string;
   readonly picked: boolean;
@@ -101,13 +102,13 @@ interface OptionRowProps {
   readonly onSelect: () => void;
 }
 
-function OptionRow({ optKey, text, picked, disabled, onSelect }: OptionRowProps) {
+function OptionRow({ itemId, optKey, text, picked, disabled, onSelect }: OptionRowProps) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={picked}
-      data-testid={`hoeren-option-${optKey}`}
+      data-testid={`hoeren-option-${itemId}-${optKey}`}
       disabled={disabled}
       onClick={onSelect}
       className={clsx(
@@ -174,6 +175,16 @@ export function HoerenSessionScreen({
   // dep-array trick) is the source of truth so StrictMode's double-render
   // can never double-fire it. Practice mode has no server attempt id, so
   // this is a no-op there (mobile 90–101).
+  //
+  // `resumed` (web#29): `attemptIdParam` is populated only on a fresh 201
+  // from `HoerenIntroScreen`'s `startHoerenDrill` (see that screen's doc
+  // comment — `null` on a resumed attempt, so the route query string omits
+  // it entirely and this screen falls back to `examSlug` alone). Its
+  // *absence* is therefore the session-bootstrap signal that this attempt
+  // was resumed, not its presence — the prior `Boolean(attemptIdParam)`
+  // had this exactly backwards.
+  const resumedAttempt = attemptIdParam === undefined;
+
   useEffect(() => {
     if (startedRef.current) return;
     if (status !== "ready" || !attemptId) return;
@@ -181,9 +192,9 @@ export function HoerenSessionScreen({
     trackEvent("exam_module_started", {
       attempt_id: attemptId,
       module: "HOEREN",
-      resumed: Boolean(attemptIdParam),
+      resumed: resumedAttempt,
     });
-  }, [status, attemptId, attemptIdParam]);
+  }, [status, attemptId, resumedAttempt]);
 
   // #472 — while the server fetch is in flight the hook returns a
   // 0-minute/0-part placeholder; nothing may submit it.
@@ -508,6 +519,7 @@ export function HoerenSessionScreen({
               {item.options.map((opt) => (
                 <OptionRow
                   key={opt.key}
+                  itemId={item.id}
                   optKey={opt.key}
                   text={opt.text}
                   picked={(player.answers[item.id] ?? null) === opt.key}

@@ -26,18 +26,40 @@ const ui = () =>
     </LearnerI18nProvider>
   );
 
+/**
+ * An ISO date `days` ahead of today.
+ *
+ * `ChangeExamDateScreen` renders `MiniCalendar` without a `referenceDate`,
+ * so the grid is anchored on the real clock and only ever paints 42 cells:
+ * the visible (current) month plus enough leading/trailing days to fill
+ * 6×7 (`buildMonthGrid`, `accueil/components/MiniCalendar.tsx`). Days
+ * before today render `disabled`.
+ *
+ * That bounds how far ahead a test may click. The trailing overflow is at
+ * minimum 5 days (worst case: a 31-day month whose 1st is a Sunday →
+ * 6 leading + 31 = 37 cells used), so `today + 1` is inside the grid on
+ * every date of every month, whereas a larger offset is only sometimes
+ * there. This was `futureIso(21)`, which silently depended on the calendar
+ * month: it was the very last cell of the grid on 2026-08-16 and fell off
+ * the end on 2026-08-17, turning the whole file red overnight with no code
+ * change. Keep this at 1 — the assertions only need *a* future, enabled
+ * day, not a distant one.
+ */
 function futureIso(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Days ahead to click — see `futureIso`'s note on the 42-cell grid bound. */
+const PICK_DAYS_AHEAD = 1;
+
 describe("ChangeExamDateScreen", () => {
   it("saves the picked day then navigates back", async () => {
     updateExamDate.mockResolvedValue(undefined);
     ui();
     expect(screen.getByTestId("change-exam-date-title")).toBeInTheDocument();
-    const iso = futureIso(21);
+    const iso = futureIso(PICK_DAYS_AHEAD);
     fireEvent.click(screen.getByTestId(`change-exam-date-mini-calendar-day-${iso}`));
     await waitFor(() => expect(updateExamDate).toHaveBeenCalledWith(iso));
     await waitFor(() => expect(back).toHaveBeenCalled(), { timeout: 2_000 });
@@ -46,7 +68,9 @@ describe("ChangeExamDateScreen", () => {
   it("surfaces the error caption and stays when the write fails", async () => {
     updateExamDate.mockRejectedValue(new Error("rls"));
     ui();
-    fireEvent.click(screen.getByTestId(`change-exam-date-mini-calendar-day-${futureIso(21)}`));
+    fireEvent.click(
+      screen.getByTestId(`change-exam-date-mini-calendar-day-${futureIso(PICK_DAYS_AHEAD)}`)
+    );
     await waitFor(() => expect(screen.getByTestId("change-exam-date-status")).toBeInTheDocument());
     expect(back).not.toHaveBeenCalled();
   });
@@ -61,7 +85,7 @@ describe("ChangeExamDateScreen", () => {
         })
     );
     const { unmount } = ui();
-    const iso = futureIso(21);
+    const iso = futureIso(PICK_DAYS_AHEAD);
     fireEvent.click(screen.getByTestId(`change-exam-date-mini-calendar-day-${iso}`));
     await waitFor(() => expect(updateExamDate).toHaveBeenCalledWith(iso));
 

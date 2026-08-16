@@ -1,4 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 // S10 SRS e2e — REAL dev backend for auth only. SRS itself is 100% LOCAL
 // (IndexedDB) — no edge function, no PostgREST, no quota. There is no
@@ -20,6 +23,57 @@ async function login(page: Page): Promise<void> {
   await page.waitForURL("**/fr/app", { timeout: 15_000 });
 }
 
+function envLocal(name: string): string {
+  const raw = readFileSync(resolve(__dirname, "../../.env.local"), "utf8");
+  const m = raw.match(new RegExp(`^${name}=(.*)$`, "m"));
+  if (!m) {
+    throw new Error(
+      `getCurrentUserId: ${name} not found in .env.local — required to resolve qa1's user id.`
+    );
+  }
+  return m[1]!.trim();
+}
+
+/**
+ * Resolves `qa1`'s Supabase user id via its OWN sign-in response, not by
+ * reading whatever medium the browser session happens to be stored in.
+ * The seed helpers write directly into IndexedDB (bypassing the app), so
+ * schema v2's `(user_id, id)` composite PK (web#44) needs a real id to put
+ * on each row — but where the *browser's* session lives is an
+ * implementation detail of `@supabase/ssr` (`src/lib/supabase/browser.ts`
+ * uses `createBrowserClient`, which persists the session in a cookie, not
+ * `localStorage` — confirmed empirically: a fresh dev-build login leaves
+ * `localStorage` empty and writes `sb-<project-ref>-auth-token` as a
+ * cookie, possibly chunked as `…auth-token.0`/`.1` with a `base64-`
+ * prefix). Parsing that storage format couples this test to a client
+ * flavour that already changed once.
+ *
+ * Instead, this does its own anon-key `signInWithPassword` in Node
+ * (mirrors `tests/e2e/learner-onboarding-gate.spec.ts`) and reads
+ * `data.user.id` straight off the auth response — no storage medium
+ * involved at all, so it can't drift when the app's client/cookie/storage
+ * strategy changes again. `persistSession: false` keeps this call from
+ * writing anything to disk; it runs independently of (and does not
+ * interfere with) the browser's own `login(page)` session, since Supabase
+ * allows multiple concurrent sessions per user.
+ */
+async function getCurrentUserId(): Promise<string> {
+  const url = envLocal("NEXT_PUBLIC_SUPABASE_URL");
+  const anonKey = envLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  const { data, error } = await client.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+  if (error || !data.user) {
+    throw new Error(
+      `getCurrentUserId: signInWithPassword for ${TEST_EMAIL} against ${url} failed — ` +
+        `${error?.message ?? "no user in response"}`
+    );
+  }
+  return data.user.id;
+}
+
 const fileMeteredRequests = {
   consumeTrial: [] as string[],
   aiCoach: [] as string[],
@@ -35,7 +89,7 @@ function trackFileMeteredRequests(page: Page): void {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function seedRows(now: number) {
+function seedRows(now: number, userId: string) {
   const mk = (
     id: string,
     overdueDays: number,
@@ -46,6 +100,7 @@ function seedRows(now: number) {
     explanation: string
   ) => ({
     id,
+    user_id: userId,
     card_type: "grammar_connector",
     prompt: {
       kind: "cloze",
@@ -89,23 +144,27 @@ function seedRows(now: number) {
 }
 
 async function seedSrsCards(page: Page): Promise<void> {
-  await page.evaluate(async (rows) => {
-    await new Promise<void>((resolve, reject) => {
-      const req = indexedDB.open("deutschfit-learner");
-      req.onsuccess = () => {
-        const db = req.result;
-        const tx = db.transaction("srsCards", "readwrite");
-        const store = tx.objectStore("srsCards");
-        for (const row of rows) store.put(row);
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+  const userId = await getCurrentUserId();
+  await page.evaluate(
+    async (rows) => {
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open("deutschfit-learner");
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction("srsCards", "readwrite");
+          const store = tx.objectStore("srsCards");
+          for (const row of rows) store.put(row);
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
         };
-        tx.onerror = () => reject(tx.error);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }, seedRows(Date.now()));
+        req.onerror = () => reject(req.error);
+      });
+    },
+    seedRows(Date.now(), userId)
+  );
 }
 
 test.describe.serial("SRS revision loop (qa1, local IndexedDB)", () => {

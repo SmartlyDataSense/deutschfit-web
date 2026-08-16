@@ -128,8 +128,19 @@ async function openLearnerDb(): Promise<LearnerDbHandle> {
   const dexieDb = createLearnerDexie();
   try {
     await dexieDb.open();
-  } catch {
-    // Private-mode Safari (quota-0 IDB), storage disabled by the user, etc.
+  } catch (err) {
+    // Two very different failures land here and the fallback is only the
+    // right answer for one of them:
+    //   - environmental — private-mode Safari (quota-0 IDB), storage
+    //     disabled by the user, a locked profile. Nothing to fix; degrade.
+    //   - a schema/upgrade defect in `createLearnerDexie` — which would
+    //     silently disable persistence for EVERY table, permanently, on
+    //     every returning learner, and never self-heal.
+    // The bare `catch {}` this replaces made the second indistinguishable
+    // from the first. It stays a fallback (the environmental case is real
+    // and unfixable), but it is no longer silent. Dexie's error carries
+    // schema/version detail only — no learner data, no PII.
+    console.warn("[learner-db] IndexedDB open failed; falling back to in-memory storage:", err);
     return createFallbackDb();
   }
 

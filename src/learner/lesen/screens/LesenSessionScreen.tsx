@@ -135,6 +135,16 @@ export function LesenSessionScreen({
   // `exam_module_started` fires once per live-mode entry — the ref (not a
   // dep-array trick) is the source of truth so StrictMode's double-render
   // can never double-fire it.
+  //
+  // `resumed` (web#29): `attemptIdParam` is populated only on a fresh 201
+  // from `LesenIntroScreen`'s `startLesenDrill` (see that screen's doc
+  // comment on `startLesenDrill` — `null` on a resumed attempt, so the
+  // route query string omits it entirely and this screen falls back to
+  // `examSlug` alone). Its *absence* is therefore the session-bootstrap
+  // signal that this attempt was resumed, not its presence — the prior
+  // `Boolean(attemptIdParam)` had this exactly backwards.
+  const resumedAttempt = attemptIdParam === undefined;
+
   useEffect(() => {
     if (startedRef.current) return;
     if (status !== "ready" || !attemptId) return;
@@ -142,9 +152,9 @@ export function LesenSessionScreen({
     trackEvent("exam_module_started", {
       attempt_id: attemptId,
       module: "LESEN",
-      resumed: Boolean(attemptIdParam),
+      resumed: resumedAttempt,
     });
-  }, [status, attemptId, attemptIdParam]);
+  }, [status, attemptId, resumedAttempt]);
 
   const isSessionReady = status === "ready" && player.session.parts.length > 0;
   const durationMs = minutesToMs(player.session.totalDurationMinutes);

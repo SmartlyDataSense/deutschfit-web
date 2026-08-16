@@ -91,16 +91,29 @@ describe("CountdownHeroCard", () => {
     expect(screen.getByTestId("cd-mini-calendar")).toBeInTheDocument();
   });
 
-  it("non-clickable card (no onPress) exposes its aria-label via role=group, not a dropped div label", () => {
-    // A plain <div aria-label> with no ARIA role isn't a recognized
-    // accessibility host — assistive tech silently drops the label.
-    // role="group" is required whenever the card isn't role="button".
+  // web#58: role="group" is NOT children-presentational on web — a
+  // composed aria-label on it would make a screen reader announce the
+  // group's name and then re-read every descendant a second time. The
+  // non-clickable branch (no onPress wired) must carry no role/aria-label
+  // duplicating what the date-label/day-count/target-score AppText
+  // children already render — same contract as PriorityTaskCard
+  // (commit 1ea9e6a).
+  it("non-clickable card (no onPress) carries no role/aria-label — content reads naturally", () => {
     ui(<CountdownHeroCard {...base} testID="cd" />);
+    const card = screen.getByTestId("cd");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByTestId("cd-days-remaining")).toHaveTextContent("42");
+    expect(screen.getByTestId("cd-target-score")).toHaveTextContent("OBJECTIF 80");
+  });
+
+  it("clickable card (onPress wired, exam date set) keeps role=button + aria-label — button role IS children-presentational", () => {
+    ui(<CountdownHeroCard {...base} onPress={() => {}} testID="cd" />);
     expect(
-      screen.getByRole("group", {
+      screen.getByRole("button", {
         name: "Compte à rebours examen. 42 jours restants. Examen le 17 juin 2026. Préparation 50%. Objectif 80.",
       })
-    ).toBeInTheDocument();
+    ).toBe(screen.getByTestId("cd"));
   });
 });
 
@@ -158,7 +171,12 @@ describe("HeroCard", () => {
     expect(onCtaPress).toHaveBeenCalled();
   });
 
-  it("non-clickable dark card (non-countdown states) exposes its aria-label via role=group", () => {
+  // web#58: this branch is never itself clickable (only the inner CTA
+  // button is), and role="group" is NOT children-presentational on web —
+  // a composed aria-label restating headline+body would make a screen
+  // reader announce it and then re-read the headline/body a second time.
+  // Same contract as PriorityTaskCard (commit 1ea9e6a).
+  it("non-clickable dark card (non-countdown states) carries no role/aria-label — content reads naturally", () => {
     const payload = computeHeroState({
       daysUntilExam: 42,
       submission: { status: "graded", ageHours: 1, correctionUnseen: true },
@@ -176,8 +194,10 @@ describe("HeroCard", () => {
         }}
       />
     );
-    expect(
-      screen.getByRole("group", { name: `${payload.headline} ${payload.body}` })
-    ).toBeInTheDocument();
+    const card = screen.getByTestId("hero");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(screen.getByTestId("hero-headline")).toHaveTextContent(payload.headline);
+    expect(screen.getByTestId("hero-body")).toHaveTextContent(payload.body);
   });
 });

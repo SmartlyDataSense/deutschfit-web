@@ -186,6 +186,31 @@ const onePartSession: ExamSession = {
   ],
 };
 
+// web#28: a single Teil with two items that share the same option alphabet
+// ("a"/"b"/"c") — the fixture that exposes the positional-testID defect.
+// Before the fix, `hoeren-option-<key>` was keyed on the option letter
+// alone, so both items rendered an identical `data-testid="hoeren-option-a"`
+// (and `-b`/`-c`), making the option unreachable by testID without falling
+// back to DOM order.
+const duplicateOptionsSession: ExamSession = {
+  id: "hoeren-sess-dup",
+  examSlug: "b1-01",
+  moduleCode: "HOEREN",
+  title: "Modelltest 1 · Hören",
+  totalDurationMinutes: 10,
+  parts: [
+    {
+      id: "b1-01-t1",
+      teilNumber: 1,
+      label: "Teil 1",
+      partKind: "GLOBALVERSTEHEN",
+      durationMinutes: 10,
+      instructions: "",
+      items: [makeItem("i1", 1, "a", "track-1"), makeItem("i2", 2, "b", "track-1")],
+    },
+  ],
+};
+
 const TWO_PART_AUDIO: Record<string, string | null> = {
   "track-1": "https://cdn.example/t1.mp3",
   "track-2": "https://cdn.example/t2.mp3",
@@ -278,9 +303,9 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
     expect(screen.getByTestId("hoeren-audio-player-stub-url").textContent).toBe(
       "https://cdn.example/t1.mp3"
     );
-    expect(screen.getByTestId("hoeren-option-a")).toBeInTheDocument();
-    expect(screen.getByTestId("hoeren-option-b")).toBeInTheDocument();
-    expect(screen.getByTestId("hoeren-option-c")).toBeInTheDocument();
+    expect(screen.getByTestId("hoeren-option-i1-a")).toBeInTheDocument();
+    expect(screen.getByTestId("hoeren-option-i1-b")).toBeInTheDocument();
+    expect(screen.getByTestId("hoeren-option-i1-c")).toBeInTheDocument();
     expect(screen.getByText("Aufgabe 1")).toBeInTheDocument();
     // Not the last Teil — "Weiter" renders, not "Abgeben".
     expect(screen.getByTestId("hoeren-session-next")).toBeInTheDocument();
@@ -340,7 +365,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     renderWithI18n(<HoerenSessionScreen />);
 
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() => expect(submitHoerenSessionMock).toHaveBeenCalledTimes(1));
@@ -371,7 +396,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
       <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
     );
 
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() => expect(finalizeSessionMock).toHaveBeenCalledTimes(1));
@@ -408,7 +433,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
       <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
     );
 
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/results"));
@@ -436,7 +461,7 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
     renderWithI18n(
       <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
     );
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
 
     // Three `fireEvent.click`s inside one outer `act()` — same isolation
     // rationale as `learner-lesen-session.test.tsx` (e): nesting defers the
@@ -498,10 +523,13 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(1);
+    // `attemptId` prop is present here (a fresh-201 param per
+    // `HoerenIntroScreen`'s contract), so this is NOT a resumed attempt —
+    // see the (g3)/(g4) pins below for the dedicated web#29 coverage.
     expect(startedCalls[0]?.[1]).toEqual({
       attempt_id: "hoeren-1",
       module: "HOEREN",
-      resumed: true,
+      resumed: false,
     });
   });
 
@@ -520,6 +548,85 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(0);
+  });
+
+  it("(g3) web#29: resumed:false when the route carries a fresh 201 attemptId param", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
+      attempt_id: "hoeren-1",
+      module: "HOEREN",
+      resumed: false,
+    });
+  });
+
+  it("(g4) web#29: resumed:true when the route carries only examSlug — the 409-resume path", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen examSlug="b1-01" mockAttemptId="mock-1" moduleFilter="HOEREN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
+      attempt_id: "hoeren-1",
+      module: "HOEREN",
+      resumed: true,
+    });
+  });
+
+  it("(h) web#28: option testIDs are scoped per item — hoeren-option-<itemId>-<key> — and stay unique within a rendered Teil", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({
+        status: "ready",
+        session: duplicateOptionsSession,
+        audioUrlBySlug: { "track-1": "https://cdn.example/t1.mp3" },
+        attemptId: null,
+      })
+    );
+
+    renderWithI18n(<HoerenSessionScreen />);
+
+    // Two items in the same Teil share the "a"/"b"/"c" option alphabet.
+    // Each item's own "a" option must be individually addressable and must
+    // be a DISTINCT element — not the same node matched twice, and not a
+    // positional first-match.
+    const i1OptionA = screen.getByTestId("hoeren-option-i1-a");
+    const i2OptionA = screen.getByTestId("hoeren-option-i2-a");
+    expect(i1OptionA).toBeInTheDocument();
+    expect(i2OptionA).toBeInTheDocument();
+    expect(i1OptionA).not.toBe(i2OptionA);
+
+    // Clicking each item's own "a" option only picks that item's answer —
+    // proves the testID is wired to the correct item, not just uniquely
+    // labelled.
+    fireEvent.click(i2OptionA);
+    expect(i2OptionA.getAttribute("aria-checked")).toBe("true");
+    expect(i1OptionA.getAttribute("aria-checked")).toBe("false");
+
+    // No two rendered options collide on a testID anywhere in this Teil —
+    // the general uniqueness guarantee the composed format exists to
+    // provide (six options total: two items x three keys).
+    const allOptionTestIds = screen
+      .getAllByRole("radio")
+      .map((el) => el.getAttribute("data-testid"));
+    expect(allOptionTestIds).toHaveLength(6);
+    expect(new Set(allOptionTestIds).size).toBe(allOptionTestIds.length);
   });
 });
 
@@ -562,7 +669,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
 
     renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
 
-    fireEvent.click(screen.getByTestId("hoeren-option-a")); // Teil 1 item answered
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a")); // Teil 1 item answered
     fireEvent.click(screen.getByTestId("hoeren-session-next"));
     await waitFor(() => expect(screen.getByTestId("hoeren-session-submit")).toBeInTheDocument());
     // Teil 2 item left unanswered — proves `unanswered` comes from the
@@ -590,7 +697,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
     );
 
     renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() =>
@@ -618,7 +725,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
     );
 
     renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() =>
@@ -664,7 +771,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
     renderWithI18n(
       <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
     );
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/results"));
@@ -683,7 +790,7 @@ describe("HoerenSessionScreen — full-simulation branch (Task 8.5)", () => {
     );
 
     renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
-    fireEvent.click(screen.getByTestId("hoeren-option-a"));
+    fireEvent.click(screen.getByTestId("hoeren-option-i1-a"));
     fireEvent.click(screen.getByTestId("hoeren-session-submit"));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/fr/app/hoeren/results"));
