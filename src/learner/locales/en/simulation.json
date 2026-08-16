@@ -23,7 +23,7 @@
     "error": "Couldn't submit the exam. Check your connection and try again."
   },
   "unsupportedDrill": {
-    "title": "Bientôt disponible",
-    "body": "Ce mode arrive bientôt pour ce module."
+    "title": "Coming soon",
+    "body": "This mode is coming soon for this module."
   }
 }

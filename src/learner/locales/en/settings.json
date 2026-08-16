@@ -12,7 +12,7 @@
   "analytics": {
     "optOutLabel": "Disable usage analytics",
     "optOutHint": "No events are sent while this is on.",
-    "comingSoon": "Bientôt disponible"
+    "comingSoon": "Coming soon"
   },
   "appearance": {
     "system": "System",
@@ -35,7 +35,7 @@
     "retakeTitle": "Retake the diagnostic",
     "retakeSubtitle": "15 questions · ~12 min · updates your baseline level",
     "saveError": "Couldn't save your choice — check your connection and try again.",
-    "levelComingSoon": "Bientôt disponible"
+    "levelComingSoon": "Coming soon"
   },
   "objectives": {
     "title": "Objectives",
@@ -84,6 +84,6 @@
     "envUnknown": "Unknown"
   },
   "developer": {
-    "comingSoon": "Bientôt disponible"
+    "comingSoon": "Coming soon"
   }
 }
