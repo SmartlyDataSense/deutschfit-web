@@ -676,10 +676,11 @@ export function initPostHog(): void {
  *
  *   - Opting out: persists the flag first (so a concurrent `loadClient()`
  *     call — e.g. a `trackEvent` mid-flight — sees it and refuses to
- *     construct a client), then tells an already-constructed client to
- *     stop via its own `opt_out_capturing()` (mirrors mobile's
- *     `client.optOut()`) rather than a hand-rolled suppression flag around
- *     `capture`.
+ *     construct a client), then tells the client to stop via its own
+ *     `opt_out_capturing()` (mirrors mobile's `client.optOut()`) rather
+ *     than a hand-rolled suppression flag around `capture`. "The client"
+ *     covers both an already-constructed one AND one whose
+ *     `import("posthog-js")` is still in flight — see the slow path below.
  *   - Opting in: removes the flag, then funnels through `loadClient()` —
  *     which will now actually construct the client if the opt-out gate had
  *     previously refused to — and calls `opt_in_capturing()` on it (mirrors
@@ -693,12 +694,35 @@ export function setAnalyticsOptOut(optedOut: boolean): void {
   if (optedOut) {
     setFlag(LEARNER_ANALYTICS_OPT_OUT_KEY, "true");
     if (client) {
+      // Fast path: the client already exists, stop it synchronously.
       try {
         client.opt_out_capturing();
       } catch (err) {
         console.warn("[analytics] opt_out_capturing failed:", err);
       }
+      return;
     }
+    // Slow path — the chunk-load race. `initPostHog()` fires the dynamic
+    // `import("posthog-js")` on boot; until it resolves, `client` is still
+    // null while `loadPromise` is live. Gating solely on `if (client)` wrote
+    // the flag and stopped there: the import then resolved, assigned
+    // `client`, and every later `trackEvent` found `client` truthy, skipped
+    // `loadClient`'s `isAnalyticsOptedOut()` gate entirely (it short-circuits
+    // on `client` first) and kept capturing for the rest of the page
+    // lifetime. Funneling through the shared promise — the same fix shape as
+    // `resetAnalyticsUser`'s sign-out race documented on `loadPromise` above
+    // — guarantees the opt-out lands on whatever client that import produces.
+    // No-op when nothing is in flight: `loadPromise` is null, and a later
+    // `loadClient()` will refuse to construct a client at all now the flag
+    // is set.
+    void loadPromise?.then((c) => {
+      if (!c) return;
+      try {
+        c.opt_out_capturing();
+      } catch (err) {
+        console.warn("[analytics] opt_out_capturing failed:", err);
+      }
+    });
     return;
   }
 

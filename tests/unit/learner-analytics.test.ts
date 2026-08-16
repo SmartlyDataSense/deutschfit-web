@@ -337,6 +337,32 @@ describe("web#52: setAnalyticsOptOut() persists the preference and drives PostHo
     expect(mockInstance.opt_in_capturing).toHaveBeenCalledTimes(1);
   });
 
+  it("opting out DURING the in-flight posthog-js import still reaches the resolved client", async () => {
+    // The chunk-load race. `initPostHog()` starts the dynamic import; the
+    // learner reaches Settings and opts out before it resolves. In that
+    // window `client` is null but `loadPromise` is live — deliberately NO
+    // `await flush()` before the toggle, which is exactly what the
+    // already-constructed case above does and why it never saw this.
+    initPostHog();
+    expect(init).not.toHaveBeenCalled(); // still mid-import
+
+    setAnalyticsOptOut(true);
+    await flush();
+
+    // The import resolved and assigned `client`. If the opt-out only ran
+    // `if (client)`, it was skipped, and `loadClient()` now short-circuits
+    // on the truthy `client` BEFORE its `isAnalyticsOptedOut()` gate — so
+    // capture would carry on for the rest of the page lifetime.
+    expect(init).toHaveBeenCalledTimes(1);
+    expect(mockInstance.opt_out_capturing).toHaveBeenCalledTimes(1);
+
+    // Deliberately NOT asserting that a later `trackEvent` drops its
+    // `capture` — suppression after `opt_out_capturing()` lives inside
+    // posthog-js, and `mockInstance.capture` is a bare `vi.fn()` that does
+    // not model it. Asserting it here would test the double, not this
+    // module. Reaching `opt_out_capturing()` at all IS the contract.
+  });
+
   it("a toggle survives what a reload looks like here: a fresh isAnalyticsOptedOut() read still sees the persisted flag", () => {
     // This module keeps no in-memory opt-out cache (unlike mobile's
     // `cachedOptOut`) — every `loadClient()` call re-reads localStorage via
