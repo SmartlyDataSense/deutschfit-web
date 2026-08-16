@@ -6,8 +6,9 @@
  * rather than slipping through silently (S11 Task-5 brief mandate):
  *   - `hydrateExamContext()` is actually called on mount (not just that
  *     the store happens to be pre-populated by `setState`).
- *   - The analytics switch never writes anything — genuinely inert, not
- *     merely disabled-looking.
+ *   - The analytics opt-out switch (web#52) reflects the persisted
+ *     `isAnalyticsOptedOut()` value on mount and calls `setAnalyticsOptOut()`
+ *     with the new value on every click — genuinely live, not decorative.
  *   - Every row's route target, not just its presence.
  *   - The about section renders live `getBackendInfo()` values, not
  *     hardcoded literals — proven by mocking the module and varying it.
@@ -72,6 +73,23 @@ vi.mock("@/learner/core/notifications/useWebPushSettings", () => ({
   useWebPushSettings: useWebPushSettingsMock,
 }));
 
+// web#52 — the screen owns only the RENDERING/wiring contract for the
+// analytics opt-out row (mirrors the S12 notifications-hook precedent
+// directly above): does it read `isAnalyticsOptedOut()` on mount and call
+// `setAnalyticsOptOut()` on click, with the right argument. The opt-out
+// module's own behaviour (persistence, PostHog `opt_out_capturing()`
+// propagation) is pinned in `tests/unit/learner-analytics.test.ts` — mocking
+// it here keeps this suite hermetic (no real PostHog client construction
+// from a `setAnalyticsOptOut(false)` click) and focused on the screen.
+const { isAnalyticsOptedOutMock, setAnalyticsOptOutMock } = vi.hoisted(() => ({
+  isAnalyticsOptedOutMock: vi.fn(() => false),
+  setAnalyticsOptOutMock: vi.fn(),
+}));
+vi.mock("@/learner/core/analytics/posthog", () => ({
+  isAnalyticsOptedOut: isAnalyticsOptedOutMock,
+  setAnalyticsOptOut: setAnalyticsOptOutMock,
+}));
+
 import { initLearnerI18n } from "@/learner/core/i18n";
 import { LearnerI18nProvider } from "@/learner/core/i18n/LearnerI18nProvider";
 import { LEARNER_LANG_STORAGE_KEY } from "@/learner/core/storage/flags";
@@ -114,6 +132,8 @@ beforeEach(() => {
     enable: vi.fn(),
     disable: vi.fn(),
   });
+  isAnalyticsOptedOutMock.mockReset().mockReturnValue(false);
+  setAnalyticsOptOutMock.mockReset();
   store = installStorageMock();
 });
 
@@ -125,14 +145,15 @@ const ui = () =>
   );
 
 describe("SettingsScreen (S11.5)", () => {
-  it("renders every section and the inert analytics switch", () => {
+  it("renders every section and the live analytics opt-out toggle", () => {
     ui();
     expect(screen.getByTestId("settings-language-fr")).toBeInTheDocument();
     expect(screen.getByTestId("settings-exam-row")).toBeInTheDocument();
     expect(screen.getByTestId("settings-exam-selector-row")).toBeInTheDocument();
     expect(screen.getByTestId("settings-objectives-row")).toBeInTheDocument();
-    const optOut = screen.getByTestId("settings-analytics-optout-switch");
-    expect(optOut).toBeDisabled();
+    const optOut = screen.getByTestId("settings-analytics-optout-toggle");
+    expect(optOut).not.toBeDisabled();
+    expect(optOut).toHaveAttribute("aria-checked", "false");
     expect(screen.getByTestId("settings-delete-account-row")).toBeInTheDocument();
     expect(screen.getByTestId("settings-version-row")).toBeInTheDocument();
     expect(screen.getByTestId("settings-backend-env-row")).toBeInTheDocument();
@@ -184,15 +205,35 @@ describe("SettingsScreen (S11.5)", () => {
     expect(push).toHaveBeenCalledWith("/fr/app/profil/delete-account");
   });
 
-  it("the analytics opt-out switch is genuinely inert: clicking it never writes a flag", () => {
+  it("web#52: hydrates checked from isAnalyticsOptedOut() on mount", () => {
+    isAnalyticsOptedOutMock.mockReturnValue(true);
     ui();
-    const optOut = screen.getByTestId("settings-analytics-optout-switch");
+    expect(screen.getByTestId("settings-analytics-optout-toggle")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
+  it("web#52: clicking the analytics toggle calls setAnalyticsOptOut(true) and flips checked", () => {
+    ui();
+    const optOut = screen.getByTestId("settings-analytics-optout-toggle");
+    expect(optOut).toHaveAttribute("aria-checked", "false");
     fireEvent.click(optOut);
-    // Disabled inputs don't fire onClick handlers in the DOM, but assert
-    // the behavioural contract directly: nothing was ever persisted.
-    expect(store.size).toBe(0);
+    expect(setAnalyticsOptOutMock).toHaveBeenCalledExactlyOnceWith(true);
+    expect(optOut).toHaveAttribute("aria-checked", "true");
+    // The click is a real toggle, not a route action.
     expect(push).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("web#52: clicking an already-opted-out toggle calls setAnalyticsOptOut(false) and flips checked back", () => {
+    isAnalyticsOptedOutMock.mockReturnValue(true);
+    ui();
+    const optOut = screen.getByTestId("settings-analytics-optout-toggle");
+    expect(optOut).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(optOut);
+    expect(setAnalyticsOptOutMock).toHaveBeenCalledExactlyOnceWith(false);
+    expect(optOut).toHaveAttribute("aria-checked", "false");
   });
 
   it("about section renders live getBackendInfo() values, not literals", () => {
@@ -357,9 +398,10 @@ describe("SettingsScreen — notifications section (S12)", () => {
     expect(screen.queryByTestId("settings-notifications-error")).toBeNull();
   });
 
-  it("the analytics placeholder row is untouched (still inert)", () => {
+  it("the analytics opt-out row is unaffected by the notifications section's state", () => {
     ui();
-    const optOut = screen.getByTestId("settings-analytics-optout-switch");
-    expect(optOut).toBeDisabled();
+    const optOut = screen.getByTestId("settings-analytics-optout-toggle");
+    expect(optOut).not.toBeDisabled();
+    expect(optOut).toHaveAttribute("aria-checked", "false");
   });
 });

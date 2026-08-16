@@ -11,8 +11,7 @@
   },
   "analytics": {
     "optOutLabel": "Disable usage analytics",
-    "optOutHint": "No events are sent while this is on.",
-    "comingSoon": "Coming soon"
+    "optOutHint": "No events are sent while this is on."
   },
   "appearance": {
     "system": "System",

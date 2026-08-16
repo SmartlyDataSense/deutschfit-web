@@ -23,9 +23,19 @@
  *   - `posthog-react-native`'s `capture`/`identify`/`reset` are async;
  *     `posthog-js`'s are synchronous. The exports below are sync to match
  *     the underlying SDK instead of wrapping them in unnecessary Promises.
- *   - No opt-out toggle here yet — mobile's Settings opt-out switch has no
- *     web equivalent until Profil/Settings (S11) ships. Init is gated on
- *     the env key only for this slice.
+ *   - Opt-out (web#52): mirrors mobile's `optOut.ts`/`client.ts` split —
+ *     `LEARNER_ANALYTICS_OPT_OUT_KEY` (`core/storage/flags.ts`, "true" =
+ *     opted out, same key string as mobile's `ANALYTICS_OPT_OUT_KEY`) is
+ *     the persistence, `loadClient()`'s gate is the enforcement. Opted
+ *     out → the client is never constructed at all (no dynamic import, no
+ *     network) — same "fail closed" posture mobile's `ensureClient()`
+ *     gate has. `setAnalyticsOptOut()` also calls PostHog's own
+ *     `opt_out_capturing()`/`opt_in_capturing()` on an already-constructed
+ *     client (mobile: `client.optOut()`/`optIn()`) rather than a
+ *     hand-rolled suppression flag around `capture` — PostHog's SDK
+ *     already refuses to send anything once opted out, so this is
+ *     defense-in-depth for the case where a client was constructed before
+ *     the toggle flipped.
  *   - Named-instance isolation: `posthog.init(token, config, "learner")`
  *     (not the default `posthog.init(token, config)`) so this client never
  *     shares state with a future marketing-pages PostHog integration in
@@ -35,6 +45,13 @@
  *     typed events below, same discipline as mobile.
  */
 import type { PostHog } from "posthog-js"; // type-only — erased at build time, never bundled
+
+import {
+  getFlag,
+  LEARNER_ANALYTICS_OPT_OUT_KEY,
+  removeFlag,
+  setFlag,
+} from "@/learner/core/storage/flags";
 
 // ─── Event catalogue (mirrors mobile's events.ts) ──────────────────────────
 
@@ -573,16 +590,33 @@ export function getPostHogHost(): string {
 }
 
 /**
+ * web#52 — the analytics-opt-out accessor. `LEARNER_ANALYTICS_OPT_OUT_KEY`
+ * (`core/storage/flags.ts`) is a browser-global preference, not user-scoped
+ * (see `core/storage/wipe.ts`'s doc comment on why it deliberately survives
+ * a local wipe). `"true"` is the only opted-out value — key absent or any
+ * other value reads as opted in, same convention as mobile's `optOut.ts`.
+ */
+export function isAnalyticsOptedOut(): boolean {
+  return getFlag(LEARNER_ANALYTICS_OPT_OUT_KEY) === "true";
+}
+
+/**
  * Resolves to the singleton `posthog-js` client, lazily importing and
  * initialising it on first call. Every subsequent call (whether or not the
  * first has settled yet) returns the same promise/client — see the
  * `loadPromise` doc comment above for why every export funnels through
  * this one function.
+ *
+ * web#52: opted out short-circuits before the dynamic `import("posthog-js")`
+ * — the client is never constructed, no chunk is fetched, no network call
+ * is made. This is the enforcement half of the opt-out; `setAnalyticsOptOut`
+ * below is the toggle half.
  */
 function loadClient(): Promise<PostHog | null> {
   if (client) return Promise.resolve(client);
   if (loadPromise) return loadPromise;
   if (typeof window === "undefined") return Promise.resolve(null);
+  if (isAnalyticsOptedOut()) return Promise.resolve(null);
 
   const apiKey = getPostHogKey();
   if (!apiKey) {
@@ -626,12 +660,57 @@ function loadClient(): Promise<PostHog | null> {
  * `posthog-js` chunk load (if a key is configured) so the first
  * `identifyUser()` / `trackEvent()` call doesn't have to trigger it itself.
  * No-ops (including no console noise beyond the one-time missing-key
- * warning) when `NEXT_PUBLIC_POSTHOG_KEY` is unset — dev/test safety.
+ * warning) when `NEXT_PUBLIC_POSTHOG_KEY` is unset — dev/test safety. Also
+ * a no-op, silently, when the learner has opted out (web#52) — `loadClient`
+ * is the shared gate for both cases.
  */
 export function initPostHog(): void {
   if (initialised) return;
   initialised = true;
   void loadClient();
+}
+
+/**
+ * web#52 — flips the persisted opt-out preference and propagates it to
+ * PostHog immediately, both directions:
+ *
+ *   - Opting out: persists the flag first (so a concurrent `loadClient()`
+ *     call — e.g. a `trackEvent` mid-flight — sees it and refuses to
+ *     construct a client), then tells an already-constructed client to
+ *     stop via its own `opt_out_capturing()` (mirrors mobile's
+ *     `client.optOut()`) rather than a hand-rolled suppression flag around
+ *     `capture`.
+ *   - Opting in: removes the flag, then funnels through `loadClient()` —
+ *     which will now actually construct the client if the opt-out gate had
+ *     previously refused to — and calls `opt_in_capturing()` on it (mirrors
+ *     mobile's `client.optIn()`).
+ *
+ * Called from the Settings toggle (`SettingsScreen`) after it persists the
+ * preference; the preference itself survives a reload because it lives in
+ * `localStorage`, not component state.
+ */
+export function setAnalyticsOptOut(optedOut: boolean): void {
+  if (optedOut) {
+    setFlag(LEARNER_ANALYTICS_OPT_OUT_KEY, "true");
+    if (client) {
+      try {
+        client.opt_out_capturing();
+      } catch (err) {
+        console.warn("[analytics] opt_out_capturing failed:", err);
+      }
+    }
+    return;
+  }
+
+  removeFlag(LEARNER_ANALYTICS_OPT_OUT_KEY);
+  void loadClient().then((c) => {
+    if (!c) return;
+    try {
+      c.opt_in_capturing();
+    } catch (err) {
+      console.warn("[analytics] opt_in_capturing failed:", err);
+    }
+  });
 }
 
 export function trackEvent<N extends AnalyticsEventName>(

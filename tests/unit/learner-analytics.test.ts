@@ -25,6 +25,12 @@
  *     funnels through the same shared load promise instead of no-opping on
  *     `!client`.
  *   - `getPostHogHost()` default vs. env override.
+ *   - web#52: `isAnalyticsOptedOut()` reads `LEARNER_ANALYTICS_OPT_OUT_KEY`;
+ *     `loadClient()`'s gate refuses to construct a client at all while
+ *     opted out (no `init` call, no network); `setAnalyticsOptOut()`
+ *     persists the flag AND calls PostHog's own
+ *     `opt_out_capturing()`/`opt_in_capturing()` on both an
+ *     already-constructed client and a not-yet-constructed one.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -35,6 +41,8 @@ const { mockInstance, init } = vi.hoisted(() => {
     capture: vi.fn(),
     identify: vi.fn(),
     reset: vi.fn(),
+    opt_out_capturing: vi.fn(),
+    opt_in_capturing: vi.fn(),
   };
   return { mockInstance, init: vi.fn(() => mockInstance) };
 });
@@ -49,9 +57,30 @@ import {
   getPostHogKey,
   identifyUser,
   initPostHog,
+  isAnalyticsOptedOut,
   resetAnalyticsUser,
+  setAnalyticsOptOut,
   trackEvent,
 } from "@/learner/core/analytics/posthog";
+import { getFlag, LEARNER_ANALYTICS_OPT_OUT_KEY } from "@/learner/core/storage/flags";
+
+// jsdom localStorage is unreliable in this repo (flags.ts docstring) —
+// install a minimal in-memory Storage mock, same idiom as
+// `learner-settings-core.test.ts`.
+function installStorageMock(): void {
+  const store = new Map<string, string>();
+  const mock = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(window, "localStorage", { value: mock, configurable: true });
+}
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -74,11 +103,14 @@ async function flush(): Promise<void> {
 }
 
 beforeEach(() => {
+  installStorageMock();
   __resetPostHogForTests();
   init.mockClear();
   mockInstance.capture.mockClear();
   mockInstance.identify.mockClear();
   mockInstance.reset.mockClear();
+  mockInstance.opt_out_capturing.mockClear();
+  mockInstance.opt_in_capturing.mockClear();
 });
 
 afterEach(() => {
@@ -228,6 +260,89 @@ describe("key configured — client is constructed as a named, explicit-track-on
       const resetOrder = mockInstance.reset.mock.invocationCallOrder[0]!;
       expect(resetOrder).toBeGreaterThan(identifyOrder);
     });
+  });
+});
+
+describe("web#52: isAnalyticsOptedOut() reads LEARNER_ANALYTICS_OPT_OUT_KEY", () => {
+  it("reads false when the key is unset", () => {
+    expect(isAnalyticsOptedOut()).toBe(false);
+  });
+
+  it('reads true only for the literal "true" value, same convention as mobile', () => {
+    window.localStorage.setItem(LEARNER_ANALYTICS_OPT_OUT_KEY, "true");
+    expect(isAnalyticsOptedOut()).toBe(true);
+
+    window.localStorage.setItem(LEARNER_ANALYTICS_OPT_OUT_KEY, "yes");
+    expect(isAnalyticsOptedOut()).toBe(false);
+  });
+});
+
+describe("web#52: opted out — the client is never constructed and never captures", () => {
+  beforeEach(() => {
+    setEnv("phc_test_key");
+    window.localStorage.setItem(LEARNER_ANALYTICS_OPT_OUT_KEY, "true");
+  });
+
+  it("initPostHog() never calls posthog.init while opted out", async () => {
+    initPostHog();
+    await flush();
+    expect(init).not.toHaveBeenCalled();
+  });
+
+  it("trackEvent() never constructs a client and never captures while opted out", async () => {
+    trackEvent("app_opened");
+    await flush();
+    expect(init).not.toHaveBeenCalled();
+    expect(mockInstance.capture).not.toHaveBeenCalled();
+  });
+});
+
+describe("web#52: setAnalyticsOptOut() persists the preference and drives PostHog's own opt-out API", () => {
+  beforeEach(() => setEnv("phc_test_key"));
+
+  it("opting out persists the flag under LEARNER_ANALYTICS_OPT_OUT_KEY", () => {
+    setAnalyticsOptOut(true);
+    expect(getFlag(LEARNER_ANALYTICS_OPT_OUT_KEY)).toBe("true");
+    expect(isAnalyticsOptedOut()).toBe(true);
+  });
+
+  it("opting back in removes the flag — not just sets it to a falsy value", () => {
+    setAnalyticsOptOut(true);
+    setAnalyticsOptOut(false);
+    expect(getFlag(LEARNER_ANALYTICS_OPT_OUT_KEY)).toBeNull();
+    expect(isAnalyticsOptedOut()).toBe(false);
+  });
+
+  it("opting out an already-initialised client calls its own opt_out_capturing() — not a hand-rolled suppression flag", async () => {
+    // Force construction first.
+    trackEvent("app_opened");
+    await flush();
+    expect(init).toHaveBeenCalledTimes(1);
+
+    setAnalyticsOptOut(true);
+    expect(mockInstance.opt_out_capturing).toHaveBeenCalledTimes(1);
+  });
+
+  it("opting back in on an opted-out-from-boot session constructs the client (gate lifts) and calls opt_in_capturing()", async () => {
+    // Opted out before anything ever ran — loadClient's gate has refused
+    // to construct a client at all, so `client` is still null internally.
+    setAnalyticsOptOut(true);
+    trackEvent("app_opened"); // no-op while opted out
+    await flush();
+    expect(init).not.toHaveBeenCalled();
+
+    setAnalyticsOptOut(false);
+    await flush();
+    expect(init).toHaveBeenCalledTimes(1);
+    expect(mockInstance.opt_in_capturing).toHaveBeenCalledTimes(1);
+  });
+
+  it("a toggle survives what a reload looks like here: a fresh isAnalyticsOptedOut() read still sees the persisted flag", () => {
+    // This module keeps no in-memory opt-out cache (unlike mobile's
+    // `cachedOptOut`) — every `loadClient()` call re-reads localStorage via
+    // `isAnalyticsOptedOut()`, so persistence IS the reload story here.
+    setAnalyticsOptOut(true);
+    expect(isAnalyticsOptedOut()).toBe(true);
   });
 });
 

@@ -225,7 +225,46 @@ describe("LesenSessionScreen — live drill submit flow", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(1);
+    // `attemptId` prop is present here (a fresh-201 param per
+    // `LesenIntroScreen`'s contract), so this is NOT a resumed attempt —
+    // see the (h)/(i) pins below for the dedicated web#29 coverage.
     expect(startedCalls[0]?.[1]).toEqual({
+      attempt_id: "lesen-1",
+      module: "LESEN",
+      resumed: false,
+    });
+  });
+
+  it("(h) web#29: resumed:false when the route carries a fresh 201 attemptId param", async () => {
+    renderWithI18n(
+      <LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" moduleFilter="LESEN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
+      attempt_id: "lesen-1",
+      module: "LESEN",
+      resumed: false,
+    });
+  });
+
+  it("(i) web#29: resumed:true when the route carries only examSlug — the 409-resume path", async () => {
+    renderWithI18n(
+      <LesenSessionScreen examSlug="b1-01" mockAttemptId="mock-1" moduleFilter="LESEN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    // Confirms the hook actually bootstrapped via the examSlug branch
+    // (`lesen-start`), not a leftover attemptId — same signal
+    // `LesenIntroScreen`'s 409 path produces.
+    expect(fetchLesenSessionMock).toHaveBeenCalledWith("b1-01");
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
       attempt_id: "lesen-1",
       module: "LESEN",
       resumed: true,

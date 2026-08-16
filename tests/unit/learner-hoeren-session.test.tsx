@@ -498,10 +498,13 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(1);
+    // `attemptId` prop is present here (a fresh-201 param per
+    // `HoerenIntroScreen`'s contract), so this is NOT a resumed attempt —
+    // see the (g3)/(g4) pins below for the dedicated web#29 coverage.
     expect(startedCalls[0]?.[1]).toEqual({
       attempt_id: "hoeren-1",
       module: "HOEREN",
-      resumed: true,
+      resumed: false,
     });
   });
 
@@ -520,6 +523,46 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
 
     const startedCalls = trackEventMock.mock.calls.filter((c) => c[0] === "exam_module_started");
     expect(startedCalls).toHaveLength(0);
+  });
+
+  it("(g3) web#29: resumed:false when the route carries a fresh 201 attemptId param", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" moduleFilter="HOEREN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
+      attempt_id: "hoeren-1",
+      module: "HOEREN",
+      resumed: false,
+    });
+  });
+
+  it("(g4) web#29: resumed:true when the route carries only examSlug — the 409-resume path", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: onePartSession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(
+      <HoerenSessionScreen examSlug="b1-01" mockAttemptId="mock-1" moduleFilter="HOEREN" />
+    );
+
+    await waitFor(() =>
+      expect(trackEventMock).toHaveBeenCalledWith("exam_module_started", expect.anything())
+    );
+    const startedCall = trackEventMock.mock.calls.find((c) => c[0] === "exam_module_started");
+    expect(startedCall?.[1]).toEqual({
+      attempt_id: "hoeren-1",
+      module: "HOEREN",
+      resumed: true,
+    });
   });
 });
 
