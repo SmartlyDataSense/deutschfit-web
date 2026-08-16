@@ -1,4 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 // S10 SRS e2e — REAL dev backend for auth only. SRS itself is 100% LOCAL
 // (IndexedDB) — no edge function, no PostgREST, no quota. There is no
@@ -20,33 +23,55 @@ async function login(page: Page): Promise<void> {
   await page.waitForURL("**/fr/app", { timeout: 15_000 });
 }
 
-/**
- * Reads `qa1`'s Supabase user id straight out of `localStorage` — the
- * seed helpers write directly into IndexedDB (bypassing the app), so
- * schema v2's `(user_id, id)` composite PK (web#44) needs a real id to
- * put on each row. `supabase-js`'s default browser storage key is
- * `sb-<project-ref>-auth-token`; no custom `storageKey` is configured
- * anywhere in this app (see `src/lib/supabase/browser.ts`), so scanning
- * for that prefix is reliable rather than hardcoding the dev project ref.
- */
-async function getCurrentUserId(page: Page): Promise<string> {
-  const userId = await page.evaluate(() => {
-    const key = Object.keys(window.localStorage).find(
-      (k) => k.startsWith("sb-") && k.endsWith("-auth-token")
+function envLocal(name: string): string {
+  const raw = readFileSync(resolve(__dirname, "../../.env.local"), "utf8");
+  const m = raw.match(new RegExp(`^${name}=(.*)$`, "m"));
+  if (!m) {
+    throw new Error(
+      `getCurrentUserId: ${name} not found in .env.local — required to resolve qa1's user id.`
     );
-    if (!key) return null;
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as {
-      user?: { id?: string };
-      currentSession?: { user?: { id?: string } };
-    };
-    return parsed.user?.id ?? parsed.currentSession?.user?.id ?? null;
-  });
-  if (!userId) {
-    throw new Error("getCurrentUserId: no Supabase auth-token entry found in localStorage");
   }
-  return userId;
+  return m[1]!.trim();
+}
+
+/**
+ * Resolves `qa1`'s Supabase user id via its OWN sign-in response, not by
+ * reading whatever medium the browser session happens to be stored in.
+ * The seed helpers write directly into IndexedDB (bypassing the app), so
+ * schema v2's `(user_id, id)` composite PK (web#44) needs a real id to put
+ * on each row — but where the *browser's* session lives is an
+ * implementation detail of `@supabase/ssr` (`src/lib/supabase/browser.ts`
+ * uses `createBrowserClient`, which persists the session in a cookie, not
+ * `localStorage` — confirmed empirically: a fresh dev-build login leaves
+ * `localStorage` empty and writes `sb-<project-ref>-auth-token` as a
+ * cookie, possibly chunked as `…auth-token.0`/`.1` with a `base64-`
+ * prefix). Parsing that storage format couples this test to a client
+ * flavour that already changed once.
+ *
+ * Instead, this does its own anon-key `signInWithPassword` in Node
+ * (mirrors `tests/e2e/learner-onboarding-gate.spec.ts`) and reads
+ * `data.user.id` straight off the auth response — no storage medium
+ * involved at all, so it can't drift when the app's client/cookie/storage
+ * strategy changes again. `persistSession: false` keeps this call from
+ * writing anything to disk; it runs independently of (and does not
+ * interfere with) the browser's own `login(page)` session, since Supabase
+ * allows multiple concurrent sessions per user.
+ */
+async function getCurrentUserId(): Promise<string> {
+  const url = envLocal("NEXT_PUBLIC_SUPABASE_URL");
+  const anonKey = envLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  const { data, error } = await client.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+  if (error || !data.user) {
+    throw new Error(
+      `getCurrentUserId: signInWithPassword for ${TEST_EMAIL} against ${url} failed — ` +
+        `${error?.message ?? "no user in response"}`
+    );
+  }
+  return data.user.id;
 }
 
 const fileMeteredRequests = {
@@ -119,7 +144,7 @@ function seedRows(now: number, userId: string) {
 }
 
 async function seedSrsCards(page: Page): Promise<void> {
-  const userId = await getCurrentUserId(page);
+  const userId = await getCurrentUserId();
   await page.evaluate(
     async (rows) => {
       await new Promise<void>((resolve, reject) => {
