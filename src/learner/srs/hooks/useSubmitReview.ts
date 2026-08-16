@@ -15,13 +15,21 @@
  *
  * Port of mobile `src/features/srs/hooks/useSubmitReview.ts` (Drizzle ->
  * LearnerTableApi). S10-D4: `LearnerTableApi` has no `orderBy`/`limit`,
- * so "latest prior review" is `whereEquals("card_id", cardId)` -> JS
- * sort descending on `reviewed_at` -> take `[0]`.
+ * so "latest prior review" is `whereEquals("user_id", userId)` -> JS
+ * filter on `card_id` -> sort descending on `reviewed_at` -> take `[0]`.
+ *
+ * web#44 (S14 gate): `srsCards`/`srsReviews` moved to a `(user_id, id)`
+ * composite primary key (schema v2) for per-account isolation. Every read
+ * and write here now carries `userId` — the prior-review lookup is scoped
+ * by `user_id` (not just `card_id`) so two accounts on the same browser
+ * can never seed one another's SM-2 state, and `srsCards.get`/`.put` use
+ * the compound `[userId, cardId]` key.
  */
 import { useCallback, useRef, useState } from "react";
 
 import { getLearnerDb } from "@/learner/core/db";
 import type { SRSRating, SRSReviewRow } from "@/learner/core/db/types";
+import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { schedule, SM2_DEFAULT_EASE } from "@/learner/core/srs/sm2";
 
 import type { DifficultyRating, SRSReview } from "../types";
@@ -35,6 +43,8 @@ export function generateReviewId(): string {
 
 export interface SubmitReviewInput {
   readonly cardId: string;
+  /** Scopes the read/write to this account's cards/reviews (web#44). */
+  readonly userId: string;
   readonly rating: DifficultyRating | SRSRating;
   /** Injectable clock for deterministic tests. */
   readonly now?: Date;
@@ -57,10 +67,13 @@ export async function submitReview(input: SubmitReviewInput): Promise<SRSReview>
   const db = await getLearnerDb();
 
   // Seed SM-2 state from the latest review row for this card, if any.
-  const priorReviews = (await db.srsReviews.whereEquals(
-    "card_id",
-    input.cardId
-  )) as unknown as SRSReviewRow[];
+  // Scoped by `user_id` first (not `card_id` alone) so a different
+  // account's review history for a same-shaped card id can never seed
+  // this account's schedule (web#44) — same whereEquals-then-JS-filter
+  // idiom as `core/storage/practiceProgress.ts`.
+  const priorReviews = (
+    (await db.srsReviews.whereEquals("user_id", input.userId)) as unknown as SRSReviewRow[]
+  ).filter((r) => r.card_id === input.cardId);
   const latest = [...priorReviews].sort((a, b) => b.reviewed_at - a.reviewed_at)[0];
   const seed = latest
     ? { ease: latest.ease_after, intervalDays: latest.interval_days_after }
@@ -71,6 +84,7 @@ export async function submitReview(input: SubmitReviewInput): Promise<SRSReview>
   const reviewId = input.reviewId ?? generateReviewId();
   const row: SRSReviewRow = {
     id: reviewId,
+    user_id: input.userId,
     card_id: input.cardId,
     reviewed_at: now.getTime(),
     rating,
@@ -82,8 +96,8 @@ export async function submitReview(input: SubmitReviewInput): Promise<SRSReview>
   await db.srsReviews.put(row as never);
 
   // Keep the card's cached next-due in sync so `useDueCards` stops
-  // returning it.
-  const card = await db.srsCards.get(input.cardId);
+  // returning it. Compound-PK `get`/`put` take the `[user_id, id]` key.
+  const card = await db.srsCards.get([input.userId, input.cardId]);
   if (card) {
     await db.srsCards.put({ ...card, next_due: row.next_due } as never);
   }
@@ -99,36 +113,47 @@ export async function submitReview(input: SubmitReviewInput): Promise<SRSReview>
   };
 }
 
+/** Hook-facing input — `userId` is sourced from `useLearnerSession`, not the caller. */
+export type UseSubmitReviewInput = Omit<SubmitReviewInput, "userId">;
+
 export interface UseSubmitReviewResult {
   readonly submitting: boolean;
   readonly error: Error | null;
-  readonly submit: (input: SubmitReviewInput) => Promise<SRSReview>;
+  readonly submit: (input: UseSubmitReviewInput) => Promise<SRSReview>;
 }
 
 export function useSubmitReview(): UseSubmitReviewResult {
+  const userId = useLearnerSession((s) => s.session?.user?.id ?? null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const inflight = useRef<Promise<SRSReview> | null>(null);
 
-  const submit = useCallback(async (input: SubmitReviewInput): Promise<SRSReview> => {
-    if (inflight.current) {
-      return inflight.current;
-    }
-    setSubmitting(true);
-    setError(null);
-    const promise = submitReview(input)
-      .catch((err: unknown) => {
-        const wrapped = err instanceof Error ? err : new Error(String(err));
-        setError(wrapped);
-        throw wrapped;
-      })
-      .finally(() => {
-        inflight.current = null;
-        setSubmitting(false);
-      });
-    inflight.current = promise;
-    return promise;
-  }, []);
+  const submit = useCallback(
+    async (input: UseSubmitReviewInput): Promise<SRSReview> => {
+      if (inflight.current) {
+        return inflight.current;
+      }
+      setSubmitting(true);
+      setError(null);
+      const promise = (
+        userId
+          ? submitReview({ ...input, userId })
+          : Promise.reject(new Error("useSubmitReview: no authenticated user"))
+      )
+        .catch((err: unknown) => {
+          const wrapped = err instanceof Error ? err : new Error(String(err));
+          setError(wrapped);
+          throw wrapped;
+        })
+        .finally(() => {
+          inflight.current = null;
+          setSubmitting(false);
+        });
+      inflight.current = promise;
+      return promise;
+    },
+    [userId]
+  );
 
   return { submitting, error, submit };
 }

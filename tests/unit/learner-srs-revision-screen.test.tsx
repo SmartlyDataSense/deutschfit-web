@@ -2,8 +2,11 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithI18n } from "./helpers/renderWithI18n";
 import { getLearnerDb, __resetLearnerDbForTests } from "../../src/learner/core/db";
+import { useLearnerSession } from "../../src/learner/core/auth/useLearnerSession";
 import { DAY_MS } from "../../src/learner/core/srs/sm2";
 import { RevisionScreen } from "../../src/learner/srs/screens/RevisionScreen";
+
+const TEST_USER_ID = "user-a";
 
 const { pushMock, replaceMock, backMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
@@ -19,6 +22,7 @@ async function seedDueCard(id: string, overdueDays: number): Promise<void> {
   const db = await getLearnerDb();
   await db.srsCards.put({
     id,
+    user_id: TEST_USER_ID,
     card_type: "grammar_connector",
     prompt: {
       kind: "cloze",
@@ -45,6 +49,7 @@ async function seedVocabCard(id: string, overdueDays: number): Promise<void> {
   const db = await getLearnerDb();
   await db.srsCards.put({
     id,
+    user_id: TEST_USER_ID,
     card_type: "vocab_word",
     prompt: {
       kind: "vocab",
@@ -71,6 +76,10 @@ beforeEach(() => {
   pushMock.mockReset();
   replaceMock.mockReset();
   backMock.mockReset();
+  useLearnerSession.setState({
+    session: { user: { id: TEST_USER_ID } } as never,
+    status: "authenticated",
+  });
 });
 
 afterEach(() => {
@@ -120,7 +129,7 @@ describe("RevisionScreen", () => {
 
   it("renders the error state when the due-queue query fails", async () => {
     const db = await getLearnerDb();
-    vi.spyOn(db.srsCards, "toArray").mockRejectedValueOnce(new Error("boom"));
+    vi.spyOn(db.srsCards, "whereEquals").mockRejectedValueOnce(new Error("boom"));
 
     renderWithI18n(<RevisionScreen />);
 
@@ -139,6 +148,7 @@ describe("RevisionScreen", () => {
       const db = await getLearnerDb();
       await db.srsCards.put({
         id: "card-today",
+        user_id: TEST_USER_ID,
         card_type: "grammar_connector",
         prompt: {
           kind: "cloze",

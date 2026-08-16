@@ -20,6 +20,35 @@ async function login(page: Page): Promise<void> {
   await page.waitForURL("**/fr/app", { timeout: 15_000 });
 }
 
+/**
+ * Reads `qa1`'s Supabase user id straight out of `localStorage` — the
+ * seed helpers write directly into IndexedDB (bypassing the app), so
+ * schema v2's `(user_id, id)` composite PK (web#44) needs a real id to
+ * put on each row. `supabase-js`'s default browser storage key is
+ * `sb-<project-ref>-auth-token`; no custom `storageKey` is configured
+ * anywhere in this app (see `src/lib/supabase/browser.ts`), so scanning
+ * for that prefix is reliable rather than hardcoding the dev project ref.
+ */
+async function getCurrentUserId(page: Page): Promise<string> {
+  const userId = await page.evaluate(() => {
+    const key = Object.keys(window.localStorage).find(
+      (k) => k.startsWith("sb-") && k.endsWith("-auth-token")
+    );
+    if (!key) return null;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      user?: { id?: string };
+      currentSession?: { user?: { id?: string } };
+    };
+    return parsed.user?.id ?? parsed.currentSession?.user?.id ?? null;
+  });
+  if (!userId) {
+    throw new Error("getCurrentUserId: no Supabase auth-token entry found in localStorage");
+  }
+  return userId;
+}
+
 const fileMeteredRequests = {
   consumeTrial: [] as string[],
   aiCoach: [] as string[],
@@ -35,7 +64,7 @@ function trackFileMeteredRequests(page: Page): void {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function seedRows(now: number) {
+function seedRows(now: number, userId: string) {
   const mk = (
     id: string,
     overdueDays: number,
@@ -46,6 +75,7 @@ function seedRows(now: number) {
     explanation: string
   ) => ({
     id,
+    user_id: userId,
     card_type: "grammar_connector",
     prompt: {
       kind: "cloze",
@@ -89,23 +119,27 @@ function seedRows(now: number) {
 }
 
 async function seedSrsCards(page: Page): Promise<void> {
-  await page.evaluate(async (rows) => {
-    await new Promise<void>((resolve, reject) => {
-      const req = indexedDB.open("deutschfit-learner");
-      req.onsuccess = () => {
-        const db = req.result;
-        const tx = db.transaction("srsCards", "readwrite");
-        const store = tx.objectStore("srsCards");
-        for (const row of rows) store.put(row);
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+  const userId = await getCurrentUserId(page);
+  await page.evaluate(
+    async (rows) => {
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open("deutschfit-learner");
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction("srsCards", "readwrite");
+          const store = tx.objectStore("srsCards");
+          for (const row of rows) store.put(row);
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
         };
-        tx.onerror = () => reject(tx.error);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }, seedRows(Date.now()));
+        req.onerror = () => reject(req.error);
+      });
+    },
+    seedRows(Date.now(), userId)
+  );
 }
 
 test.describe.serial("SRS revision loop (qa1, local IndexedDB)", () => {

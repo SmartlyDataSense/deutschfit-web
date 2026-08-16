@@ -117,9 +117,13 @@ stuck showing the raw i18next key forever, even after the bundle lands.
 ## Dexie (IndexedDB)
 
 `core/db/schema.ts` defines an 11-table Dexie schema (`deutschfit-learner`,
-version 1), mirroring `deutschfit-mobile`'s Drizzle schemas so the web app
+version 2), mirroring `deutschfit-mobile`'s Drizzle schemas so the web app
 persists the same shapes offline that mobile does. Table names are
 camelCase; row field names stay `snake_case` to mirror mobile 1:1.
+`srsCards`/`srsReviews` use a `(user_id, id)` composite primary key
+(schema v2, web#44) for per-account isolation on a shared browser — the v1→v2
+migration drops any pre-v2 rows in those two tables (safe: no card producer
+has ever shipped, so there is no real local data to lose).
 
 Tables: `writingDrafts`, `srsCards`, `srsReviews`, `contentCache`,
 `userStats`, `mockExamCache`, `cachedTopics`, `activeSubmission`,

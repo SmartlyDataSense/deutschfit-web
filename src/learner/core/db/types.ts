@@ -31,9 +31,10 @@ export type SRSCardType = "grammar_connector" | "vocab" | "writing_chunk";
 /** SM-2 self-rating buckets (mirrors mobile `SRSRating`). */
 export type SRSRating = "again" | "hard" | "good" | "easy";
 
-/** `srs_cards` — one row per learnable atom. */
+/** `srs_cards` — one row per learnable atom. Composite PK `(user_id, id)` (schema v2, web#44) — per-account deck isolation on a shared device. */
 export interface SRSCardRow {
   id: string;
+  user_id: string;
   card_type: SRSCardType;
   prompt: unknown;
   answer: unknown;
@@ -43,9 +44,10 @@ export interface SRSCardRow {
   created_at: number;
 }
 
-/** `srs_reviews` — append-only log of SM-2 rating events. */
+/** `srs_reviews` — append-only log of SM-2 rating events. Composite PK `(user_id, id)` (schema v2, web#44) — per-account isolation, mirrors `srsCards`. */
 export interface SRSReviewRow {
   id: string;
+  user_id: string;
   card_id: string;
   reviewed_at: number;
   rating: SRSRating;

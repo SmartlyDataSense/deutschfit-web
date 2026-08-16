@@ -81,17 +81,17 @@ describe("learner db — table registry", () => {
     expect(LEARNER_TABLE_NAMES).toHaveLength(11);
   });
 
-  it("uses db name and version 1", () => {
+  it("uses db name and version 2", () => {
     expect(LEARNER_DB_NAME).toBe("deutschfit-learner");
-    expect(LEARNER_DB_VERSION).toBe(1);
+    expect(LEARNER_DB_VERSION).toBe(2);
   });
 });
 
 describe("learner db — schema strings contain the expected primary keys", () => {
   it.each([
     ["writingDrafts", "[user_id+prompt_id]"],
-    ["srsCards", "id"],
-    ["srsReviews", "id"],
+    ["srsCards", "[user_id+id]"],
+    ["srsReviews", "[user_id+id]"],
     ["contentCache", "cache_key"],
     ["userStats", "user_id"],
     ["mockExamCache", "[user_id+modelltest_slug]"],
@@ -105,11 +105,13 @@ describe("learner db — schema strings contain the expected primary keys", () =
     expect(schema.split(",")[0]?.trim()).toBe(pkToken);
   });
 
-  it("indexes srs_cards.next_due (due-queue query)", () => {
+  it("indexes srs_cards.user_id (per-account scoping, web#44) and .next_due (due-queue query)", () => {
+    expect(LEARNER_TABLE_SCHEMAS.srsCards).toContain("user_id");
     expect(LEARNER_TABLE_SCHEMAS.srsCards).toContain("next_due");
   });
 
-  it("indexes srs_reviews by [card_id+reviewed_at] (mirrors mobile's srs_reviews_card_id_idx)", () => {
+  it("indexes srs_reviews.user_id (per-account scoping, web#44) and by [card_id+reviewed_at] (mirrors mobile's srs_reviews_card_id_idx)", () => {
+    expect(LEARNER_TABLE_SCHEMAS.srsReviews).toContain("user_id");
     expect(LEARNER_TABLE_SCHEMAS.srsReviews).toContain("[card_id+reviewed_at]");
   });
 
@@ -220,6 +222,7 @@ describe("learner db — in-memory fallback", () => {
     const db = await getLearnerDb();
     await db.srsCards.put({
       id: "c1",
+      user_id: "u1",
       card_type: "vocab",
       prompt: { de: "das Haus" },
       answer: { fr: "la maison" },
@@ -230,6 +233,7 @@ describe("learner db — in-memory fallback", () => {
     });
     await db.srsCards.put({
       id: "c2",
+      user_id: "u1",
       card_type: "grammar_connector",
       prompt: { de: "weil" },
       answer: { fr: "parce que" },

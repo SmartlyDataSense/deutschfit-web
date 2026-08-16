@@ -1,5 +1,5 @@
 /**
- * Dexie schema for the learner IndexedDB (`deutschfit-learner`, v1).
+ * Dexie schema for the learner IndexedDB (`deutschfit-learner`, v2).
  *
  * Table set + key paths mirror `deutschfit-mobile`'s Drizzle schemas
  * (`deutschfit-mobile/src/core/db/schema/*.ts` + `migrations.ts`) so the
@@ -29,7 +29,7 @@ import Dexie from "dexie";
 export const LEARNER_DB_NAME = "deutschfit-learner";
 
 /** Dexie schema version. Bump + add a new `.version()` block for any future migration. */
-export const LEARNER_DB_VERSION = 1;
+export const LEARNER_DB_VERSION = 2;
 
 export const LEARNER_TABLE_NAMES = [
   "writingDrafts",
@@ -61,17 +61,26 @@ const TABLE_INDEX_SPECS: Record<LearnerTableName, TableIndexSpec> = {
     primaryKey: ["user_id", "prompt_id"],
     extraIndexes: ["prompt_id"],
   },
-  // `next_due` mirrors mobile's `srs_cards_next_due_idx` — the due-queue query is a
-  // single indexable comparison.
+  // Composite PK (user_id, id) — schema v2 (web#44): pre-v2 this was `id`
+  // alone, which let a browser-shared account inherit the previous
+  // account's deck the moment a card producer started writing rows. `id`
+  // alone was never queryable as an index on its own before either — it's
+  // still reachable as the first key-path segment of the compound PK.
+  // `user_id` is also indexed alone (mirrors `mockExamCache`/
+  // `practiceProgress` below) so `queryDueCards` can run a real Dexie
+  // `.where("user_id")` scoped query instead of a full-table scan.
+  // `next_due` mirrors mobile's `srs_cards_next_due_idx`.
   srsCards: {
-    primaryKey: ["id"],
-    extraIndexes: ["next_due"],
+    primaryKey: ["user_id", "id"],
+    extraIndexes: ["user_id", "next_due"],
   },
-  // `[card_id+reviewed_at]` mirrors mobile's `srs_reviews_card_id_idx`; `card_id` alone
-  // is also indexed for a plain per-card review lookup.
+  // Composite PK (user_id, id) — same v2 rationale as `srsCards` above.
+  // `user_id` is indexed alone for the scoped due-queue/review lookups;
+  // `[card_id+reviewed_at]` mirrors mobile's `srs_reviews_card_id_idx`;
+  // `card_id` alone is also indexed for a plain per-card review lookup.
   srsReviews: {
-    primaryKey: ["id"],
-    extraIndexes: ["card_id", ["card_id", "reviewed_at"]],
+    primaryKey: ["user_id", "id"],
+    extraIndexes: ["user_id", "card_id", ["card_id", "reviewed_at"]],
   },
   contentCache: {
     primaryKey: ["cache_key"],
@@ -143,14 +152,47 @@ export const LEARNER_TABLE_PRIMARY_KEYS: Record<LearnerTableName, readonly strin
   ) as Record<LearnerTableName, readonly string[]>;
 
 /**
+ * v1 (pre-account-scoping, S10) schema strings for `srsCards` / `srsReviews`
+ * — `id` alone as the primary key, no `user_id` field or index at all.
+ * Kept only so the Dexie version chain accurately reflects what actually
+ * shipped; nothing reads these constants except `createLearnerDexie`
+ * itself. A fresh browser goes straight to opening at
+ * `LEARNER_DB_VERSION` — this v1 block only matters for browsers that
+ * already have a v1 database on disk from before this migration shipped.
+ */
+const V1_SRS_CARDS_SCHEMA = "id, next_due";
+const V1_SRS_REVIEWS_SCHEMA = "id, card_id, [card_id+reviewed_at]";
+
+/**
  * Constructs (but does not open) the Dexie instance. Defining the schema via
  * `.version().stores()` is synchronous and does not touch IndexedDB — it's
  * safe to call in tests without a working `indexedDB` global, as long as
  * you never call `.open()` (or an operation that triggers Dexie's implicit
  * open) on the result.
+ *
+ * v2 (web#44): `srsCards`/`srsReviews` move to a `(user_id, id)` composite
+ * primary key for per-account deck isolation, following the same shape
+ * `writingDrafts`/`mockExamCache`/`practiceProgress` already use (see
+ * `TABLE_INDEX_SPECS` above). The upgrade function drops every pre-v2 row
+ * in those two tables rather than backfilling `user_id` onto them — this
+ * is safe ONLY because no card producer has shipped yet (S10 shipped SRS
+ * with an empty deck by design) so there is no real local data to lose,
+ * and every pre-v2 row is 100% locally-derived / re-derivable from server
+ * content. Do not copy this "clear on upgrade" pattern for a future schema
+ * bump once a producer exists and real decks are on real devices.
  */
 export function createLearnerDexie(): Dexie {
   const db = new Dexie(LEARNER_DB_NAME);
-  db.version(LEARNER_DB_VERSION).stores(LEARNER_TABLE_SCHEMAS);
+  db.version(1).stores({
+    ...LEARNER_TABLE_SCHEMAS,
+    srsCards: V1_SRS_CARDS_SCHEMA,
+    srsReviews: V1_SRS_REVIEWS_SCHEMA,
+  });
+  db.version(LEARNER_DB_VERSION)
+    .stores(LEARNER_TABLE_SCHEMAS)
+    .upgrade(async (tx) => {
+      await tx.table("srsCards").clear();
+      await tx.table("srsReviews").clear();
+    });
   return db;
 }
