@@ -12,7 +12,14 @@
  * IndexedDB until `.open()` (or an operation that triggers an implicit
  * open), so this is safe without a working `indexedDB` global.
  *
- * fake-indexeddb is intentionally NOT used (not an approved new dep).
+ * This file deliberately keeps the no-`indexedDB` environment: it pins the
+ * schema-string / fallback contract. The real open + v1→v3 upgrade chain is
+ * pinned separately in `learner-db-migration.test.ts`, which imports
+ * `fake-indexeddb/auto` (a devDependency, signed off for exactly that pin)
+ * before anything else. Keeping the two in different files matters —
+ * vitest gives each file its own environment, so the fake globals installed
+ * there cannot leak in here and quietly turn these fallback assertions into
+ * real-Dexie assertions.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
@@ -81,9 +88,9 @@ describe("learner db — table registry", () => {
     expect(LEARNER_TABLE_NAMES).toHaveLength(11);
   });
 
-  it("uses db name and version 2", () => {
+  it("uses db name and version 3", () => {
     expect(LEARNER_DB_NAME).toBe("deutschfit-learner");
-    expect(LEARNER_DB_VERSION).toBe(2);
+    expect(LEARNER_DB_VERSION).toBe(3);
   });
 });
 
