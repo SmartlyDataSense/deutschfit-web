@@ -47,7 +47,7 @@ export function IdentityCard({
         aria-hidden="true"
         className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-coach"
       >
-        <AppText size="h3" weight="bold" family="serif" className="text-coach-ink">
+        <AppText size="h3" weight="bold" family="serif" tone="coachInk">
           {initial}
         </AppText>
       </div>

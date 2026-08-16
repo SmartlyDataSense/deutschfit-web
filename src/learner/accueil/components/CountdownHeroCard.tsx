@@ -157,16 +157,15 @@ export function CountdownHeroCard({
   // the localized fallback (no calendar glyph) and the digit row swaps
   // the big number for the same string so the layout doesn't collapse.
   const headerPillLabel = hasExamDate ? examDateLabel : noDateSetLabel;
-  const a11y = hasExamDate
-    ? (daysRemainingA11y ??
-      `Compte à rebours examen. ${daysRemaining} jours restants. Examen le ${examDateLabel}. Préparation ${preparationPct}%. Objectif ${targetScore}.`)
-    : canPickDate
-      ? isPickerOpen
-        ? (miniCalendarCloseA11y ??
-          `${noDateSetLabel}. Préparation ${preparationPct}%. Objectif ${targetScore}.`)
-        : (miniCalendarOpenA11y ??
-          `${noDateSetLabel}. Préparation ${preparationPct}%. Objectif ${targetScore}.`)
-      : `${noDateSetLabel}. Préparation ${preparationPct}%. Objectif ${targetScore}.`;
+  // web#58 — only computed for (and only ever applied to) the clickable
+  // `role="button"` branch below, where `cardOnClick` is truthy (which
+  // in turn requires `hasExamDate`). The non-clickable `role="group"`
+  // branch used to reuse this same composed string, duplicating what the
+  // date-label/days-remaining/target-score `AppText` children already
+  // render — see the comment on the returned `<div>`.
+  const a11y =
+    daysRemainingA11y ??
+    `Compte à rebours examen. ${daysRemaining} jours restants. Examen le ${examDateLabel}. Préparation ${preparationPct}%. Objectif ${targetScore}.`;
 
   // Wave C1 wires the placeholder digit row's own click instead of the
   // whole card — opening/closing the inline picker shouldn't fire the
@@ -186,17 +185,28 @@ export function CountdownHeroCard({
     onSelectExamDate?.(iso);
   };
 
-  // A plain `<div>` with no ARIA role isn't a recognized accessibility
-  // host — an `aria-label` on it is silently dropped by assistive tech
-  // (unlike RN, where `accessibilityLabel` on a `View` carries regardless
-  // of role). `role="button"` already covers the clickable branch; the
-  // non-clickable branch needs an explicit `role="group"` so the label
-  // is still exposed.
+  // web#58 — `aria-label`/`role="button"` are set ONLY on the clickable
+  // branch. There, the whole card IS the interactive control (routes to
+  // PerformanceHistory), and `role="button"` — like a native `<button>`
+  // — is children-presentational: assistive tech treats it as one atomic
+  // widget and doesn't separately re-read its descendants, so an
+  // explicit label is safe (see `Card.tsx`'s doc comment for the same
+  // distinction on its clickable branch).
+  //
+  // The non-clickable branch (no exam date set, or a date set but no
+  // `onPress` wired) used to carry `role="group"` + the same composed
+  // `a11y` string. `role="group"` is NOT children-presentational on web
+  // the way mobile's `accessible` View is: a screen reader announces the
+  // composed name and then re-reads every descendant text node anyway.
+  // The date pill / day count / target score already read fine as
+  // independently-readable `AppText`/`<button>` nodes, so this branch
+  // gets no wrapper role or label at all — same treatment as
+  // `PriorityTaskCard` (commit 1ea9e6a).
   return (
     <div
       data-testid={testID}
-      aria-label={a11y}
-      role={cardOnClick ? "button" : "group"}
+      role={cardOnClick ? "button" : undefined}
+      aria-label={cardOnClick ? a11y : undefined}
       tabIndex={cardOnClick ? 0 : undefined}
       onClick={cardOnClick}
       onKeyDown={cardOnClick ? handleCardKeyDown : undefined}

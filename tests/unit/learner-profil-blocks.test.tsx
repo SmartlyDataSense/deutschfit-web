@@ -95,6 +95,30 @@ describe("IdentityCard (S11.3)", () => {
     expect(screen.getByText("Douala · Français · Anglais")).toBeInTheDocument();
     expect(screen.getByTestId("profil-identity-card-exam-pill")).toHaveTextContent("B1");
   });
+
+  // web#57: `tone="coachInk"` (`text-coach-ink`, white) must reliably win
+  // on the avatar-circle initial — `className="text-coach-ink"` used to
+  // lose silently to AppText's default `tone="primary"`
+  // (`text-text-primary`) because clsx() attribute order doesn't drive
+  // the CSS cascade; Tailwind's generated stylesheet rule order does.
+  it("avatar initial carries the coach-ink tone, not the default primary tone", () => {
+    renderWithI18n(
+      <IdentityCard
+        stats={{
+          ...emptyProfilStats,
+          fullName: "Marie Dupont",
+          location: "Douala",
+          languages: [],
+        }}
+        examPill="B1"
+        testID="profil-identity-card"
+      />
+    );
+    const avatar = screen.getByTestId("profil-identity-card-avatar");
+    const initial = within(avatar).getByText("M");
+    expect(initial.className).toContain("text-coach-ink");
+    expect(initial.className).not.toContain("text-text-primary");
+  });
 });
 
 describe("SettingsPickerRow (S11.3)", () => {

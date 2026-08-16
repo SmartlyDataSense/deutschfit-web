@@ -11,6 +11,19 @@ import clsx from "clsx";
  * `surface` is kept for API parity with mobile (it documents the
  * tone/surface AA-contrast pairing) but has no runtime effect here — the
  * web port doesn't yet carry mobile's `contrast.test.ts` harness.
+ *
+ * Never set a text colour through `className` (web#57) — `clsx()` below
+ * puts `TONE_CLASS[tone]` before `className` in the emitted `class`
+ * attribute, but attribute order has no effect on the CSS cascade. Which
+ * rule wins is decided by Tailwind's rule order in the generated
+ * stylesheet, which this component does not control and which silently
+ * changes across builds. A `className` colour utility can therefore lose
+ * to the default `tone="primary"` with no error, no warning, and no
+ * visual diff in a quick glance (`IdentityCard.tsx` shipped exactly this
+ * way for one release). If the tone you need does not exist yet, add it
+ * to `AppTextTone`/`TONE_CLASS` (see `coachInk`, added for the same
+ * reason) — that keeps colour resolution inside the one mechanism
+ * (`tone`) that is guaranteed to apply.
  */
 export type AppTextTone =
   | "primary"
@@ -19,6 +32,7 @@ export type AppTextTone =
   | "inverse"
   | "cta"
   | "coach"
+  | "coachInk"
   | "gold"
   | "warning"
   | "success";
@@ -56,6 +70,13 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // hue, darkened to clear AA; see globals.css for the derivation.
   cta: "text-cta-text",
   coach: "text-coach-text",
+  // web#57: the on-`bg-coach` ink pairing (white, `--color-coach-ink`) —
+  // distinct from `coach` above, which is the darkened AA body-text
+  // shade of the same hue for use ON a light surface, not the ink that
+  // sits ON a coach-coloured surface. Used by `IdentityCard`'s avatar
+  // initial, which previously tried to reach this colour via
+  // `className="text-coach-ink"` and silently lost to the default tone.
+  coachInk: "text-coach-ink",
   gold: "text-accent-gold",
   // S13 Task 10 (axe sweep): `warning` backs 30+ form-validation-error /
   // destructive-label call sites app-wide, none at the "large text" AA

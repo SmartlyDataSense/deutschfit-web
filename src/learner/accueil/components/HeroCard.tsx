@@ -73,20 +73,20 @@ export function HeroCard({ payload, countdownProps, onCtaPress, testID }: HeroCa
     );
   }
 
-  const a11y = `${payload.headline} ${payload.body}`;
   const captionTone = payload.milestone ? "gold" : "inverse";
 
   return (
-    // A plain `<div>` with no ARIA role isn't a recognized accessibility
-    // host — `aria-label` on it is silently dropped by assistive tech.
-    // `role="group"` exposes it (this card is never clickable itself —
-    // only its inner CTA button is).
-    <div
-      className="rounded-3xl bg-bg-premium p-6 text-on-premium"
-      data-testid={testID}
-      aria-label={a11y}
-      role="group"
-    >
+    // web#58 — deliberately no `role="group"`/`aria-label` here. This
+    // card is never clickable itself (only its inner CTA button is), and
+    // `role="group"` is NOT children-presentational on web the way
+    // mobile's `accessible` View is (see `Card.tsx`'s doc comment): a
+    // composed label duplicating `payload.headline`/`payload.body` would
+    // make a screen reader announce the composed name and then re-read
+    // every descendant a second time. The overline/headline/body already
+    // read fine as independently-readable `AppText` nodes, in the same
+    // order, so no wrapper accessible name is needed at all — same
+    // treatment as `PriorityTaskCard` (commit 1ea9e6a).
+    <div className="rounded-3xl bg-bg-premium p-6 text-on-premium" data-testid={testID}>
       <div className="mb-4 flex items-center justify-between">
         <AppText
           tone="inverse"
