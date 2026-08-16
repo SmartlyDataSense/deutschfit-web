@@ -9,6 +9,11 @@
  * only — F-3 debranding). Pill is an inline span (S10 precedent: no new
  * exported primitives for one-off pills).
  *
+ * Note: `${locationA11y}` named below refers to the former
+ * `profil:identity.locationA11y` key. That key was removed from both
+ * catalogs once this component stopped reading it — the mention is
+ * historical narrative, not a live lookup.
+ *
  * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
  * (fix-round web#58 sweep). An earlier version composed
  * `${fullName}. ${locationA11y}. ${examPill}.` and put it on the outer

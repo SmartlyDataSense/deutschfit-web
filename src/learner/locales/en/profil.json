@@ -4,9 +4,6 @@
     "backA11y": "Back",
     "settingsA11y": "Open settings"
   },
-  "identity": {
-    "locationA11y": "{{location}}, languages {{languages}}"
-  },
   "fullPrep": {
     "overline": "Go Full Prep",
     "title": "Unlimited simulations + Voice Betreuer",

@@ -45,7 +45,7 @@
   "diagnosticResult": {
     "levelEyebrow": "Estimated level",
     "tierSuffix": {
-      "fast-b2": "fast B2",
+      "fast-b2": "almost B2",
       "solide": "solid {{level}}",
       "debutant": "starter {{level}}"
     },

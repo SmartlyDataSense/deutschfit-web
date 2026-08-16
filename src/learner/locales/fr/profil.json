@@ -4,9 +4,6 @@
     "backA11y": "Retour",
     "settingsA11y": "Ouvrir les paramètres"
   },
-  "identity": {
-    "locationA11y": "{{location}}, langues {{languages}}"
-  },
   "fullPrep": {
     "overline": "Passez Full Prep",
     "title": "Simulations illimitées + Betreuer vocal",

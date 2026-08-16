@@ -331,8 +331,6 @@ const SPECIAL_CASE_KEYS: readonly string[] = [
  *     subordinate clauses" — English content also present verbatim in the
  *     fr catalog (fr-side under-translation). Not an en-catalog French
  *     leak, so out of this task's scope, but a real defect on the fr side.
- *   - `onboarding:diagnosticResult.tierSuffix.fast-b2` = "fast B2" — same
- *     fr-side-under-translation family as the two above.
  *   - `coach:chat.header.avatarInitials` / `coach:drills.header.avatarInitials`
  *     = "IA" — "IA" is the French initialism for "Intelligence
  *     Artificielle"; English initials would read "AI". Ambiguous whether
@@ -344,7 +342,13 @@ const KNOWN_DEBT_KEYS: readonly string[] = [
   "coach:drills.summary.tally",
   "onboarding:diagnostic.category",
   "onboarding:diagnosticResult.tagLabel.wortstellung",
-  "onboarding:diagnosticResult.tierSuffix.fast-b2",
+  // `onboarding:diagnosticResult.tierSuffix.fast-b2` used to sit here,
+  // filed as the same fr-side-under-translation family. That reading was
+  // wrong: `fast` is GERMAN for "almost", so this was a German leak in the
+  // `en` catalog (an English reader parses it as "quick B2"), and both its
+  // siblings were already translated on the en side. Now `"almost B2"` —
+  // no exemption needed. The fr side stays "fast B2"; the fr-direction
+  // gaps are tracked separately in web#62, not here.
   "coach:chat.header.avatarInitials",
   "coach:drills.header.avatarInitials",
 ];
