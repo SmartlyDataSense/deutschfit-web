@@ -28,21 +28,33 @@
  * (`_shared/mock_exam.ts`'s `NEXT_MODULE`) is a FIXED LESEN→HOEREN→
  * SCHREIBEN sequence, blind to which modules a given Modelltest actually
  * has content for. `ModelltestsListScreen` now proxy-filters its picker to
- * `?module=LESEN` rows (closing the forward entry point), but that filter
- * can't retroactively fix a `mock_exam_attempts` row that was already
- * seeded against a module-incomplete exam before this fix shipped, nor
- * does it cover a direct/deep-linked `?examSlug=` that bypasses the
+ * rows carrying EVERY module in `FULL_SIMULATION_REQUIRED_MODULES`
+ * (LESEN + HOEREN + SCHREIBEN — closing the forward entry point), but that
+ * filter can't retroactively fix a `mock_exam_attempts` row that was
+ * already seeded against a module-incomplete exam before this fix shipped,
+ * nor does it cover a direct/deep-linked `?examSlug=` that bypasses the
  * picker entirely — the exact "orphaned Lesen child, 409-resume loops
  * back to the same dead end" trap the issue describes. `runBoot` therefore
- * re-checks LESEN presence for `slug` via the SAME `listModelltests({
- * module: "LESEN" })` proxy BEFORE calling `startSession` at all (fresh
- * start AND resume both go through this one gate, since both share the
- * same `slug` resolution step) — a miss flips straight to the
+ * re-checks the SAME module set for `slug` through the SAME
+ * `listModelltests({ module })` proxy BEFORE calling `startSession` at all
+ * (fresh start AND resume both go through this one gate, since both share
+ * the same `slug` resolution step) — a miss flips straight to the
  * `"unavailable"` phase and never touches `mock_exam_attempts`, so no new
  * orphaned child is ever created. A transient failure of the presence
  * check itself fails OPEN (treated as available) rather than blocking a
  * perfectly good exam behind a flaky network call — same defensive
  * posture as the `getMockAttempt`-failure fallback below.
+ *
+ * The gate imports `FULL_SIMULATION_REQUIRED_MODULES` from
+ * `ModelltestsListScreen` rather than re-deriving the list — final-review
+ * I-1. Round 1 of the fix gated BOTH sites on LESEN alone; round 2 widened
+ * only the picker, leaving this screen as the "second special-cased filter
+ * silently drifting out of sync" the constant's own docstring was extracted
+ * to prevent. A LESEN+SCHREIBEN-but-no-HOEREN exam then passed this gate,
+ * `startSession` ran, the learner finished Lesen for real, and the chain
+ * dead-ended at Hören's zero-part backstop — in an attempt the picker no
+ * longer offers any route back into, so `ExamHomeScreen`'s "Reprendre" card
+ * resurfaced it forever. One list, two call sites, no second derivation.
  *
  * Phases (`dispatch` never itself renders — it always either
  * `router.replace`s into a leg route or flips `phase` to a state this
@@ -50,8 +62,9 @@
  *   - `"booting"`        — default. Silent `Skeleton` only (founding-doc
  *     §17 — no spinner/percentage copy); also what's showing while a
  *     dispatched `router.replace` is in flight.
- *   - `"unavailable"`    — web#32: the module-presence gate above found no
- *     LESEN module for `slug`. Root testID
+ *   - `"unavailable"`    — web#32: the module-presence gate above found at
+ *     least one `FULL_SIMULATION_REQUIRED_MODULES` entry missing for
+ *     `slug`. Root testID
  *     `simulation-orchestrator-unavailable`; `EmptyState` (no CTA of its
  *     own, same shape as the `"error"` phase below) + a separate
  *     `AppButton` (testID `simulation-orchestrator-unavailable-back`) that
@@ -155,13 +168,14 @@
  *
  *   1. No `examSlug` prop → `readPendingMockExam(userId)`. A row → adopt
  *      `row.modelltestSlug`. No row → `router.replace('/{locale}/app/examen')`.
- *   2. web#32 module-presence gate — `listModelltests({ module: "LESEN" })`
- *      and check `slug` is among the rows. Miss → `setPhase("unavailable")`
- *      and return, BEFORE step 3 ever calls `startSession` (so a
- *      module-incomplete exam never seeds a fresh `mock_exam_attempts` row
- *      — see the class doc comment above). A rejected presence check fails
- *      OPEN (treated as present) so a transient network blip can't block a
- *      perfectly good exam.
+ *   2. web#32 module-presence gate — one `listModelltests({ module })` per
+ *      entry in `FULL_SIMULATION_REQUIRED_MODULES` and check `slug` is
+ *      among the rows of EVERY response. Any miss →
+ *      `setPhase("unavailable")` and return, BEFORE step 3 ever calls
+ *      `startSession` (so a module-incomplete exam never seeds a fresh
+ *      `mock_exam_attempts` row — see the class doc comment above). A
+ *      rejected presence check fails OPEN (treated as present) so a
+ *      transient network blip can't block a perfectly good exam.
  *   3. `startSession({ userId, examSlug })` (`@/learner/core/exam/
  *      mockExamSession` — NOT `examApi.startMockExam` directly; that
  *      service already folds the 409 "mock_in_progress" catch into a
@@ -229,6 +243,7 @@ import {
 } from "@/learner/core/exam/mockExamSession";
 import { toSkillScores } from "@/learner/core/exam/skillScores";
 import { useSimulationRun } from "@/learner/core/exam/simulationRunStore";
+import { FULL_SIMULATION_REQUIRED_MODULES } from "./ModelltestsListScreen";
 
 export interface SimulationOrchestratorScreenProps {
   readonly examSlug?: string;
@@ -260,23 +275,36 @@ function buildLegUrl(base: string, ids: DispatchIds, childId: string | null): st
 
 /**
  * web#32 module-presence gate. Reuses `ModelltestsListScreen`'s exact
- * proxy-filter primitive (`listModelltests({ module: "LESEN" })`) — the
- * backend's `mock-exam-start`/`mock-exam-advance` chain is content-blind
- * (fixed LESEN→HOEREN→SCHREIBEN table), so this is the only signal web can
- * get, without a backend change, that `examSlug` can actually run as a
- * full simulation. Fails OPEN (returns `true`) on a rejected call — a
- * transient network failure of this defensive check must never block a
- * perfectly good exam; that mirrors `runBoot`'s own `getMockAttempt`
- * resume fallback below, which also degrades gracefully rather than
- * erroring.
+ * proxy-filter primitive (`listModelltests({ module })`) over the exact
+ * same module list the picker filters on — the backend's
+ * `mock-exam-start`/`mock-exam-advance` chain is content-blind (fixed
+ * LESEN→HOEREN→SCHREIBEN table), so this is the only signal web can get,
+ * without a backend change, that `examSlug` can actually run as a full
+ * simulation to completion.
+ *
+ * `FULL_SIMULATION_REQUIRED_MODULES` is IMPORTED, never re-derived
+ * (final-review I-1): a locally-written module list here is exactly the
+ * "second special-cased filter" the constant's docstring warns about, and
+ * it already drifted once — this gate checked LESEN alone while the picker
+ * checked all three, so a HOEREN-less exam cleared the gate and stranded
+ * real Lesen work in an attempt with no route to completion.
+ *
+ * Fails OPEN (returns `true`) on a rejected call — a transient network
+ * failure of this defensive check must never block a perfectly good exam;
+ * that mirrors `runBoot`'s own `getMockAttempt` resume fallback below,
+ * which also degrades gracefully rather than erroring. `Promise.all`
+ * rejects on the first failing module lookup, so one flaky call fails the
+ * whole gate open rather than half-checking.
  */
-async function hasLesenModule(examSlug: string): Promise<boolean> {
+async function hasAllRequiredModules(examSlug: string): Promise<boolean> {
   try {
-    const rows = await listModelltests({ module: "LESEN" });
-    return rows.some((row) => row.slug === examSlug);
+    const perModule = await Promise.all(
+      FULL_SIMULATION_REQUIRED_MODULES.map((module) => listModelltests({ module }))
+    );
+    return perModule.every((rows) => rows.some((row) => row.slug === examSlug));
   } catch (err) {
     console.warn(
-      "[SimulationOrchestratorScreen] web#32 module-presence check failed — failing open (treating the module as present) rather than blocking a possibly-fine exam.",
+      "[SimulationOrchestratorScreen] web#32 module-presence check failed — failing open (treating every required module as present) rather than blocking a possibly-fine exam.",
       err
     );
     return true;
@@ -382,7 +410,7 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
 
       // web#32 — gate BEFORE startSession so a module-incomplete exam
       // never seeds a fresh mock_exam_attempts row (see class doc comment).
-      const available = await hasLesenModule(slug);
+      const available = await hasAllRequiredModules(slug);
       if (!isMountedRef.current) return;
       if (!available) {
         setPhase("unavailable");
