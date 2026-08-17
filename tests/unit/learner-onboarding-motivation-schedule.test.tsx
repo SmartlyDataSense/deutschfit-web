@@ -56,11 +56,15 @@ describe("MotivationScreen (step 2/3)", () => {
     expect(useOnboardingAnswers.getState().motivation).toBe("work");
   });
 
-  it("Ignorer finishes onboarding and replaces to /fr/app", async () => {
+  it("Ignorer skips this step only — advances to Schedule (step 3/3), does NOT finish onboarding (#53)", () => {
+    // Motivation is step 2/3, not the wizard's last step — "Ignorer" here
+    // must not end onboarding early. Only Schedule (the actual finale)
+    // may call `finish()`.
     wrap(<MotivationScreen />);
     fireEvent.click(screen.getByTestId("onboarding-skip"));
-    await waitFor(() => expect(finish).toHaveBeenCalled());
-    expect(replace).toHaveBeenCalledWith("/fr/app");
+    expect(push).toHaveBeenCalledWith("/fr/app/onboarding/schedule");
+    expect(finish).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 });
 

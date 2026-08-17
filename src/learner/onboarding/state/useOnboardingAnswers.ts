@@ -15,9 +15,11 @@
  * founding-doc §17 + §3).
  *
  * Keeping answers in a zustand store (rather than route params) means the
- * user can navigate back without losing their previous selections — and
- * "Ignorer" on Motivation / Schedule can run the same finalize sequence
- * without threading state through multiple `navigation.navigate` calls.
+ * user can navigate back without losing their previous selections. Only
+ * Schedule (the wizard's actual last step) runs the finalize sequence on
+ * "Ignorer" — Motivation's "Ignorer" just advances to Schedule without
+ * threading state through a `router.push` (#53: Motivation is step 2/3,
+ * not the last step, so skipping it must not end onboarding).
  */
 import { create } from "zustand";
 
