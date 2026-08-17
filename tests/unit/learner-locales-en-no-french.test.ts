@@ -675,3 +675,134 @@ describe("en locale catalogs · no leftover source-language text (web#46, web#35
     });
   });
 });
+
+// ============================================================================
+// Detector 4: known-wrong German-word leftover scan (both catalogs)
+// ============================================================================
+
+/**
+ * Task 5 fix round 1 found `en/coach.json:193` (`drills.summary.tally`)
+ * still read `"{{correct}} / {{total}} korrekt"` — a German leftover in
+ * the `en` catalog, live via `CoachChatScreen.tsx` — after both detectors
+ * above had already gone green. Neither could have caught it: detector 1
+ * (linguistic) only matches French markers; detectors 2/3 (structural)
+ * only fire when `en` and `fr` are byte-identical, and here they weren't
+ * (`fr` already said "corrects"). A German word sitting alone in the `en`
+ * catalog, with no French counterpart to compare against, was invisible
+ * to every existing check. This detector closes that gap directly.
+ *
+ * A blanket "flag any German word" scan is unworkable for this product:
+ * DeutschFit is a German-exam app, so `Richtig`, `Lesen`, `Hören`,
+ * `Schreiben`, `Sprechen`, `Betreuer`, `Modelltest`, `Übungstest`, and
+ * many more German nouns are correct, load-bearing content in *both*
+ * catalogs, not defects — a broad heuristic would need an allowlist
+ * covering most of the corpus, at which point it stops discriminating.
+ * `KNOWN_WRONG_GERMAN_TOKENS` is deliberately a narrow, explicit list of
+ * individually-confirmed leftover defects (today: just `korrekt`, doing
+ * duty in a UI-chrome string where the sibling key already uses the
+ * correct-language word). Extend it only with the same rigor — a
+ * confirmed live defect, not a guess.
+ */
+const KNOWN_WRONG_GERMAN_TOKENS: readonly { label: string; pattern: RegExp }[] = [
+  {
+    label: "korrekt (UI chrome should say en 'correct' / fr 'corrects')",
+    pattern: /\bkorrekt\b/i,
+  },
+];
+
+/**
+ * Allowlist — `<namespace>:<key>` entries where a token in
+ * `KNOWN_WRONG_GERMAN_TOKENS` is legitimate content, not a defect. One
+ * entry today: `onboarding:diagnostic.questionItalic` = "korrekt", present
+ * in both `en/onboarding.json:24` and `fr/onboarding.json:24`.
+ *
+ * Confirmed by reading its siblings in both locale files, not assumed:
+ * `diagnostic.questionLead` = "Welcher Satz ist " and
+ * `diagnostic.questionTrail` = "?" are identical in both catalogs and
+ * bracket `questionItalic` to render the full German sentence "Welcher
+ * Satz ist *korrekt*?" — the diagnostic quiz's German question stem. This
+ * is the same German-exam-content family as
+ * `onboarding:diagnostic.options.a`–`d` (the four German answer options),
+ * already exempted in `DIAGNOSTIC_GERMAN_CONTENT_KEYS` above for the
+ * identical reason: it is exam content under test and must render in
+ * German regardless of UI locale, the same way a maths app wouldn't
+ * translate "2 + 2" into words. This is legitimate content, not a defect
+ * — unlike `coach:drills.summary.tally`, `questionItalic` has no
+ * correct-language sibling to be inconsistent with; it is the isolated,
+ * deliberately-German answer to a German-language question.
+ */
+const GERMAN_LEFTOVER_ALLOWLIST = new Set<string>(["onboarding:diagnostic.questionItalic"]);
+
+describe("both locale catalogs · no known-wrong German-word leftovers (task 5 fix round 1)", () => {
+  const allLeaves: { key: string; locale: "en" | "fr"; value: string }[] = [];
+  for (const fileName of catalogFiles) {
+    const ns = path.basename(fileName, ".json");
+    for (const [locale, dir] of [
+      ["en", EN_LOCALES_DIR],
+      ["fr", FR_LOCALES_DIR],
+    ] as const) {
+      const flat = loadCatalog(dir, fileName);
+      for (const [key, value] of flat) {
+        allLeaves.push({ key: `${ns}:${key}`, locale, value });
+      }
+    }
+  }
+
+  test("swept more than 1000 locale-scoped leaf values across both catalogs (sanity check the walker isn't silently matching nothing)", () => {
+    expect(allLeaves.length).toBeGreaterThan(1000);
+  });
+
+  test("no known-wrong German token appears outside the allowlist", () => {
+    const violations: { key: string; locale: string; value: string; label: string }[] = [];
+    for (const { key, locale, value } of allLeaves) {
+      if (GERMAN_LEFTOVER_ALLOWLIST.has(key)) continue;
+      for (const { label, pattern } of KNOWN_WRONG_GERMAN_TOKENS) {
+        if (pattern.test(value)) {
+          violations.push({ key, locale, value, label });
+        }
+      }
+    }
+    if (violations.length > 0) {
+      const detail = violations
+        .map((v) => `  - ${v.locale}/${v.key} [${v.label}] = ${JSON.stringify(v.value)}`)
+        .join("\n");
+      throw new Error(
+        `Found ${violations.length} known-wrong German-word leftover(s):\n${detail}\n\n` +
+          `Translate the value, or if it's legitimate German exam content, add its full key to ` +
+          `GERMAN_LEFTOVER_ALLOWLIST in tests/unit/learner-locales-en-no-french.test.ts and explain why.`
+      );
+    }
+    expect(violations).toEqual([]);
+  });
+
+  test("allowlist entries are real keys present in the swept catalogs (no stale entries)", () => {
+    const allKeys = new Set(allLeaves.map((p) => p.key));
+    for (const entry of GERMAN_LEFTOVER_ALLOWLIST) {
+      expect(allKeys.has(entry)).toBe(true);
+    }
+  });
+
+  describe("discrimination — fires on the known-wrong token, not on legitimate German exam vocabulary", () => {
+    test.each([
+      ["bare token", "korrekt"],
+      ["mid-string, the exact web#62-round-1 regression shape", "{{correct}} / {{total}} korrekt"],
+      ["capitalized", "Korrekt"],
+    ])("fires on %s (%j)", (_label, value) => {
+      expect(KNOWN_WRONG_GERMAN_TOKENS.some(({ pattern }) => pattern.test(value))).toBe(true);
+    });
+
+    test.each([
+      ["exam-content adjective, different word", "Richtig. Bon connecteur."],
+      ["skill name", "Lesen"],
+      ["skill name", "Hören"],
+      ["skill name", "Schreiben"],
+      ["skill name", "Sprechen"],
+      ["persona name", "Betreuer"],
+      ["exam content term", "Modelltest"],
+      ["exam content term", "Choisis ton Übungstest."],
+      ["substring, not a whole word", "inkorrekte Antwort"],
+    ])("does not fire on legitimate content: %s (%j)", (_label, value) => {
+      expect(KNOWN_WRONG_GERMAN_TOKENS.some(({ pattern }) => pattern.test(value))).toBe(false);
+    });
+  });
+});

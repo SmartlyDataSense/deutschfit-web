@@ -190,7 +190,7 @@
     "fallback": "Drill complete.",
     "summary": {
       "overline": "Done",
-      "tally": "{{correct}} / {{total}} korrekt",
+      "tally": "{{correct}} / {{total}} correct",
       "signoffPerfect": "Perfect — you've nailed these connectors. Keep going?",
       "signoffGood": "Solid progress. Same time tomorrow?",
       "signoffPractice": "We'll revisit these connectors tomorrow — see you soon.",
