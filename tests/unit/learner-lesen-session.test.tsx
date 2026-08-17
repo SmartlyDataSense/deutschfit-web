@@ -603,9 +603,10 @@ describe("LesenSessionScreen — web#32 empty module payload", () => {
     expect(
       screen.getByText("Ce module n'est pas disponible pour ce modelltest.")
     ).toBeInTheDocument();
-    // web#32 fix round 1 review, Minor finding — `EmptyState`'s default
-    // 📖 illustration is outside the brand-voice emoji lock (`📍 ⏱ ✓ ✕`);
-    // this new call site must not render it.
+    // web#60 — `EmptyState` no longer has a default illustration at all
+    // (the old 📖 default was outside the brand-voice emoji lock
+    // `📍 ⏱ ✓ ✕`); this call site passes no `illustration`, so it renders
+    // none.
     expect(screen.getByTestId("lesen-session-empty").textContent).not.toContain("\u{1F4D6}");
 
     fireEvent.click(screen.getByTestId("lesen-session-empty-cta"));

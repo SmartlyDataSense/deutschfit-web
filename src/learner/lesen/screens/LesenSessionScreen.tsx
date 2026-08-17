@@ -359,20 +359,10 @@ export function LesenSessionScreen({
     // practice-mode ambiguity (dedicated exam-only route, unlike Hören's
     // shared practice/exam session screen), so the exit CTA is
     // unconditional.
-    //
-    // web#32 fix round 1 review, Minor finding — `EmptyState`'s default
-    // illustration (📖) is not in the brand-voice-locked emoji set
-    // (`📍 ⏱ ✓ ✕`). None of those four map cleanly to "this module isn't
-    // available" without misleading (✕ reads as failure, not absence), so
-    // this suppresses the illustration entirely (`illustration={<></>}`)
-    // rather than reaching for a wrong-semantics glyph. The primitive's
-    // own default is unchanged — out of scope per this task, since it has
-    // ~28 other consumers.
     return (
       <div className={clsx(CONTAINER_CLASS, "items-center justify-center px-6 py-8")}>
         <EmptyState
           testID="lesen-session-empty"
-          illustration={<></>}
           title={t("simulation:empty")}
           description={t("simulation:emptyBody")}
           actionLabel={t("simulation:emptyCta")}

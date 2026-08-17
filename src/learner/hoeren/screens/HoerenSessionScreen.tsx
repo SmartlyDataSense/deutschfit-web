@@ -464,21 +464,11 @@ export function HoerenSessionScreen({
     // wording) is left untouched; only exam mode gets the new exit CTA,
     // gated on `mockAttemptId` truthiness so this never regresses the
     // practice-mode empty state.
-    //
-    // web#32 fix round 1 review, Minor finding — the exam-mode branch
-    // below is new code from this task, so it must not carry
-    // `EmptyState`'s default 📖 illustration (outside the brand-voice
-    // emoji lock). Suppressed via `illustration={<></>}` rather than a
-    // wrong-semantics glyph from the approved set; see
-    // `LesenSessionScreen`'s identical fix for the full rationale. The
-    // practice-mode branch (pre-existing, untouched) keeps its current
-    // behavior, default illustration included — out of scope here.
     return (
       <div className={clsx(CONTAINER_CLASS, "items-center justify-center px-6 py-8")}>
         {mockAttemptId ? (
           <EmptyState
             testID="hoeren-session-empty"
-            illustration={<></>}
             title={t("simulation:empty")}
             description={t("simulation:emptyBody")}
             actionLabel={t("simulation:emptyCta")}

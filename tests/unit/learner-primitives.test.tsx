@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 
 // vitest.config.ts runs with `globals: false`, so @testing-library/react's
@@ -14,6 +14,7 @@ import {
   AppButton,
   Chip,
   Card,
+  EmptyState,
   ProgressBar,
   TimerPill,
   formatMs,
@@ -163,6 +164,40 @@ describe("Card", () => {
     expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(
       screen.getByTestId("card")
     );
+  });
+});
+
+describe("EmptyState", () => {
+  // web#60 — no default illustration any more (the old 📖 default was
+  // outside the brand-voice emoji lock `📍 ⏱ ✓ ✕`, and neither the icon
+  // sprite nor the 5 inlined Ionicons carry a dedicated "empty" mark).
+  // Omitting `illustration` now renders no illustration wrapper at all.
+  it("renders no illustration wrapper when illustration is omitted", () => {
+    render(<EmptyState testID="empty" title="Rien ici" />);
+    const root = screen.getByTestId("empty");
+    expect(within(root).queryByText("\u{1F4D6}")).not.toBeInTheDocument();
+    expect(root.querySelector('[aria-hidden="true"]')).not.toBeInTheDocument();
+  });
+
+  it("renders a caller-supplied illustration node", () => {
+    render(<EmptyState testID="empty" title="Rien ici" illustration={<span>custom-glyph</span>} />);
+    expect(screen.getByText("custom-glyph")).toBeInTheDocument();
+  });
+
+  // web#60 — the wrapper used to carry `role="group"` + `aria-label`
+  // composed from `description ? \`${title}. ${description}\` : title` —
+  // duplicating the title/description `AppText` children rendered right
+  // below it. `role="group"` is not children-presentational on web, so a
+  // screen reader announced the composed name and then re-read those
+  // children a second time. This pins the wrapper carrying no role or
+  // aria-label at all — the children read on their own.
+  it("carries no wrapper role/aria-label — title and description read naturally, not duplicated", () => {
+    render(<EmptyState testID="empty" title="Rien ici" description="Reviens plus tard." />);
+    const root = screen.getByTestId("empty");
+    expect(root).not.toHaveAttribute("role");
+    expect(root).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Rien ici")).toBeInTheDocument();
+    expect(screen.getByText("Reviens plus tard.")).toBeInTheDocument();
   });
 });
 

@@ -210,9 +210,9 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     );
     expect(startSessionMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();
-    // web#32 fix round 1 review, Minor finding — `EmptyState`'s default
-    // 📖 illustration is outside the brand-voice emoji lock (`📍 ⏱ ✓ ✕`);
-    // this new phase must not render it.
+    // web#60 — `EmptyState` no longer has a default illustration at all
+    // (the old 📖 default was outside the brand-voice emoji lock
+    // `📍 ⏱ ✓ ✕`); this phase passes no `illustration`, so it renders none.
     expect(screen.getByTestId("simulation-orchestrator-unavailable").textContent).not.toContain(
       "\u{1F4D6}"
     );

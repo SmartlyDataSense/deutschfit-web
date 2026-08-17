@@ -6,21 +6,36 @@ import { AppText } from "./AppText";
 
 /**
  * `EmptyState` — ports `deutschfit-mobile/src/ui/blocks/EmptyState.tsx`.
- * Canonical empty-state panel: optional illustration (defaults to a book
- * emoji, matching mobile), serif title, secondary description, optional
- * `AppButton` CTA.
+ * Canonical empty-state panel: optional illustration, serif title,
+ * secondary description, optional `AppButton` CTA.
  *
- * Accessibility: the container is a single `role="group"` with
- * `aria-label` merging title + description, so screen readers announce it
- * as one region instead of stuttering across separate title/body reads —
- * same rationale as mobile's `accessibilityRole="summary"` (there is no
- * web ARIA role named "summary"; `group` + `aria-label` is the closest
- * equivalent).
+ * No default illustration (web#60 sweep). Mobile's port defaulted to a
+ * book emoji (📖), but that glyph is outside the brand-voice-locked
+ * emoji set (`📍 ⏱ ✓ ✕`) — a hard-lock violation baked into a shared
+ * primitive with ~28 consumers. None of the four allowed glyphs map
+ * cleanly onto "nothing here yet" without misleading (✕ reads as
+ * failure, not absence), and neither the icon sprite
+ * (`@/learner/core/icons/iconSprite.tsx`) nor the 5 inlined Ionicons
+ * carry a dedicated "empty" mark — inventing one is forbidden by the
+ * icon-source lock. So the sensible default is no illustration at all;
+ * callers that want one pass their own approved icon/glyph via
+ * `illustration`.
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
+ * (web#60 sweep). An earlier version composed
+ * `description ? \`${title}. ${description}\` : title` and put it on
+ * the outer `role="group"` div — `role="group"` is not children-
+ * presentational on web (unlike mobile's `accessible` View), so a
+ * screen reader announced that composed name and then re-read the
+ * title/description `AppText` children a second time. Those already
+ * read fine as independently readable nodes in the same order, so no
+ * wrapper accessible name is needed — same treatment as
+ * `PriorityTaskCard` (commit `1ea9e6a`).
  */
 export interface EmptyStateProps {
   readonly title: string;
   readonly description?: string;
-  /** Defaults to a book emoji (📖). Pass a custom node to override. */
+  /** No default — pass an approved icon/glyph node to render one. */
   readonly illustration?: ReactNode;
   readonly actionLabel?: string;
   readonly onAction?: () => void;
@@ -40,25 +55,20 @@ export function EmptyState({
   testID,
 }: EmptyStateProps) {
   const showCta = Boolean(actionLabel && onAction);
-  const announcement = description ? `${title}. ${description}` : title;
 
   return (
     <div
-      role="group"
-      aria-label={announcement}
       data-testid={testID}
       className={clsx(
         "flex flex-col items-center justify-center gap-2 px-6 py-8 text-center",
         className
       )}
     >
-      <div aria-hidden="true" className="mb-1">
-        {illustration ?? (
-          <AppText as="span" tone="gold" size="display" weight="regular" align="center">
-            {"\u{1F4D6}"}
-          </AppText>
-        )}
-      </div>
+      {illustration ? (
+        <div aria-hidden="true" className="mb-1">
+          {illustration}
+        </div>
+      ) : null}
 
       <AppText as="p" tone="primary" family="serif" size="h3" weight="bold" align="center">
         {title}

@@ -24,9 +24,20 @@
  * (never invent glyphs), so the badge drops the icon rather than
  * substitute an unapproved one.
  *
- * Disabled cards are non-interactive (`role="group"`, `aria-disabled`,
- * `aria-label` pairing title + "Bientôt disponible" — same idiom as
- * `EmptyState`/`AccueilScreen`'s labeled non-interactive containers).
+ * Disabled cards are non-interactive (`role="group"`, `aria-disabled`).
+ * Deliberately does NOT also pass a composed wrapper `aria-label`
+ * (web#60 sweep). An earlier version paired `role="group"` with
+ * `aria-label={\`${title} – ${comingSoonLabel}\`}` — `role="group"` is
+ * not children-presentational on web (unlike mobile's `accessible`
+ * View), so a screen reader announced that composed name and then
+ * re-read the identical title `AppText` and "Bientôt" `Chip` a second
+ * time. Those already read fine as independently readable children in
+ * the same order, so no wrapper accessible name is needed — same
+ * treatment as `PriorityTaskCard` (commit `1ea9e6a`). `role="group"`
+ * itself is kept (unlike the other web#60 fixes) because it is the
+ * only reason `aria-disabled` reliably exposes on a plain `<div>` —
+ * same shape as `DiagnosticResultScreen.tsx`'s `CtaCardView`, which
+ * already pairs `role="group"` with `aria-disabled` and no label.
  * Active cards render as a `Card` with `onClick` (native `<button>`).
  */
 import { useCallback } from "react";
@@ -142,7 +153,6 @@ export function ApprendreScreen() {
                 key={card.id}
                 role="group"
                 aria-disabled="true"
-                aria-label={`${title} – ${comingSoonLabel}`}
                 data-testid={`apprendre-card-${card.id}`}
               >
                 <Card className={clsx("opacity-55")}>{cardBody}</Card>
