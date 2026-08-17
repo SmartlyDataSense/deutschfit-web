@@ -210,6 +210,12 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     );
     expect(startSessionMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();
+    // web#32 fix round 1 review, Minor finding — `EmptyState`'s default
+    // 📖 illustration is outside the brand-voice emoji lock (`📍 ⏱ ✓ ✕`);
+    // this new phase must not render it.
+    expect(screen.getByTestId("simulation-orchestrator-unavailable").textContent).not.toContain(
+      "\u{1F4D6}"
+    );
 
     fireEvent.click(screen.getByTestId("simulation-orchestrator-unavailable-back"));
     expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");

@@ -360,6 +360,10 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
     expect(
       screen.getByText("Ce module n'est pas disponible pour ce modelltest.")
     ).toBeInTheDocument();
+    // web#32 fix round 1 review, Minor finding — `EmptyState`'s default
+    // 📖 illustration is outside the brand-voice emoji lock (`📍 ⏱ ✓ ✕`);
+    // this new exam-mode call site must not render it.
+    expect(screen.getByTestId("hoeren-session-empty").textContent).not.toContain("\u{1F4D6}");
 
     fireEvent.click(screen.getByTestId("hoeren-session-empty-cta"));
     expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");

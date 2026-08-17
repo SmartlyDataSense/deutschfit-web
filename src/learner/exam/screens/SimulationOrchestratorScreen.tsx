@@ -649,7 +649,17 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
           className="flex flex-col items-center gap-3"
           data-testid="simulation-orchestrator-unavailable"
         >
-          <EmptyState title={t("simulation:empty")} description={t("simulation:emptyBody")} />
+          {/* web#32 fix round 1 review, Minor finding — this phase is new
+              code from this task, so it must not carry `EmptyState`'s
+              default 📖 illustration (outside the brand-voice emoji lock).
+              Suppressed rather than substituted with a wrong-semantics
+              glyph from the approved set; see `LesenSessionScreen`'s
+              identical fix for the full rationale. */}
+          <EmptyState
+            illustration={<></>}
+            title={t("simulation:empty")}
+            description={t("simulation:emptyBody")}
+          />
           <AppButton
             testID="simulation-orchestrator-unavailable-back"
             label={t("simulation:emptyCta")}
