@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
-import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // `vi.hoisted` — `vi.mock` factories are hoisted above the rest of the
@@ -35,6 +36,7 @@ vi.mock("@/learner/core/exam/mockExamSession", () => ({
   readPendingMockExam: (...args: unknown[]) => readPendingMockExamMock(...args),
 }));
 
+import { initLearnerI18n } from "@/learner/core/i18n";
 import { useExamContextStore } from "@/learner/core/exam/examContext";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import type { MockExamCacheRecord } from "@/learner/core/exam/mockExamSession";
@@ -102,6 +104,44 @@ describe("ExamHomeScreen — S8 Task 8.3 (track badge, resume card, module + sim
 
     expect(trackEventMock).toHaveBeenCalledWith("exam_home_card_tapped", { card: "resume" });
     expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/simulation?examSlug=goethe-b1-modell-1");
+  });
+
+  it("web#38 pin: under StrictMode's dev double-invoke, a resolved pending row still lands in state and the resume card renders (isMountedRef guard-removal-verified)", async () => {
+    // Regression for the cleanup-only `isMountedRef` trap: an effect whose
+    // only job is `return () => { isMountedRef.current = false; }` never
+    // resets the ref back to `true` on the second (post-cleanup) setup that
+    // StrictMode's dev double-invoke runs synchronously on mount. The ref
+    // is then permanently `false` for the rest of the component's life, so
+    // `if (isMountedRef.current) setPending(row)` silently drops the async
+    // `readPendingMockExam` resolution below and the resume card never
+    // renders — even though nothing actually unmounted. A test that isn't
+    // wrapped in `<StrictMode>` (the "pending row" test above) cannot catch
+    // this: without the double-invoke, the ref's initial `true` value is
+    // never touched before the promise resolves, so it passes against both
+    // the broken and the fixed effect.
+    //
+    // Deliberately NOT using the shared `renderWithI18n` helper: it wraps
+    // `<I18nextProvider>` OUTSIDE the tree it's given, so
+    // `renderWithI18n(<StrictMode>...)` nests as
+    // `I18nextProvider > StrictMode > ExamHomeScreen`. Empirically verified
+    // (React 19.1.0 / this jsdom+vitest setup) that a Context.Provider
+    // *outside* `<StrictMode>` suppresses the dev mount double-invoke for
+    // every descendant effect — `<StrictMode>` must be the OUTERMOST
+    // element for the double-invoke to actually fire. Rendered directly
+    // here with the order flipped (`StrictMode > I18nextProvider > …`) so
+    // this test exercises the real trap instead of silently no-op'ing.
+    readPendingMockExamMock.mockResolvedValue(pendingRow());
+    const i18n = initLearnerI18n("fr");
+    render(
+      <StrictMode>
+        <I18nextProvider i18n={i18n}>
+          <ExamHomeScreen />
+        </I18nextProvider>
+      </StrictMode>
+    );
+
+    await waitFor(() => expect(screen.getByTestId("examHome.resume")).toBeInTheDocument());
+    expect(screen.getByTestId("examHome.resume").textContent).toContain("Reprendre l'examen blanc");
   });
 
   it("rejected readPendingMockExam: cards still render (resume is best-effort); guard resets so a later legitimate re-run can retry and show the card", async () => {

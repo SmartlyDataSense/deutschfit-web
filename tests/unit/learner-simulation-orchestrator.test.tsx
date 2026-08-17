@@ -13,6 +13,7 @@ const {
   getMockAttemptMock,
   advanceSessionMock,
   finalizeSessionMock,
+  listModelltestsMock,
   trackEventMock,
   pushMock,
   replaceMock,
@@ -24,6 +25,7 @@ const {
   getMockAttemptMock: vi.fn(),
   advanceSessionMock: vi.fn(),
   finalizeSessionMock: vi.fn(),
+  listModelltestsMock: vi.fn(),
   trackEventMock: vi.fn(),
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -32,13 +34,15 @@ const {
 }));
 
 // Partial mock: keep the real `nextModuleForStatus` (pure — no reason to
-// fake it, screen imports it directly) and stub `getMockAttempt`, same
-// idiom as `learner-lesen-session.test.tsx`'s partial mocks.
+// fake it, screen imports it directly) and stub `getMockAttempt` +
+// `listModelltests` (web#32's module-presence gate), same idiom as
+// `learner-lesen-session.test.tsx`'s partial mocks.
 vi.mock("@/learner/core/api/examApi", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/api/examApi")>();
   return {
     ...actual,
     getMockAttempt: (...args: unknown[]) => getMockAttemptMock(...args),
+    listModelltests: (...args: unknown[]) => listModelltestsMock(...args),
   };
 });
 vi.mock("@/learner/core/exam/mockExamSession", async (importOriginal) => {
@@ -93,6 +97,43 @@ function attemptRow(
   };
 }
 
+/**
+ * web#32 — every dispatch/resume test in this file boots against one of
+ * these two slugs. Default `listModelltestsMock` resolution (below) tags
+ * both as carrying every required module, so the module-presence gate is a
+ * no-op for every pre-existing test; tests that need the OTHER branch
+ * override per-module with `moduleAwareRows` / `mockResolvedValueOnce`.
+ */
+const MODULE_COMPLETE_SLUGS = ["goethe-b1-01", "telc-b1-07"] as const;
+
+function moduleRows(slugs: readonly string[] = MODULE_COMPLETE_SLUGS, moduleCode = "LESEN") {
+  return slugs.map((slug) => ({
+    id: slug,
+    slug,
+    title: "Modelltest",
+    cert_code: "GOETHE",
+    level_code: "B1",
+    short_label: null,
+    sequence_num: null,
+    module_code: moduleCode,
+  }));
+}
+
+/**
+ * final-review I-1 — drives `listModelltestsMock` off the `module` arg the
+ * gate actually passes, so a test can say "this slug has LESEN but not
+ * HOEREN". `slugsByModule` is keyed by module code; a module absent from
+ * the map resolves to `MODULE_COMPLETE_SLUGS`.
+ */
+function moduleAwareRows(slugsByModule: Readonly<Record<string, readonly string[]>>) {
+  return (args?: { module?: string }) => {
+    const moduleCode = args?.module ?? "LESEN";
+    return Promise.resolve(
+      moduleRows(slugsByModule[moduleCode] ?? MODULE_COMPLETE_SLUGS, moduleCode)
+    );
+  };
+}
+
 describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)", () => {
   beforeEach(() => {
     startSessionMock.mockReset();
@@ -105,7 +146,12 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     replaceMock.mockReset();
     backMock.mockReset();
     hydrateMock.mockReset();
+    listModelltestsMock.mockReset();
     readPendingMockExamMock.mockResolvedValue(null);
+    // web#32 — default resolution tags both fixture slugs as carrying every
+    // module in `FULL_SIMULATION_REQUIRED_MODULES`, so the module-presence
+    // gate is a no-op for every pre-existing test.
+    listModelltestsMock.mockImplementation(moduleAwareRows({}));
     useLearnerSession.setState({
       status: "authenticated",
       session: { user: { id: "u1" } },
@@ -168,6 +214,85 @@ describe("SimulationOrchestratorScreen — S8 Task 8.6 (boot, resume, dispatch)"
     await waitFor(() => expect(replaceMock).toHaveBeenCalledTimes(1));
     expect(startSessionMock).toHaveBeenCalledTimes(1);
     expect(trackEventMock.mock.calls.filter((c) => c[0] === "simulation_started")).toHaveLength(1);
+  });
+
+  it("web#32: examSlug absent from the LESEN-filtered list renders the unavailable phase, never calls startSession, and the back CTA routes to the picker", async () => {
+    // goethe-b1-01 carries no LESEN module.
+    listModelltestsMock.mockImplementation(moduleAwareRows({ LESEN: ["telc-b1-07"] }));
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-orchestrator-unavailable")).toBeInTheDocument()
+    );
+    expect(startSessionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+    // web#60 — `EmptyState` no longer has a default illustration at all
+    // (the old 📖 default was outside the brand-voice emoji lock
+    // `📍 ⏱ ✓ ✕`); this phase passes no `illustration`, so it renders none.
+    expect(screen.getByTestId("simulation-orchestrator-unavailable").textContent).not.toContain(
+      "\u{1F4D6}"
+    );
+
+    fireEvent.click(screen.getByTestId("simulation-orchestrator-unavailable-back"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");
+  });
+
+  /**
+   * final-review I-1 — the gate must check EVERY module in
+   * `FULL_SIMULATION_REQUIRED_MODULES`, not just LESEN. Revert the
+   * orchestrator to the LESEN-only check and this test fails: `hasLesen`
+   * is true, `startSession` runs, the learner gets routed into the Lesen
+   * leg, and the chain later dead-ends at Hören's zero-part backstop in an
+   * attempt the picker no longer offers a way back into.
+   */
+  it("web#32 / I-1: a slug with LESEN but no HOEREN is blocked BEFORE startSession, exactly like a LESEN-less slug", async () => {
+    listModelltestsMock.mockImplementation(moduleAwareRows({ HOEREN: ["telc-b1-07"] }));
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-orchestrator-unavailable")).toBeInTheDocument()
+    );
+    expect(startSessionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+    // The gate asked about every required module, not just LESEN.
+    const askedModules = listModelltestsMock.mock.calls.map(
+      (c) => (c[0] as { module?: string } | undefined)?.module
+    );
+    expect(askedModules).toEqual(expect.arrayContaining(["LESEN", "HOEREN", "SCHREIBEN"]));
+  });
+
+  it("web#32 / I-1: a slug with LESEN + HOEREN but no SCHREIBEN is blocked too (the whole set is required)", async () => {
+    listModelltestsMock.mockImplementation(moduleAwareRows({ SCHREIBEN: ["telc-b1-07"] }));
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("simulation-orchestrator-unavailable")).toBeInTheDocument()
+    );
+    expect(startSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("web#32: listModelltests rejecting fails OPEN — boot proceeds to startSession as if the module were present", async () => {
+    listModelltestsMock.mockRejectedValueOnce(new Error("network_error"));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    startSessionMock.mockResolvedValue({
+      mockAttemptId: "mock-1",
+      examSlug: "goethe-b1-01",
+      status: "in_progress",
+      nextModule: "LESEN",
+      lesenAttemptId: "lesen-attempt-1",
+      hoerenAttemptId: null,
+      resumed: false,
+    });
+
+    renderWithI18n(<SimulationOrchestratorScreen examSlug="goethe-b1-01" />);
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledTimes(1));
+    expect(startSessionMock).toHaveBeenCalledWith({ userId: "u1", examSlug: "goethe-b1-01" });
+    expect(screen.queryByTestId("simulation-orchestrator-unavailable")).not.toBeInTheDocument();
+    warnSpy.mockRestore();
   });
 
   it("resumed at lesen_done: replaces to the hoeren session URL with the row's hoeren attempt id, and does not fire simulation_started", async () => {
@@ -528,7 +653,12 @@ describe("SimulationOrchestratorScreen — S8 Task 8.7 (schreiben gate + finaliz
     replaceMock.mockReset();
     backMock.mockReset();
     hydrateMock.mockReset();
+    listModelltestsMock.mockReset();
     readPendingMockExamMock.mockResolvedValue(null);
+    // web#32 — default resolution tags both fixture slugs as carrying every
+    // module in `FULL_SIMULATION_REQUIRED_MODULES`, so the module-presence
+    // gate is a no-op for every pre-existing test.
+    listModelltestsMock.mockImplementation(moduleAwareRows({}));
     useLearnerSession.setState({
       status: "authenticated",
       session: { user: { id: "u1" } },
@@ -545,7 +675,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.7 (schreiben gate + finaliz
 
     await bootToSchreibenGate();
 
-    expect(screen.getByText("Schreiben · Entraînement par module")).toBeInTheDocument();
+    expect(screen.getByText("Schreiben · Préparation par module")).toBeInTheDocument();
     expect(
       screen.getByText("Choisis un modelltest pour t'entraîner uniquement sur l'expression écrite.")
     ).toBeInTheDocument();

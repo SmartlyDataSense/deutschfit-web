@@ -11,6 +11,16 @@
  * Connector chips reuse the existing `Chip` primitive (display-only, no
  * `onClick`) instead of porting mobile's `InlineCorrectionChip` variant
  * system — no web equivalent exists and this is the only caller.
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
+ * (web#60 sweep). An earlier version composed
+ * `${overlineLabel}. ${body}` and put it on the outer `role="group"`
+ * div — `role="group"` is not children-presentational on web (unlike
+ * mobile's `accessible` View), so a screen reader announced that
+ * composed name and then re-read the overline/body `AppText` children a
+ * second time. Those already read fine as independently readable nodes
+ * in the same order, so no wrapper accessible name is needed — same
+ * treatment as `PriorityTaskCard` (commit `1ea9e6a`).
  */
 import { AppText, Chip } from "@/learner/ui/primitives";
 
@@ -30,8 +40,6 @@ export interface ObservationCardProps {
 export function ObservationCard({ body, connectors, overlineLabel, testID }: ObservationCardProps) {
   return (
     <div
-      role="group"
-      aria-label={`${overlineLabel}. ${body}`}
       data-testid={testID}
       className="mx-4 mb-2 flex gap-3 rounded-[var(--radius-md)] bg-bg-card p-4"
     >

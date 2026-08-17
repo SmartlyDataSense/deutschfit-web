@@ -411,7 +411,14 @@ function LevelPopover({
                   onClick={() => handlePick(level)}
                   className={clsx(
                     "rounded-[var(--radius-sm)] px-2 py-1 text-left hover:bg-bg-subtle",
-                    (isCurrent || isActive) && "bg-bg-subtle"
+                    // #51 item 8 (parity): isCurrent (selection) and
+                    // isActive (roving keyboard focus) previously both
+                    // resolved to the same bg-bg-subtle class — a sighted
+                    // keyboard user couldn't tell "focused" from
+                    // "selected" when they coincided. isCurrent keeps the
+                    // fill; isActive gets its own ring, independently.
+                    isCurrent && "bg-bg-subtle",
+                    isActive && "ring-2 ring-inset ring-cta"
                   )}
                 >
                   <AppText size="small" weight={isCurrent ? "semi" : "regular"}>
@@ -574,7 +581,11 @@ function SubgenrePopover({
                   onClick={() => handlePick(option.id)}
                   className={clsx(
                     "rounded-[var(--radius-sm)] px-2 py-1 text-left hover:bg-bg-subtle",
-                    (isCurrent || isActive) && "bg-bg-subtle"
+                    // #51 item 8 (parity): see the identical fix in
+                    // LevelPopover above — isCurrent/isActive get
+                    // independent visual treatment now.
+                    isCurrent && "bg-bg-subtle",
+                    isActive && "ring-2 ring-inset ring-cta"
                   )}
                 >
                   <AppText size="small" weight={isCurrent ? "semi" : "regular"}>

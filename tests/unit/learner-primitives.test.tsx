@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 
 // vitest.config.ts runs with `globals: false`, so @testing-library/react's
@@ -14,6 +14,7 @@ import {
   AppButton,
   Chip,
   Card,
+  EmptyState,
   ProgressBar,
   TimerPill,
   formatMs,
@@ -127,6 +128,57 @@ describe("Chip", () => {
     fireEvent.click(screen.getByRole("button", { name: "B1" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  // #51 items 1/6/7 (parity): tone prop, mirrors mobile's Pill palette.
+  it("defaults to the neutral tone (byte-identical to the pre-tone idle look)", () => {
+    render(<Chip label="Neutral" />);
+    const el = screen.getByText("Neutral").parentElement;
+    expect(el?.className).toMatch(/border-line-soft/);
+    expect(el?.className).toMatch(/bg-bg-hero/);
+  });
+
+  it("renders the success tone with the AA-safe success-text color, not the vivid one", () => {
+    render(<Chip label="Solide" tone="success" />);
+    const el = screen.getByText("Solide").parentElement;
+    expect(el?.className).toMatch(/border-success-green/);
+    expect(el?.className).toMatch(/bg-bg-hero/);
+    expect(screen.getByText("Solide").className).toMatch(/text-success-text/);
+    expect(screen.getByText("Solide").className).not.toMatch(/text-success-green/);
+  });
+
+  it("renders the warning tone", () => {
+    render(<Chip label="Focus" tone="warning" />);
+    const el = screen.getByText("Focus").parentElement;
+    expect(el?.className).toMatch(/border-warning-red\b/);
+    expect(screen.getByText("Focus").className).toMatch(/text-warning-red-text/);
+  });
+
+  // final-review I-2: the amber tone the two non-`Pill` call sites need.
+  // Narrow addition — `warning` above stays the faithful red `Pill` port.
+  it("renders the warningSubtle tone in mobile's amber pair, never the red family", () => {
+    render(<Chip label="Grammaire" tone="warningSubtle" />);
+    const el = screen.getByText("Grammaire").parentElement;
+    expect(el?.className).toMatch(/border-warning-text/);
+    expect(el?.className).toMatch(/bg-warning-subtle/);
+    expect(el?.className).not.toMatch(/warning-red/);
+    expect(screen.getByText("Grammaire").className).toMatch(/text-warning-text\b/);
+    expect(screen.getByText("Grammaire").className).not.toMatch(/text-warning-red-text/);
+  });
+
+  it("renders the gold tone", () => {
+    render(<Chip label="Fast-B2" tone="gold" />);
+    const el = screen.getByText("Fast-B2").parentElement;
+    expect(el?.className).toMatch(/border-accent-gold/);
+    expect(el?.className).toMatch(/bg-accent-gold/);
+  });
+
+  it("selected always wins over tone (still routes through ctaLabel)", () => {
+    render(<Chip label="Selected" tone="warning" selected />);
+    const el = screen.getByText("Selected").parentElement;
+    expect(el?.className).toMatch(/bg-cta\b/);
+    expect(el?.className).not.toMatch(/bg-warning/);
+    expect(screen.getByText("Selected").className).toMatch(/text-cta-label/);
+  });
 });
 
 describe("Card", () => {
@@ -163,6 +215,40 @@ describe("Card", () => {
     expect(screen.getByRole("button", { name: "Résumé de la carte" })).toBe(
       screen.getByTestId("card")
     );
+  });
+});
+
+describe("EmptyState", () => {
+  // web#60 — no default illustration any more (the old 📖 default was
+  // outside the brand-voice emoji lock `📍 ⏱ ✓ ✕`, and neither the icon
+  // sprite nor the 5 inlined Ionicons carry a dedicated "empty" mark).
+  // Omitting `illustration` now renders no illustration wrapper at all.
+  it("renders no illustration wrapper when illustration is omitted", () => {
+    render(<EmptyState testID="empty" title="Rien ici" />);
+    const root = screen.getByTestId("empty");
+    expect(within(root).queryByText("\u{1F4D6}")).not.toBeInTheDocument();
+    expect(root.querySelector('[aria-hidden="true"]')).not.toBeInTheDocument();
+  });
+
+  it("renders a caller-supplied illustration node", () => {
+    render(<EmptyState testID="empty" title="Rien ici" illustration={<span>custom-glyph</span>} />);
+    expect(screen.getByText("custom-glyph")).toBeInTheDocument();
+  });
+
+  // web#60 — the wrapper used to carry `role="group"` + `aria-label`
+  // composed from `description ? \`${title}. ${description}\` : title` —
+  // duplicating the title/description `AppText` children rendered right
+  // below it. `role="group"` is not children-presentational on web, so a
+  // screen reader announced the composed name and then re-read those
+  // children a second time. This pins the wrapper carrying no role or
+  // aria-label at all — the children read on their own.
+  it("carries no wrapper role/aria-label — title and description read naturally, not duplicated", () => {
+    render(<EmptyState testID="empty" title="Rien ici" description="Reviens plus tard." />);
+    const root = screen.getByTestId("empty");
+    expect(root).not.toHaveAttribute("role");
+    expect(root).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Rien ici")).toBeInTheDocument();
+    expect(screen.getByText("Reviens plus tard.")).toBeInTheDocument();
   });
 });
 

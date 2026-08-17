@@ -685,6 +685,97 @@ describe("SprechenSessionScreen (S7 Task 7.8)", () => {
     ).toBe(true);
   });
 
+  // #54 — a pure send failure (reserve/PUT/finalize threw before any
+  // submission ever existed server-side) offers an explicit retry that
+  // re-runs the WHOLE upload sequence from the retained recording, rather
+  // than resurrecting the abandoned `submissionId` (which the hook already
+  // reset to `null`). Also the concrete evidence that the F2 blob-registry
+  // contract actually holds at retry time: `getRecordingBlobMock` resolves
+  // the SAME uri a second time, proving the registry never dropped it.
+  it("#54: a pure send failure offers a retry that re-runs reserve -> PUT -> finalize from the retained recording", async () => {
+    useTopicHandoff.setState({ topic: sampleTopic() });
+    const fakeRecorder = makeFakeRecorder();
+    const { deps, reserveUploadMock, putAudioMock, finalizeMock, getRecordingBlobMock } =
+      makeSessionDeps();
+    // Fail post-`getRecordingBlobFn` (at the PUT step) — this is the shape
+    // that actually exercises the F2 blob-retrieval contract on retry (a
+    // pre-`getRecordingBlobFn` failure, e.g. `reserveUpload` itself
+    // rejecting, would never call it on the first attempt at all).
+    putAudioMock.mockRejectedValueOnce(new Error("upload_failed"));
+
+    renderScreen({ recorderFactory: () => fakeRecorder, sessionDeps: deps });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-mic-check")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-mic-check-skip"));
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-stop-cta")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("sprechen-session-stop-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-submit")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-review-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-send-failed")).toBeInTheDocument()
+    );
+    expect(screen.getByTestId("sprechen-session-error-code")).toHaveTextContent("upload_failed");
+    expect(reserveUploadMock).toHaveBeenCalledTimes(1);
+
+    replaceMock.mockClear();
+    fireEvent.click(screen.getByTestId("sprechen-session-send-failed-cta"));
+
+    // A SECOND, fresh reserve — not a re-PUT against the dead reservation.
+    await waitFor(() => expect(reserveUploadMock).toHaveBeenCalledTimes(2));
+    // The retained blob is still resolvable via the registry seam at retry
+    // time — same uri both times, proving nothing released it between the
+    // failed first attempt and the retry.
+    expect(getRecordingBlobMock).toHaveBeenCalledTimes(2);
+    expect(getRecordingBlobMock).toHaveBeenNthCalledWith(1, "blob:recorded-uri");
+    expect(getRecordingBlobMock).toHaveBeenNthCalledWith(2, "blob:recorded-uri");
+    // put was attempted both times (fails first, succeeds on retry);
+    // finalize only ever runs after a successful put, so once.
+    expect(putAudioMock).toHaveBeenCalledTimes(2);
+    expect(finalizeMock).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/fr/app"));
+  });
+
+  // Negative case — a fallback where a submission DOES already exist
+  // server-side (a post-upload grading failure/timeout, not a send
+  // failure) must NOT offer the #54 retry: `submissionId` stays non-null in
+  // that branch of the hook, so retrying would abandon a live submission
+  // instead of resuming a dead one.
+  it("#54: a post-upload grading timeout (submissionId retained) does NOT offer the send-failed retry", async () => {
+    useTopicHandoff.setState({ topic: sampleTopic() });
+    const fakeRecorder = makeFakeRecorder();
+    const { deps, pollerListeners } = makeSessionDeps();
+
+    renderScreen({ recorderFactory: () => fakeRecorder, sessionDeps: deps });
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-mic-check")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-mic-check-skip"));
+    fireEvent.click(screen.getByTestId("sprechen-session-start-cta"));
+    await waitFor(() => expect(screen.getByTestId("sprechen-session-stop-cta")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("sprechen-session-stop-cta"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-review-submit")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("sprechen-session-review-submit"));
+
+    await waitFor(() => expect(pollerListeners.has("sub-1")).toBe(true));
+
+    act(() => {
+      pollerListeners.get("sub-1")?.({ status: "timeout", data: null, error: null });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("sprechen-session-empty-state")).toBeInTheDocument()
+    );
+    expect(screen.queryByTestId("sprechen-session-send-failed")).not.toBeInTheDocument();
+  });
+
   // S7-7.8 regression pin — a `graded` poller snapshot with unified
   // (schema_version >= 2) data must drive `FeedbackView`'s inline
   // `ModuleResultLayout` with the RIGHT props wired to the RIGHT slots. A

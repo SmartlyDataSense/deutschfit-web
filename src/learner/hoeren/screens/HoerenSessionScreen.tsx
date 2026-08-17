@@ -145,7 +145,7 @@ export function HoerenSessionScreen({
 }: HoerenSessionScreenProps) {
   const router = useRouter();
   const locale = useLocale();
-  const { t } = useTranslation(["apprendre"]);
+  const { t } = useTranslation(["apprendre", "simulation"]);
 
   const hookArgs =
     attemptIdParam !== undefined
@@ -166,6 +166,12 @@ export function HoerenSessionScreen({
   const startedRef = useRef(false);
 
   useEffect(() => {
+    // Re-arm on every setup invocation (web#38 idiom, mirrors
+    // `SimulationOrchestratorScreen`/`useWebPushSettings`): StrictMode's dev
+    // double-invoke runs setup → cleanup → setup on mount, and a
+    // cleanup-only effect would leave this ref permanently `false` after
+    // that cycle, silently dropping any async work that resolves later.
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -445,9 +451,32 @@ export function HoerenSessionScreen({
   const parts = player.session.parts;
   const part = parts[currentPartIndex];
   if (parts.length === 0 || !part) {
+    // web#32 — this branch is shared between practice mode (no
+    // `mockAttemptId`) and exam/live mode (`mockAttemptId` present, driven
+    // by the full-simulation chain or a HOEREN drill). A zero-part payload
+    // in exam mode is exactly what an orphaned/module-incomplete Modelltest
+    // looks like at this depth (see `SimulationOrchestratorScreen`'s
+    // module-presence gate, which stops most of these before they get
+    // here — this is the defensive backstop for whatever slips past it,
+    // e.g. a direct deep link into a resumed attempt). Practice mode's
+    // existing copy/behavior (no action — #472/#473 established this as a
+    // dead end with its own dedicated `apprendre:practice.emptyTitle`
+    // wording) is left untouched; only exam mode gets the new exit CTA,
+    // gated on `mockAttemptId` truthiness so this never regresses the
+    // practice-mode empty state.
     return (
       <div className={clsx(CONTAINER_CLASS, "items-center justify-center px-6 py-8")}>
-        <EmptyState testID="hoeren-session-empty" title={t("apprendre:practice.emptyTitle")} />
+        {mockAttemptId ? (
+          <EmptyState
+            testID="hoeren-session-empty"
+            title={t("simulation:empty")}
+            description={t("simulation:emptyBody")}
+            actionLabel={t("simulation:emptyCta")}
+            onAction={() => router.push(`/${locale}/app/examen/modelltests`)}
+          />
+        ) : (
+          <EmptyState testID="hoeren-session-empty" title={t("apprendre:practice.emptyTitle")} />
+        )}
       </div>
     );
   }

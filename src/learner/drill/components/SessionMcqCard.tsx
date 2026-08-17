@@ -6,19 +6,19 @@
  * `deutschfit-mobile/src/features/drill/components/SessionMcqCard.tsx`
  * onto `@/learner/ui/primitives`.
  *
- * Copy is hardcoded FR, ported byte-for-byte from mobile
- * (task-9.6-brief.md Step 5) — there is no `drill.json`/`coach.json`
- * precedent for this screen's copy to key off (unlike S9's other
- * screens, which route new strings through i18n), so the brief's
- * explicit instruction wins here.
+ * Copy was hardcoded FR at first port (task-9.6-brief.md Step 5, mirroring
+ * mobile byte-for-byte). Routed through `drill:session.*` in task 8 (#39)
+ * — the French had already shipped and already passed brand voice; only
+ * the English side was missing, which was translation, not new copy.
  *
  * Before an answer: a serif cloze sentence (`before ____ after`) with
  * three radio-style options. After a pick (`selected`, set by the
  * parent): each option resolves correct ✓ / incorrect ✕, an
- * explanation panel slides in with `explanation_fr`, and "Continuer"
- * advances the session.
+ * explanation panel slides in with `explanation_fr`, and the continue
+ * label advances the session.
  */
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, AppText, Card } from "@/learner/ui/primitives";
 
@@ -39,6 +39,7 @@ export function SessionMcqCard({
   onContinue,
   testID,
 }: SessionMcqCardProps) {
+  const { t } = useTranslation(["drill"]);
   const revealed = selected !== undefined;
 
   return (
@@ -100,7 +101,7 @@ export function SessionMcqCard({
             {item.explanation_fr}
           </AppText>
           <AppButton
-            label="Continuer"
+            label={t("drill:session.continue")}
             variant="solid"
             onClick={onContinue}
             testID={testID ? `${testID}-continue` : undefined}

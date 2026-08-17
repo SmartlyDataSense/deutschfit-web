@@ -38,6 +38,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
+import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 
 import { normaliseReport, submitLesen } from "@/learner/core/api/examApi";
@@ -111,6 +112,7 @@ export function LesenSessionScreen({
 }: LesenSessionScreenProps) {
   const router = useRouter();
   const locale = useLocale();
+  const { t } = useTranslation(["simulation"]);
 
   const hookArgs =
     attemptIdParam !== undefined
@@ -127,6 +129,12 @@ export function LesenSessionScreen({
   const startedRef = useRef(false);
 
   useEffect(() => {
+    // Re-arm on every setup invocation (web#38 idiom, mirrors
+    // `SimulationOrchestratorScreen`/`useWebPushSettings`): StrictMode's dev
+    // double-invoke runs setup → cleanup → setup on mount, and a
+    // cleanup-only effect would leave this ref permanently `false` after
+    // that cycle, silently dropping any async work that resolves later.
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -340,11 +348,26 @@ export function LesenSessionScreen({
 
   const current = player.current;
   if (!current) {
+    // web#32 — this screen only ever renders for the LESEN leg of the
+    // full-simulation chain (or a LESEN-module drill); a `current === null`
+    // here means the session payload came back with zero questions, which
+    // is exactly what an orphaned/module-incomplete exam looks like at this
+    // depth (see `SimulationOrchestratorScreen`'s module-presence gate,
+    // which stops most of these before they get here — this is the
+    // defensive backstop for whatever slips past it, e.g. a direct deep
+    // link into a resumed attempt). `/examen/lesen/session` has no
+    // practice-mode ambiguity (dedicated exam-only route, unlike Hören's
+    // shared practice/exam session screen), so the exit CTA is
+    // unconditional.
     return (
       <div className={clsx(CONTAINER_CLASS, "items-center justify-center px-6 py-8")}>
-        <AppText tone="secondary" size="body" align="center">
-          Keine Aufgaben in dieser Sitzung.
-        </AppText>
+        <EmptyState
+          testID="lesen-session-empty"
+          title={t("simulation:empty")}
+          description={t("simulation:emptyBody")}
+          actionLabel={t("simulation:emptyCta")}
+          onAction={() => router.push(`/${locale}/app/examen/modelltests`)}
+        />
       </div>
     );
   }

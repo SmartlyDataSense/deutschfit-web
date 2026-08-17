@@ -60,8 +60,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { toPracticeLevel } from "@/learner/core/exam/engine/practiceLevel";
-import { fetchPracticeSetsList } from "@/learner/core/api/mockExam";
-import type { PracticeSetInfo } from "@/learner/core/api/mockExam";
+import { fetchPracticeSetsList } from "@/learner/core/api/examApi";
+import type { PracticeSetInfo } from "@/learner/core/api/examApi";
 import { loadPracticeProgress } from "@/learner/core/storage/practiceProgress";
 
 import { deriveChip } from "@/learner/practice/model/progressChip";

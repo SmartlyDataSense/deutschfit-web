@@ -32,6 +32,17 @@ import { AppText, Chip, ProgressBar, type ProgressBarTone } from "@/learner/ui/p
  * `score`/`max`, so their rendered output and aria text are identical
  * before and after this change (regression-locked in
  * `tests/unit/learner-module-result-layout.test.tsx`).
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
+ * (web#60 sweep). An earlier version composed
+ * `${label}: ${score} sur ${max}${state ? \`, ${state}\` : ""}` and put
+ * it on the outer `role="group"` div — `role="group"` is not children-
+ * presentational on web (unlike mobile's `accessible` View), so a
+ * screen reader announced that composed name and then re-read the
+ * label/score/state chip a second time. Those are already
+ * independently readable `AppText`/`Chip`/`ProgressBar` children in the
+ * same order, so no wrapper accessible name is needed — same treatment
+ * as `PriorityTaskCard` (commit `1ea9e6a`).
  */
 export type CompetenceBarTone = "teal" | "amber";
 
@@ -80,24 +91,16 @@ export function CompetenceBarRow({
   // "0/0". Numeric branch below is byte-unchanged from the pre-8.8 shape.
   let fraction: number;
   let scoreLabel: string;
-  let announcement: string;
   if (score === null || max === null) {
     fraction = 0;
     scoreLabel = "—";
-    announcement = `${label}: —${stateLabel ? `, ${stateLabel}` : ""}`;
   } else {
     fraction = max > 0 ? clamp01(score / max) : 0;
     scoreLabel = `${score}/${max}`;
-    announcement = `${label}: ${score} sur ${max}${stateLabel ? `, ${stateLabel}` : ""}`;
   }
 
   return (
-    <div
-      role="group"
-      aria-label={announcement}
-      data-testid={testID}
-      className="flex flex-col gap-1"
-    >
+    <div data-testid={testID} className="flex flex-col gap-1">
       <div className="flex items-center gap-3">
         <div className="flex flex-1 flex-col gap-0.5">
           <AppText family="serif" size="body" weight="semi">

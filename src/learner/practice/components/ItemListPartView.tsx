@@ -12,6 +12,19 @@
  * verdict is fixed, there's no per-item retry. Reveal styling (success /
  * error tokens) replaces the picked/idle gold treatment once locked.
  * Labels arrive as props — no i18n at block level.
+ *
+ * Per-item wrapper `role="group"`/`aria-label` (web#60 sweep): only set
+ * when `item.stem` is null. When a stem exists, it renders as its own
+ * `AppText` a few lines below — pairing `role="group"` with
+ * `aria-label={item.stem}` there would duplicate it, since `role="group"`
+ * is not children-presentational on web (unlike mobile's `accessible`
+ * View): a screen reader would announce the stem as the group's name and
+ * then re-read the same `AppText` a second time. When `item.stem` is
+ * null (still-scaffolding source), that whole stem row doesn't render at
+ * all, so the item number is NOT otherwise visible anywhere in the
+ * group — same shape as the do-not-touch `PracticeSessionScreen` /
+ * `TopicPickerScreen` groups, where the label is a section identifier
+ * that isn't rendered inside the group, so it's kept.
  */
 import clsx from "clsx";
 
@@ -116,9 +129,10 @@ export function ItemListPartView({ part, locks, onPick }: ItemListPartViewProps)
         return (
           <div
             key={item.id}
+            data-testid={`practice-item-${item.id}`}
             className="flex flex-col gap-2"
-            role="group"
-            aria-label={item.stem ?? `${item.number}`}
+            role={item.stem ? undefined : "group"}
+            aria-label={item.stem ? undefined : `${item.number}`}
           >
             {item.stem ? (
               <div className="flex items-baseline gap-2">

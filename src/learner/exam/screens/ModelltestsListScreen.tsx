@@ -16,6 +16,32 @@
  * (`LesenIntroScreen`/`HoerenIntroScreen`), so this screen never needs to
  * distinguish a module drill from a full mock.
  *
+ * web#32 fix (round 1 — LESEN-only, superseded): the list was first
+ * fetched via a single `listModelltests({ module: "LESEN" })` call. Review
+ * caught that this only guarantees a valid *entry* point — a row with
+ * LESEN but missing HOEREN (the chain's second forced step) still got
+ * offered and still launched, only to strand one screen later on
+ * `HoerenSessionScreen`'s defensive empty state. See
+ * `FULL_SIMULATION_REQUIRED_MODULES` below for the fix round 2 fetch,
+ * which checks presence across the whole chain, not one module.
+ *
+ * The full-simulation chain (`SimulationOrchestratorScreen`) always starts
+ * at LESEN — the backend's `mock-exam-start`/`mock-exam-advance` state
+ * machine is a fixed LESEN→HOEREN→SCHREIBEN chain
+ * (`_shared/mock_exam.ts`'s `NEXT_MODULE` table, mirrored client-side by
+ * `nextModuleForStatus` in `@/learner/core/api/examApi`), blind to which
+ * modules a given Modelltest actually has content for. A Modelltest
+ * missing any module in that chain would still start a "full" mock and
+ * eventually strand the learner on an empty session with an orphaned
+ * attempt. `listModelltests` only accepts one `?module=` filter per call
+ * (no backend change in scope here), so `fetchFullSimulationModelltests`
+ * below issues one filtered request per required module — reusing the
+ * backend's existing inner-join gate (`modelltests-list/index.ts`,
+ * already shipped for #59's mono-module drills) — and intersects the
+ * results on `slug`: a row is offered only if it appears in *every*
+ * response. No backend change needed, no new field invented on
+ * `ModelltestRow`.
+ *
  * Web delta: no pull-to-refresh — RN's `RefreshControl` has no web analog.
  * The error state's retry button is the only refresh affordance (also
  * reachable from the empty state's CTA, mobile parity).
@@ -64,9 +90,49 @@ import { useTranslation } from "react-i18next";
 import { Icon } from "@/learner/core/icons/Icon";
 import { AppButton, AppText, Card, Chip, EmptyState, Skeleton } from "@/learner/ui/primitives";
 
-import { listModelltests, type ModelltestRow } from "@/learner/core/api/examApi";
+import {
+  listModelltests,
+  type MockExamModule,
+  type ModelltestRow,
+} from "@/learner/core/api/examApi";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { CERT_CODES_BY_BOARD } from "@/learner/core/exam/examTypes";
+
+/**
+ * web#32 fix round 2 — every module the full-simulation chain actually
+ * walks on a fresh start: LESEN → HOEREN → SCHREIBEN (`NEXT_MODULE` in
+ * backend `_shared/mock_exam.ts`, mirrored by `nextModuleForStatus`).
+ * SPRECHEN is deliberately excluded: `nextModuleForStatus("schreiben_done")`
+ * resolves to `"SPRECHEN"` only as a finalize signal, never an actual leg
+ * the chain routes to (see `SimulationOrchestratorScreen`'s "B1 recovery
+ * path" handling) — so a row's SPRECHEN content is irrelevant to whether
+ * it can complete the chain.
+ *
+ * Named and exported (not inlined into the fetch call) specifically so a
+ * future change to the chain's module order is a one-line edit here
+ * instead of a second special-cased filter silently drifting out of sync.
+ */
+export const FULL_SIMULATION_REQUIRED_MODULES: readonly MockExamModule[] = [
+  "LESEN",
+  "HOEREN",
+  "SCHREIBEN",
+] as const;
+
+/**
+ * Issues one `listModelltests({ module })` call per entry in
+ * `FULL_SIMULATION_REQUIRED_MODULES` and intersects the results on
+ * `slug` — a row is returned only if it appears in every response, i.e.
+ * only if it carries every module the chain will walk. See the class doc
+ * comment above for why this can't be a single backend call.
+ */
+async function fetchFullSimulationModelltests(): Promise<readonly ModelltestRow[]> {
+  const [first, ...rest] = await Promise.all(
+    FULL_SIMULATION_REQUIRED_MODULES.map((module) => listModelltests({ module }))
+  );
+  if (!first) return [];
+  const restSlugSets = rest.map((rows) => new Set(rows.map((row) => row.slug)));
+  return first.filter((row) => restSlugSets.every((slugs) => slugs.has(row.slug)));
+}
 
 export function ModelltestsListScreen() {
   const router = useRouter();
@@ -100,7 +166,9 @@ export function ModelltestsListScreen() {
     setHasError(false);
     void (async () => {
       try {
-        const rows = await listModelltests();
+        // web#32 — filters to Modelltests that carry every module the
+        // full-simulation chain will walk (see doc comment above).
+        const rows = await fetchFullSimulationModelltests();
         if (cancelled) return;
         setModelltests(rows);
       } catch {

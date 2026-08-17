@@ -57,6 +57,6 @@ describe("BetreuerHubScreen", () => {
     expect(oral).toHaveAttribute("aria-disabled", "true");
     expect(oral).not.toHaveAttribute("href");
     expect(oral.tagName).not.toBe("A");
-    expect(oral).toHaveAttribute("aria-label", "Entraînement à l'oral guidé – À venir");
+    expect(oral).toHaveAttribute("aria-label", "Préparation à l'oral guidée – À venir");
   });
 });

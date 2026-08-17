@@ -161,10 +161,21 @@ export function DiagnosticResultScreen({ mode }: DiagnosticResultScreenProps) {
                 {viewModel.estimatedLevel.toUpperCase()}
               </AppText>
             </div>
+            {/* #51 item 1 (parity): tone per tier, mirrors mobile's Pill
+                mapping 1:1 (OnboardingDiagnosticResultScreen.tsx) — the web
+                Chip previously had no tone prop so this rendered untinted
+                regardless of tier. */}
             <Chip
               label={t(`onboarding:diagnosticResult.tierSuffix.${viewModel.tierSuffix}`, {
                 level: baseLevel,
               })}
+              tone={
+                viewModel.tierSuffix === "fast-b2"
+                  ? "gold"
+                  : viewModel.tierSuffix === "solide"
+                    ? "success"
+                    : "neutral"
+              }
               testID="diagnostic-result-tier-suffix"
             />
           </div>

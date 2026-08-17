@@ -245,6 +245,87 @@ describe("useSprechenSession", () => {
     expect(releaseRecordingMock).not.toHaveBeenCalled();
   });
 
+  // #54 — the retry contract: a caller (the screen's retry CTA) re-invokes
+  // `submitRecording` with the SAME `recordingUri`/`durationMs` the fallback
+  // state retained, rather than resurrecting `submissionId` (which the hook
+  // already reset to `null` above). No hook change was needed to support
+  // this — `submitRecording` is already a from-scratch reserve -> PUT ->
+  // finalize sequence, re-entrant once `submitInFlightRef` clears in its
+  // `finally`. This test is the hook-level proof that a second call
+  // succeeds end-to-end once the transient failure clears, still reading
+  // the blob through `getRecordingBlobFn` (never a fresh recorder call).
+  it("#54: calling submitRecording again after a fallback re-runs reserve -> PUT -> finalize from the retained recordingUri and succeeds", async () => {
+    const reserveUploadMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        submission_id: "sub-2a",
+        signed_put_url: "https://signed.example/put-a",
+        storage_path: "u1/sub-2a.m4a",
+        expires_in: 900,
+      } satisfies ReserveUploadResult)
+      .mockResolvedValueOnce({
+        submission_id: "sub-2b",
+        signed_put_url: "https://signed.example/put-b",
+        storage_path: "u1/sub-2b.m4a",
+        expires_in: 900,
+      } satisfies ReserveUploadResult);
+    const blob = new Blob(["x"], { type: "audio/mp4" });
+    const getRecordingBlobMock = vi.fn().mockReturnValue({ blob, mimeType: "audio/mp4" });
+    const putAudioMock = vi.fn().mockResolvedValue(undefined);
+    const finalizeMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("bad_source_status"))
+      .mockResolvedValueOnce({ submission_id: "sub-2b", status: "queued", replay: false });
+    const pollerStart = vi.fn();
+    const createPollerMock = vi.fn().mockReturnValue({ start: pollerStart, stop: vi.fn() });
+
+    const { result } = renderHook(() =>
+      useSprechenSession({
+        examSlug: "goethe-b1",
+        teil: 1,
+        topicId: "topic-2",
+        subgenre: "vortrag",
+        level: "B2",
+        deps: {
+          reserveUpload: reserveUploadMock,
+          putAudio: putAudioMock,
+          finalize: finalizeMock,
+          getRecordingBlob: getRecordingBlobMock,
+          createPoller: createPollerMock,
+        },
+      })
+    );
+
+    act(() => result.current.reviewRecording({ recordingUri: "blob:uri-2", durationMs: 10_000 }));
+    act(() => result.current.submitRecording({ recordingUri: "blob:uri-2", durationMs: 10_000 }));
+    await waitFor(() => expect(result.current.phase).toBe("fallback"));
+    expect(result.current.submissionId).toBeNull();
+    expect(result.current.recordingUri).toBe("blob:uri-2");
+
+    // Retry: the screen re-calls submitRecording with the state the hook
+    // itself retained — never a value the caller invented.
+    act(() =>
+      result.current.submitRecording({
+        recordingUri: result.current.recordingUri,
+        durationMs: result.current.durationMs,
+      })
+    );
+
+    await waitFor(() => expect(result.current.phase).toBe("awaiting"));
+    expect(result.current.submissionId).toBe("sub-2b");
+
+    expect(reserveUploadMock).toHaveBeenCalledTimes(2);
+    expect(getRecordingBlobMock).toHaveBeenCalledTimes(2);
+    expect(getRecordingBlobMock).toHaveBeenNthCalledWith(1, "blob:uri-2");
+    expect(getRecordingBlobMock).toHaveBeenNthCalledWith(2, "blob:uri-2");
+    expect(putAudioMock).toHaveBeenCalledTimes(2);
+    expect(finalizeMock).toHaveBeenCalledTimes(2);
+    // The second (successful) attempt released the blob — same F2 contract
+    // as the plain happy-path test above.
+    expect(releaseRecordingMock).toHaveBeenCalledWith("blob:uri-2");
+    expect(releaseRecordingMock).toHaveBeenCalledTimes(1);
+  });
+
   it("re-entrant submitRecording while in-flight is a no-op (re-entrancy ref)", async () => {
     let resolveReserve: ((v: ReserveUploadResult) => void) | undefined;
     const reserveUploadMock = vi.fn().mockImplementation(

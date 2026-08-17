@@ -43,6 +43,14 @@ import frSchreiben from "../../src/learner/locales/fr/schreiben.json";
 import enSchreiben from "../../src/learner/locales/en/schreiben.json";
 import frCommon from "../../src/learner/locales/fr/common.json";
 import enCommon from "../../src/learner/locales/en/common.json";
+import frCoach from "../../src/learner/locales/fr/coach.json";
+import enCoach from "../../src/learner/locales/en/coach.json";
+import frApprendre from "../../src/learner/locales/fr/apprendre.json";
+import enApprendre from "../../src/learner/locales/en/apprendre.json";
+import frExamen from "../../src/learner/locales/fr/examen.json";
+import enExamen from "../../src/learner/locales/en/examen.json";
+import frDrill from "../../src/learner/locales/fr/drill.json";
+import enDrill from "../../src/learner/locales/en/drill.json";
 
 /**
  * Recursively walks any JSON-shaped value and yields every string leaf
@@ -220,6 +228,16 @@ describe("brand-voice lint — sprechen namespace", () => {
  * dashboard / profile / schreiben / common string passes the persona +
  * register locks before the v2 bilan ships."
  *
+ * Coach, Apprendre, and Examen joined this list in web#56: exclamation
+ * marks and the gamification noun "Entraînement" were previously
+ * unfiltered in those three namespaces (the forbidden-token list itself
+ * already covered both — this is a coverage gap, not a rule gap). Drill
+ * joined in web#39 (task 8 of the S15 burn-down): the namespace grew
+ * real prose (session copy + empty-state copy) for the first time,
+ * beyond the pre-existing short `skillProfile` labels. Do not widen this
+ * list again without also widening any namespace-scoped allowlist first
+ * — an empty allowlist would make the addition pass vacuously.
+ *
  * One test per locale-namespace pair. Failures pretty-print every
  * offending path so the developer can fix copy without re-running.
  */
@@ -232,6 +250,14 @@ describe.each([
   ["en/schreiben.json", enSchreiben],
   ["fr/common.json", frCommon],
   ["en/common.json", enCommon],
+  ["fr/coach.json", frCoach],
+  ["en/coach.json", enCoach],
+  ["fr/apprendre.json", frApprendre],
+  ["en/apprendre.json", enApprendre],
+  ["fr/examen.json", frExamen],
+  ["en/examen.json", enExamen],
+  ["fr/drill.json", frDrill],
+  ["en/drill.json", enDrill],
 ])("brand-voice lint — %s", (label, resource) => {
   test(`${label} has zero forbidden-token violations`, () => {
     const violations = findViolations(resource, label);

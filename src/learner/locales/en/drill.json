@@ -12,5 +12,41 @@
     "cta": "Start a session",
     "empty": "Do a first session to see your skills here.",
     "error": "Couldn't load your skills right now."
+  },
+  "session": {
+    "continue": "Continue",
+    "finish": "Finish",
+    "toReview": "To review",
+    "reviewToggle": "review",
+    "betreuerLine": {
+      "ledWithRedo": "You're coming back to points you missed. That's how it sticks.",
+      "noGapsYet": "A good start. We're getting to know your level.",
+      "reviewMode": "You're consolidating what you already master. Keep at it.",
+      "default": "You're working on the points you need to strengthen. Come back tomorrow for more."
+    }
+  },
+  "emptyState": {
+    "eyebrow": "Exercises",
+    "retry": "Try again",
+    "levelNotSupportedYet": {
+      "title": "Level {{level}} — coming soon",
+      "body": "Personalized exercises are available for level B1 first. Your level is coming soon."
+    },
+    "noGapsYet": {
+      "title": "Write your first piece",
+      "body": "Submit a piece to unlock your exercise for today."
+    },
+    "noMissingStructures": {
+      "title": "Nothing to work on here",
+      "body": "Nice work. Keep it up."
+    },
+    "reviewMode": {
+      "title": "Review",
+      "body": "You've mastered your points. We'll keep it fresh with a few reminders."
+    },
+    "error": {
+      "title": "Small hitch",
+      "body": "Can't load your exercise right now."
+    }
   }
 }

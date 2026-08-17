@@ -9,12 +9,14 @@
  * `deutschfit-mobile/src/features/drill/components/SessionResults.tsx`
  * onto `@/learner/ui/primitives`.
  *
- * Copy hardcoded FR, ported byte-for-byte from mobile
- * (task-9.6-brief.md Step 5), including `betreuerLine` verbatim — see
- * `SessionMcqCard`'s docstring for why this screen hardcodes rather
- * than keying through `drill.json`.
+ * Copy was hardcoded FR at first port (task-9.6-brief.md Step 5,
+ * `betreuerLine` included, byte-for-byte from mobile). Routed through
+ * `drill:session.*` in task 8 (#39) — the French had already shipped and
+ * already passed brand voice; only the English side was missing, which
+ * was translation, not new copy.
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, AppText, Card } from "@/learner/ui/primitives";
 
@@ -27,22 +29,27 @@ export interface SessionResultsProps {
   readonly testID?: string;
 }
 
-/** French Betreuer one-liner — re-serve framing overrides the reason. */
-export function betreuerLine(ledWithRedo: boolean, reason: DrillReason): string {
+/** Betreuer one-liner, keyed off `drill:session.betreuerLine.*` — re-serve framing overrides the reason. */
+export function betreuerLine(
+  ledWithRedo: boolean,
+  reason: DrillReason,
+  t: (key: string) => string
+): string {
   if (ledWithRedo) {
-    return "Tu reviens sur des points que tu avais ratés. C'est comme ça que ça rentre.";
+    return t("drill:session.betreuerLine.ledWithRedo");
   }
   switch (reason) {
     case "no_gaps_yet":
-      return "Un bon début. On apprend à connaître ton niveau.";
+      return t("drill:session.betreuerLine.noGapsYet");
     case "review_mode":
-      return "Tu consolides ce que tu maîtrises déjà. Continue comme ça.";
+      return t("drill:session.betreuerLine.reviewMode");
     default:
-      return "Tu travailles tes points à renforcer. Reviens demain pour la suite.";
+      return t("drill:session.betreuerLine.default");
   }
 }
 
 export function SessionResults({ summary, onFinish, testID }: SessionResultsProps) {
+  const { t } = useTranslation(["drill"]);
   const [expanded, setExpanded] = useState<string | undefined>(undefined);
 
   return (
@@ -52,13 +59,13 @@ export function SessionResults({ summary, onFinish, testID }: SessionResultsProp
       </AppText>
 
       <AppText size="body" tone="secondary">
-        {betreuerLine(summary.ledWithRedo, summary.reason)}
+        {betreuerLine(summary.ledWithRedo, summary.reason, t)}
       </AppText>
 
       {summary.missed.length > 0 ? (
         <div className="flex flex-col gap-2">
           <AppText size="small" weight="semi">
-            À revoir
+            {t("drill:session.toReview")}
           </AppText>
           {summary.missed.map((m) => (
             <Card key={m.conceptCode} padded>
@@ -72,7 +79,7 @@ export function SessionResults({ summary, onFinish, testID }: SessionResultsProp
                   data-testid={testID ? `${testID}-missed-${m.conceptCode}-toggle` : undefined}
                 >
                   <AppText size="small" tone="cta">
-                    revoir
+                    {t("drill:session.reviewToggle")}
                   </AppText>
                 </button>
               </div>
@@ -87,7 +94,7 @@ export function SessionResults({ summary, onFinish, testID }: SessionResultsProp
       ) : null}
 
       <AppButton
-        label="Terminer"
+        label={t("drill:session.finish")}
         variant="solid"
         onClick={onFinish}
         testID={testID ? `${testID}-finish` : undefined}

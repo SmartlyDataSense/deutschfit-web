@@ -182,10 +182,31 @@ describe("ModuleResultLayout — sections 3-4 Betreuer sub-cards (Task 7.5)", ()
     );
 
     const group = screen.getByTestId("module-result-focus-chips");
-    expect(group).toHaveAttribute("role", "group");
     expect(group).toHaveTextContent("Points à travailler");
     expect(group).toHaveTextContent("Grammaire");
     expect(group).toHaveTextContent("Cohérence");
+  });
+
+  // web#60 — the wrapper used to carry `role="group"` +
+  // `aria-label={label}` (the exact same string as the `common:focus.label`
+  // caption rendered right below it). `role="group"` is not children-
+  // presentational on web, so a screen reader announced the label and then
+  // re-read the identical caption a second time. This pins the wrapper
+  // carrying no role or aria-label at all — the caption reads on its own.
+  it("carries no wrapper role/aria-label — the caption reads naturally, not duplicated", () => {
+    renderWithI18n(
+      <ModuleResultLayout
+        {...baseProps({
+          focusAreas: ["Grammaire", "Cohérence"],
+        })}
+      />
+    );
+
+    const group = screen.getByTestId("module-result-focus-chips");
+    expect(group).not.toHaveAttribute("role");
+    expect(group).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Points à travailler")).toBeInTheDocument();
+    expect(screen.getByText("Grammaire")).toBeInTheDocument();
   });
 
   it("renders PersonalizedModelCard with the mobile copy keys + German prose when personalizedModelDe is set", () => {
@@ -204,8 +225,16 @@ describe("ModuleResultLayout — sections 3-4 Betreuer sub-cards (Task 7.5)", ()
   });
 });
 
-describe("ModuleResultLayout — ScoreHeaderCard composed aria-label carry-in", () => {
-  it("composes the announcement with the objective sentence when passFloorPoints is set (ScoreHeaderCard.tsx:90-92)", () => {
+// web#60 — the scorecard used to carry `role="group"` + `aria-label`
+// composed from `${score} sur ${scoreMax} ${unitLabel}. ${objectiveLabel}
+// ${passFloorPoints}.` — every clause already rendered as its own AppText
+// child (score/scoreMax/unitLabel row, "📍 {objectiveLabel} {passFloorPoints}"
+// caption). `role="group"` is not children-presentational on web, so a
+// screen reader announced the composed name and then re-read those
+// children a second time. This pins the wrapper carrying no role or
+// aria-label at all — the children read on their own.
+describe("ModuleResultLayout — ScoreHeaderCard carries no wrapper role/aria-label", () => {
+  it("no wrapper role/aria-label when passFloorPoints is set — score row + objective caption read on their own", () => {
     renderWithI18n(
       <ModuleResultLayout
         {...baseProps({
@@ -218,13 +247,15 @@ describe("ModuleResultLayout — ScoreHeaderCard composed aria-label carry-in", 
       />
     );
 
-    expect(screen.getByTestId("module-result-scorecard")).toHaveAttribute(
-      "aria-label",
-      "31 sur 45 points. Objectif 27."
-    );
+    const card = screen.getByTestId("module-result-scorecard");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(card).toHaveTextContent("31");
+    expect(card).toHaveTextContent("/ 45");
+    expect(screen.getByTestId("score-header-objective-label")).toHaveTextContent("📍 Objectif 27");
   });
 
-  it("composes the short-form announcement when passFloorPoints is absent", () => {
+  it("no wrapper role/aria-label when passFloorPoints is absent", () => {
     renderWithI18n(
       <ModuleResultLayout
         {...baseProps({
@@ -235,10 +266,10 @@ describe("ModuleResultLayout — ScoreHeaderCard composed aria-label carry-in", 
       />
     );
 
-    expect(screen.getByTestId("module-result-scorecard")).toHaveAttribute(
-      "aria-label",
-      "31 sur 45 points."
-    );
+    const card = screen.getByTestId("module-result-scorecard");
+    expect(card).not.toHaveAttribute("role");
+    expect(card).not.toHaveAttribute("aria-label");
+    expect(card).toHaveTextContent("31");
   });
 });
 
@@ -259,23 +290,12 @@ describe("CompetenceBarRow — nullable score/max (S8 Task 8.8 Cycle A, B3 sub-s
     const row = screen.getByTestId("row-schreiben");
     expect(row).toHaveTextContent("—");
     expect(row.textContent).not.toMatch(/\d/);
-    expect(row).toHaveAttribute("aria-label", "Schreiben: —, Priorité");
 
     const fill = within(row).getByRole("progressbar").firstElementChild;
     expect(fill).toHaveStyle({ width: "0%" });
   });
 
-  it("composes the em-dash aria without a trailing state clause when state is absent", () => {
-    renderWithI18n(
-      <CompetenceBarRow label="Sprechen" score={null} max={null} testID="row-sprechen" />
-    );
-
-    const row = screen.getByTestId("row-sprechen");
-    expect(row).toHaveAttribute("aria-label", "Sprechen: —");
-    expect(row.textContent).not.toMatch(/\d/);
-  });
-
-  it("REGRESSION LOCK: numeric props still render the byte-identical X/N fraction + aria (S6/S7 non-regression)", () => {
+  it("REGRESSION LOCK: numeric props still render the byte-identical X/N fraction (S6/S7 non-regression)", () => {
     renderWithI18n(
       <CompetenceBarRow
         label="Lesen"
@@ -289,10 +309,9 @@ describe("CompetenceBarRow — nullable score/max (S8 Task 8.8 Cycle A, B3 sub-s
 
     const row = screen.getByTestId("row-lesen");
     expect(row).toHaveTextContent("5/10");
-    expect(row).toHaveAttribute("aria-label", "Lesen: 5 sur 10");
   });
 
-  it("REGRESSION LOCK: numeric props with a state chip still compose the exact 'X sur Y, <État>' aria (S6/S7 non-regression)", () => {
+  it("REGRESSION LOCK: numeric props with a state chip still render the fraction + state chip (S6/S7 non-regression)", () => {
     renderWithI18n(
       <CompetenceBarRow
         label="Hören"
@@ -306,7 +325,33 @@ describe("CompetenceBarRow — nullable score/max (S8 Task 8.8 Cycle A, B3 sub-s
 
     const row = screen.getByTestId("row-hoeren");
     expect(row).toHaveTextContent("3/10");
-    expect(row).toHaveAttribute("aria-label", "Hören: 3 sur 10, Priorité");
+    expect(screen.getByText("Priorité")).toBeInTheDocument();
+  });
+
+  // web#60 — the row used to carry `role="group"` + `aria-label` composed
+  // from `${label}: ${score} sur ${max}${state ? \`, ${state}\` : ""}` —
+  // every clause already rendered as its own AppText/Chip child (label,
+  // "X/N" fraction, state chip). `role="group"` is not children-
+  // presentational on web, so a screen reader announced the composed name
+  // and then re-read those children a second time. This pins the row
+  // carrying no role or aria-label at all — the children read on their own.
+  it("carries no wrapper role/aria-label — label, fraction, and state chip read naturally, not duplicated", () => {
+    renderWithI18n(
+      <CompetenceBarRow
+        label="Hören"
+        score={3}
+        max={10}
+        tone="amber"
+        state="priorite"
+        testID="row-hoeren-a11y"
+      />
+    );
+
+    const row = screen.getByTestId("row-hoeren-a11y");
+    expect(row).not.toHaveAttribute("role");
+    expect(row).not.toHaveAttribute("aria-label");
+    expect(screen.getByText("Hören")).toBeInTheDocument();
+    expect(screen.getByText("3/10")).toBeInTheDocument();
     expect(screen.getByText("Priorité")).toBeInTheDocument();
   });
 });

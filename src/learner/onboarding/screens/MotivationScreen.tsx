@@ -7,7 +7,6 @@ import clsx from "clsx";
 
 import { trackEvent } from "@/learner/core/analytics/posthog";
 import { AppText } from "@/learner/ui/primitives";
-import { useFinishOnboarding } from "@/learner/onboarding/useFinishOnboarding";
 import {
   useOnboardingAnswers,
   type OnboardingMotivation,
@@ -19,10 +18,12 @@ const MOTIVATIONS: OnboardingMotivation[] = ["travel", "work", "studies", "immig
  * Onboarding step 2/3 — motivation. Web port of
  * `deutschfit-mobile/src/features/onboarding/screens/MotivationScreen.tsx`.
  *
- * "Ignorer" runs the same finalize sequence as Schedule's auto-finish
- * (`finish()` then `router.replace`) rather than merely skipping ahead —
- * mobile parity: any exit before the wizard's last step still needs to
- * mark onboarding done so the gate stops re-prompting.
+ * "Ignorer" skips this step only and advances to Schedule (step 3/3) —
+ * Motivation is NOT the wizard's last step, so it must not end the whole
+ * onboarding flow (#53). Schedule is the actual finale: its own
+ * "Ignorer" still runs the finalize sequence (`finish()` then
+ * `router.replace`), because there IS no next step to skip to from
+ * there.
  */
 export function MotivationScreen() {
   const { t } = useTranslation(["onboarding"]);
@@ -30,11 +31,9 @@ export function MotivationScreen() {
   const locale = useLocale();
   const motivation = useOnboardingAnswers((s) => s.motivation);
   const setMotivation = useOnboardingAnswers((s) => s.setMotivation);
-  const { busy, finish } = useFinishOnboarding();
 
-  async function handleSkip(): Promise<void> {
-    await finish();
-    router.replace(`/${locale}/app`);
+  function handleSkip(): void {
+    router.push(`/${locale}/app/onboarding/schedule`);
   }
 
   function handleContinue(): void {
@@ -52,11 +51,8 @@ export function MotivationScreen() {
         <button
           type="button"
           data-testid="onboarding-skip"
-          disabled={busy}
-          onClick={() => {
-            void handleSkip();
-          }}
-          className="underline disabled:cursor-not-allowed"
+          onClick={handleSkip}
+          className="underline"
         >
           <AppText tone="secondary" size="small">
             {t("onboarding:skip")}

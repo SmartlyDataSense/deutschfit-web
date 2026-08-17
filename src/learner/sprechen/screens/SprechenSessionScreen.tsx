@@ -427,6 +427,24 @@ export function SprechenSessionScreen({
     topicId,
   ]);
 
+  /**
+   * #54 — retry after a failed send. Re-runs the WHOLE upload sequence
+   * (reserve -> PUT -> finalize) from the retained `recordingUri`/
+   * `durationMs`, exactly like a first attempt — `submitRecording` never
+   * resurrects the abandoned `submissionId` (the hook already reset it to
+   * `null`; that reservation is dead). Only wired up when
+   * `session.recordingUri` is still non-null, i.e. only for the specific
+   * failure the hook's F2 contract guarantees retains the blob: reserve/
+   * PUT/finalize threw before a submission ever existed server-side.
+   */
+  const handleRetry = useCallback((): void => {
+    if (!session.recordingUri) return;
+    session.submitRecording({
+      recordingUri: session.recordingUri,
+      durationMs: session.durationMs,
+    });
+  }, [session]);
+
   const handleAcknowledgeResult = useCallback((): void => {
     session.acknowledgeResult();
     router.push(`/${locale}/app`);
@@ -511,9 +529,12 @@ export function SprechenSessionScreen({
     }
   }, [locale, router, session.error, session.phase, session.submission, session.submissionId]);
 
-  // Reset both guards when a fresh attempt starts.
+  // Reset both guards when a fresh attempt starts — including a #54 retry,
+  // which re-enters `submit` directly from `fallback` without passing
+  // through `prep`/`record` first, and must be able to re-fire the
+  // failed-optimistic analytics event if it fails again.
   useEffect(() => {
-    if (session.phase === "prep" || session.phase === "record") {
+    if (session.phase === "prep" || session.phase === "record" || session.phase === "submit") {
       dismissedAttemptRef.current = null;
       errorAttemptRef.current = null;
     }
@@ -580,6 +601,13 @@ export function SprechenSessionScreen({
   const fallbackBannerLabel = isLanguageError
     ? t("sprechen:session.languageNotGermanBanner")
     : t("sprechen:feedback.fallbackBanner");
+  // #54 — only the pure send-failure shape gets a retry: no submission was
+  // ever reserved (`submissionId` reset to `null` by the hook's catch
+  // block) AND the recording is still retained on-device. Every other
+  // fallback cause either has a real submissionId (post-upload grading
+  // failure/timeout/rejection — retrying would abandon a live submission,
+  // not resume one) or no recording at all (`no_recording`).
+  const canRetrySend = session.submissionId === null && session.recordingUri !== null;
 
   return (
     <div
@@ -659,6 +687,7 @@ export function SprechenSessionScreen({
           onReset={handleReset}
           onGoHome={handleGoHome}
           onViewFullFeedback={handleViewFullFeedback}
+          onRetry={session.phase === "fallback" && canRetrySend ? handleRetry : null}
         />
       ) : null}
     </div>
@@ -979,6 +1008,16 @@ interface FeedbackViewProps {
   readonly onReset: () => void;
   readonly onGoHome: () => void;
   readonly onViewFullFeedback: () => void;
+  /**
+   * Non-null only for the #54 target case: `submitRecording` failed before
+   * a submission ever existed (reserve/PUT/finalize threw — the hook resets
+   * `submissionId` to `null` but retains `recordingUri`/`durationMs`, see
+   * `useSprechenSession`'s F2 contract). Re-runs the whole upload sequence
+   * from the retained recording — never resurrects the abandoned
+   * reservation. Null for every other fallback cause (no recording to
+   * retry from, or a submission already exists server-side).
+   */
+  readonly onRetry: (() => void) | null;
 }
 
 function FeedbackView({
@@ -990,6 +1029,7 @@ function FeedbackView({
   onReset,
   onGoHome,
   onViewFullFeedback,
+  onRetry,
 }: FeedbackViewProps) {
   const { t } = useTranslation(["sprechen"]);
 
@@ -1014,6 +1054,45 @@ function FeedbackView({
 
   if (!hasUnifiedData) {
     const isGraded = submission?.status === "graded";
+
+    // #54 — the send failed: offer an explicit retry that starts the whole
+    // upload sequence over from the retained recording, alongside the usual
+    // "back to home" escape hatch — same EmptyState-plus-secondary-AppButton
+    // layout the rejected-submission branch on `SprechenFeedbackScreen`
+    // already uses.
+    //
+    // Deliberately does NOT claim nothing was reserved server-side. The
+    // hook's single catch (`useSprechenSession.ts:390-406`) covers the whole
+    // reserve → PUT → finalize sequence, so a failure after a successful
+    // reserve leaves an orphaned reservation behind, and retrying reserves a
+    // second one. That is harmless rather than ideal: `clientSubmissionId`
+    // is timestamp-unique, so the retry cannot collide with the abandoned
+    // attempt. Reusing the original reservation instead would mean re-PUTting
+    // to a possibly-expired signed URL — unverified server semantics this
+    // deliberately avoids.
+    if (onRetry) {
+      return (
+        <>
+          {fallbackBanner}
+          <div className="flex flex-col items-center gap-4">
+            <EmptyState
+              testID="sprechen-session-send-failed"
+              title={t("sprechen:session.sendFailed.title")}
+              description={t("sprechen:session.sendFailed.body")}
+              actionLabel={t("sprechen:session.sendFailed.retry")}
+              onAction={onRetry}
+            />
+            <AppButton
+              testID="sprechen-session-send-failed-secondary"
+              label={t("sprechen:session.sendFailed.secondaryCta")}
+              onClick={onGoHome}
+              variant="outline"
+            />
+          </div>
+        </>
+      );
+    }
+
     return (
       <>
         {fallbackBanner}

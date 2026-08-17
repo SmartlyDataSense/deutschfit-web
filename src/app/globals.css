@@ -40,6 +40,28 @@
    */
   --color-cta-text: #a2542c;
   --color-coach-text: #347367;
+  /*
+   * `--color-cta-label` (#50, a11y) — learner-scoped label token for body
+   * text rendered ON TOP of `bg-cta`: `AppButton`'s solid variant and
+   * `Chip`'s selected state. Measured root cause: both previously used
+   * `tone="inverse"` -> `--color-on-premium` (#f4ead3 cream), which is
+   * only 2.87:1 on `--color-cta` — fails AA body (4.5:1) AND AA large
+   * (3.0:1); even pure white (`--color-cta-ink`) only reaches 3.43:1. No
+   * *lighter* foreground can do better (white is already the maximum
+   * possible luminance) — `--color-cta`'s own relative luminance
+   * (~0.256) sits low enough that a *darker* foreground clears AA instead:
+   * this reuses the exact value of `--color-text-primary` /
+   * `--color-cream-ink` (#1a1714, the darkest brand ink — not a new hex)
+   * to reach 5.20:1. See `tests/unit/cta-label-contrast.test.ts`, which
+   * computes this from the declared token values rather than asserting a
+   * hardcoded number.
+   *
+   * Deliberately NOT a change to `--color-cta` itself (consumed by the
+   * public/auth/admin surfaces, all under never-modify locks, and by
+   * mobile) — this is additive and learner-scoped only. Darkening
+   * `--color-cta` app-wide needs design sign-off, tracked separately.
+   */
+  --color-cta-label: #1a1714;
   --color-accent-gold: #e5b367;
   --color-accent-gold-ink: #1a1714;
   --color-warning-red: #c2492e;
@@ -238,6 +260,7 @@
   --color-cta: var(--color-cta);
   --color-cta-ink: var(--color-cta-ink);
   --color-cta-text: var(--color-cta-text);
+  --color-cta-label: var(--color-cta-label);
   --color-coach: var(--color-coach);
   --color-coach-ink: var(--color-coach-ink);
   --color-coach-text: var(--color-coach-text);

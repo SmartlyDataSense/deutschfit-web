@@ -31,11 +31,14 @@ export type AppTextTone =
   | "tertiary"
   | "inverse"
   | "cta"
+  | "ctaLabel"
   | "coach"
   | "coachInk"
   | "gold"
   | "warning"
-  | "success";
+  | "warningText"
+  | "success"
+  | "successText";
 
 export type AppTextSurface = "cream" | "creamDeep" | "card" | "premium" | "gold" | "cta" | "coach";
 
@@ -69,6 +72,13 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // as "decorative only" — never body-text-safe). `-text` are the same
   // hue, darkened to clear AA; see globals.css for the derivation.
   cta: "text-cta-text",
+  // #50 (a11y): the compliant learner-scoped label for body text ON TOP
+  // of `bg-cta` (AppButton solid / Chip selected) — see
+  // `--color-cta-label` in globals.css for the measured derivation.
+  // Distinct from `inverse` (still correct everywhere else it's used,
+  // e.g. on `bg-bg-premium`) — narrowly scoped to the two cta-background
+  // call sites that were actually failing AA.
+  ctaLabel: "text-cta-label",
   coach: "text-coach-text",
   // web#57: the on-`bg-coach` ink pairing (white, `--color-coach-ink`) —
   // distinct from `coach` above, which is the darkened AA body-text
@@ -83,7 +93,26 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // bar — the vivid `text-warning-red` fails AA there; `-text` is the
   // same hue darkened to clear it. See globals.css for the derivation.
   warning: "text-warning-red-text",
+  // final-review I-2: mobile's OTHER warning family — `tokens.warningText`
+  // (`--color-warning-text`, amber), the partner of
+  // `--color-warning-subtle`, both byte-identical to mobile's own pair.
+  // Distinct from `warning` above (`--color-warning-red-text`, the
+  // app-wide form-validation-error / destructive-label RED), and named
+  // after its token exactly the way `successText` is. Use `warningText`
+  // for advisory "here's what to work on / not shipped yet" copy on an
+  // amber `bg-warning-subtle` surface; use `warning` for genuine errors
+  // and destructive labels. Measured 5.35:1 on `--color-warning-subtle` —
+  // clears WCAG AA body text, pinned in `tests/unit/chip-tone-contrast.test.ts`.
+  warningText: "text-warning-text",
   success: "text-success-green",
+  // #51 item 1/6 (parity): `success` (above) is the vivid `--color-success-green`
+  // (~3.49:1 on bg-hero — fails AA body, same class of gap `-text` variants
+  // fixed for cta/coach/warning; `success` itself is untouched here to
+  // avoid an unrequested visual change on its 7 existing call sites).
+  // `successText` is the already-declared AA-safe `--color-success-text`
+  // (5.39:1), added narrowly for the new Chip `tone="success"` spec so
+  // that addition doesn't import a fresh contrast failure.
+  successText: "text-success-text",
 };
 
 const SIZE_CLASS: Record<AppTextSize, string> = {

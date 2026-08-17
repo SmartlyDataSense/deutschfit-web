@@ -21,7 +21,7 @@ const {
   hydrateMock: vi.fn(),
 }));
 
-vi.mock("@/learner/core/api/mockExam", () => ({
+vi.mock("@/learner/core/api/examApi", () => ({
   fetchLesenPracticeSession: (...args: unknown[]) => fetchLesenMock(...args),
   fetchSprachbausteinePracticeSession: (...args: unknown[]) => fetchSprachbausteineMock(...args),
 }));

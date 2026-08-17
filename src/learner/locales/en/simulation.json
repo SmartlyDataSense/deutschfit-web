@@ -16,6 +16,8 @@
     "submit": "Abgeben"
   },
   "empty": "No questions in this simulation.",
+  "emptyBody": "This module isn't available for this modelltest.",
+  "emptyCta": "Back to modelltests",
   "offline": {
     "banner": "Offline — exam submission will resume once you're back online."
   },

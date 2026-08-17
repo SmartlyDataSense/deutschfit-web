@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 
@@ -27,25 +26,21 @@ export interface SidebarProps {
  *
  * Wordmark links back to Accueil; the 5 tabs share `navModel`'s tint
  * contract with `TabBar` (Coach always teal, others orange only while
- * active); sign-out calls `useLearnerSession().signOut()` then replaces
- * the history entry with `/{locale}/app/login` (matches `LoginForm`'s
- * `router.replace` pattern — no stale authenticated shell reachable via
- * the back button after signing out).
- *
- * Deferred (review fix-round-1, minor): `handleSignOut` explicitly
- * `router.replace`s to `/login` on top of `LearnerGuard`'s own reactive
- * redirect (session flips to `"unauthenticated"` → guard redirects
- * anyway) — a harmless double-navigation, not a correctness bug. Revisit
- * if it ever causes a visible flash or a race.
+ * active); sign-out calls `useLearnerSession().signOut()` only —
+ * `LearnerGuard`'s own reactive redirect (session flips to
+ * `"unauthenticated"` → `redirect()` to `/{locale}/app/login`, the exact
+ * same URL) handles navigation. #51 item 3 (parity): an earlier version
+ * additionally called `router.replace()` to that same URL right after
+ * `signOut()`, a harmless but redundant double-navigation the component's
+ * own docstring flagged as removable debt; removed rather than left for a
+ * future pass.
  */
 export function Sidebar({ locale, activeTabId }: SidebarProps) {
-  const router = useRouter();
   const { t } = useTranslation(["common", "profil"]);
   const signOut = useLearnerSession((state) => state.signOut);
 
   async function handleSignOut() {
     await signOut();
-    router.replace(`/${locale}/app/login`);
   }
 
   return (

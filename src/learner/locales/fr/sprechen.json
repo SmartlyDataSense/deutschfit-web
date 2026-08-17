@@ -211,6 +211,12 @@
       "title": "Ce sujet n'est pas encore noté",
       "body": "Le Betreuer travaille sur la notation pour ce module. Essaie un autre sujet B1 en attendant.",
       "action": "Retour à l'accueil"
+    },
+    "sendFailed": {
+      "title": "L'envoi a échoué",
+      "body": "Ton audio est toujours sur cet appareil. Réessaie l'envoi — tu ne perds rien.",
+      "retry": "Réessayer l'envoi",
+      "secondaryCta": "Retour à l'accueil"
     }
   },
   "feedbackScreen": {

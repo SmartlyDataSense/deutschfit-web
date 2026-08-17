@@ -31,6 +31,17 @@ import { AppText } from "@/learner/ui/primitives";
  *
  * Band profiles (TestDaF TDN, etc.) do not use this card — the layout
  * falls back to the donut. Dispatch lives in `ModuleResultLayout`.
+ *
+ * Deliberately does NOT pass a wrapper `role="group"`/`aria-label`
+ * (web#60 sweep). An earlier version composed
+ * `${score} sur ${scoreMax} ${unitLabel}. ${objectiveLabel}
+ * ${passFloorPoints}.` and put it on the outer `role="group"` div —
+ * `role="group"` is not children-presentational on web (unlike
+ * mobile's `accessible` View), so a screen reader announced that
+ * composed name and then re-read the score/unit/objective line a
+ * second time. Those are already independently readable `AppText`
+ * children in the same order, so no wrapper accessible name is needed
+ * — same treatment as `PriorityTaskCard` (commit `1ea9e6a`).
  */
 export interface ScoreHeaderCardProps {
   /**
@@ -87,14 +98,8 @@ export function ScoreHeaderCard({
   const fillWidth = trackPercent(score, scoreMax);
   const objectiveLeft = showObjective ? trackPercent(passFloorPoints, scoreMax) : undefined;
 
-  const announcement = showObjective
-    ? `${score} sur ${scoreMax} ${unitLabel}. ${objectiveLabel} ${passFloorPoints}.`
-    : `${score} sur ${scoreMax} ${unitLabel}.`;
-
   return (
     <div
-      role="group"
-      aria-label={announcement}
       data-testid={testID}
       className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-line-soft bg-bg-card p-6"
     >

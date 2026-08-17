@@ -40,7 +40,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   fetchLesenPracticeSession,
   fetchSprachbausteinePracticeSession,
-} from "@/learner/core/api/mockExam";
+} from "@/learner/core/api/examApi";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { buildSession } from "@/learner/core/exam/engine/loadModel";

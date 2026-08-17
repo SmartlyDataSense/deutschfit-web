@@ -27,24 +27,18 @@ const {
 }));
 
 // Partial mock: keep the real `normaliseReport` (pure — no reason to fake
-// it) but stub `fetchLesenSession`, same idiom as `examContext`'s partial
-// mock in `learner-lesen-intro.test.tsx`.
-vi.mock("@/learner/core/api/mockExam", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/learner/core/api/mockExam")>();
-  return {
-    ...actual,
-    fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
-  };
-});
-// Partial mock (S8 · Task 8.1 facade-hygiene): `LesenSessionScreen` now
-// imports `normaliseReport` from the `examApi` facade too (not `mockExam`
-// directly) — keep the real `normaliseReport` (pure — no reason to fake
-// it, same rationale as the `mockExam` partial mock above) and stub only
-// `submitLesen`.
+// it) but stub `fetchLesenSession` and `submitLesen`, same idiom as
+// `examContext`'s partial mock in `learner-lesen-intro.test.tsx`. web#34:
+// `useLesenSession` now imports `fetchLesenSession` from this facade too
+// (not `./mockExam` directly, which `examApi` itself still wraps
+// underneath) — folded into this single block instead of a second
+// `vi.mock("@/learner/core/api/mockExam", ...)` now that nothing in this
+// file's render tree imports that module directly anymore.
 vi.mock("@/learner/core/api/examApi", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/api/examApi")>();
   return {
     ...actual,
+    fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
     submitLesen: (...args: unknown[]) => submitLesenMock(...args),
   };
 });
@@ -572,6 +566,51 @@ describe("LesenSessionScreen — full-simulation branch (Task 8.5)", () => {
       total: 2,
       unanswered: 0,
     });
+  });
+});
+
+describe("LesenSessionScreen — web#32 empty module payload", () => {
+  beforeEach(() => {
+    fetchLesenSessionMock.mockReset();
+    submitLesenMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
+    trackEventMock.mockReset();
+    pushMock.mockReset();
+    replaceMock.mockReset();
+    backMock.mockReset();
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
+    useLesenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
+  });
+  afterEach(cleanup);
+
+  it("web#32: a ready session with zero parts renders a labelled empty state (not the silent bare-text fallback) with a working exit back to the picker", async () => {
+    fetchLesenSessionMock.mockResolvedValue({
+      attemptId: "lesen-1",
+      examSlug: "b1-01",
+      manifest,
+      module: { module_code: "LESEN", source_slug: "b1-01", parts: [] },
+    });
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+
+    await waitFor(() => expect(screen.getByTestId("lesen-session-empty")).toBeInTheDocument());
+    expect(screen.getByText("Aucune question dans cette simulation.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ce module n'est pas disponible pour ce modelltest.")
+    ).toBeInTheDocument();
+    // web#60 — `EmptyState` no longer has a default illustration at all
+    // (the old 📖 default was outside the brand-voice emoji lock
+    // `📍 ⏱ ✓ ✕`); this call site passes no `illustration`, so it renders
+    // none.
+    expect(screen.getByTestId("lesen-session-empty").textContent).not.toContain("\u{1F4D6}");
+
+    fireEvent.click(screen.getByTestId("lesen-session-empty-cta"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");
   });
 });
 

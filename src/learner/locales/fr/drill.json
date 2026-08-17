@@ -12,5 +12,41 @@
     "cta": "Commencer une séance",
     "empty": "Fais une première séance pour voir tes points ici.",
     "error": "Impossible de charger tes points pour le moment."
+  },
+  "session": {
+    "continue": "Continuer",
+    "finish": "Terminer",
+    "toReview": "À revoir",
+    "reviewToggle": "revoir",
+    "betreuerLine": {
+      "ledWithRedo": "Tu reviens sur des points que tu avais ratés. C'est comme ça que ça rentre.",
+      "noGapsYet": "Un bon début. On apprend à connaître ton niveau.",
+      "reviewMode": "Tu consolides ce que tu maîtrises déjà. Continue comme ça.",
+      "default": "Tu travailles tes points à renforcer. Reviens demain pour la suite."
+    }
+  },
+  "emptyState": {
+    "eyebrow": "Exercices",
+    "retry": "Réessayer",
+    "levelNotSupportedYet": {
+      "title": "Niveau {{level}} — bientôt",
+      "body": "Les exercices personnalisés sont d'abord disponibles pour le niveau B1. Ton niveau arrive bientôt."
+    },
+    "noGapsYet": {
+      "title": "Fais ta première rédaction",
+      "body": "Soumets une rédaction pour débloquer ton exercice du jour."
+    },
+    "noMissingStructures": {
+      "title": "Aucun point à retravailler ici",
+      "body": "Beau travail. Continue comme ça."
+    },
+    "reviewMode": {
+      "title": "Révision",
+      "body": "Tu maîtrises tes points. On garde la main avec quelques rappels."
+    },
+    "error": {
+      "title": "Petit souci",
+      "body": "Impossible de charger ton exercice pour l'instant."
+    }
   }
 }

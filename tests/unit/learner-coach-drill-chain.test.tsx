@@ -491,6 +491,11 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
     expect(screen.getByTestId("coach-drill-chain-header")).toHaveTextContent(
       "Drill ciblé · connecteurs"
     );
+    // Betreuer is an unnamed, faceless persona — "IA" named the machine
+    // instead of the persona (#61). Pins the fix: the avatar initials
+    // render "DF" (DeutschFit), not "IA".
+    expect(screen.getByTestId("coach-drill-chain-header")).toHaveTextContent("DF");
+    expect(screen.getByTestId("coach-drill-chain-header")).not.toHaveTextContent("IA");
     expect(screen.getByTestId("drill-chain-progress")).toBeInTheDocument();
     expect(screen.getByTestId(`coach-drill-card-${firstDrill.id}`)).toBeInTheDocument();
 
@@ -512,7 +517,7 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
     fireEvent.click(screen.getByTestId(`drill-option-${firstDrill.answer}`));
 
     expect(screen.getByTestId("coach-drill-feedback")).toHaveTextContent(
-      "Richtig ! Bon connecteur."
+      "Richtig. Bon connecteur."
     );
   });
 
