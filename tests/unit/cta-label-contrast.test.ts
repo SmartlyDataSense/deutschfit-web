@@ -74,6 +74,10 @@ describe("#50 — cta-label token contrast", () => {
 
   it("Chip's selected state routes its label through ctaLabel, not inverse", () => {
     const src = fs.readFileSync(CHIP_PATH, "utf-8");
-    expect(src).toMatch(/tone=\{selected \? "ctaLabel" : /);
+    // Matches both the original `tone={selected ? "ctaLabel" : "primary"}`
+    // shape and #51's later `tone` refactor (`selected ? "ctaLabel" : spec.textTone`)
+    // — the assertion cares that "selected" still maps to "ctaLabel", not the
+    // exact surrounding expression.
+    expect(src).toMatch(/selected\s*\?\s*"ctaLabel"/);
   });
 });

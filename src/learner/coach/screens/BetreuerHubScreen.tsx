@@ -127,7 +127,16 @@ function HubTileCard({ tile, base }: { tile: HubTile; base: string }) {
       <AppText tone="secondary" size="small">
         {t(`coach:hub.tiles.${tile.id}.description`)}
       </AppText>
-      <Chip testID={`${testID}-status`} label={statusLabel} disabled={disabled} className="mt-1" />
+      {/* #51 item 6 (parity): tone conveys the same active/coming-soon
+          distinction mobile draws via successSubtle/warningSubtle badge
+          colors — previously opacity-only, indistinguishable by color. */}
+      <Chip
+        testID={`${testID}-status`}
+        label={statusLabel}
+        tone={disabled ? "warning" : "success"}
+        disabled={disabled}
+        className="mt-1"
+      />
     </>
   );
 

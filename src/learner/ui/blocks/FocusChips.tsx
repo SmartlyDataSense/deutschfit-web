@@ -41,8 +41,11 @@ export function FocusChips({ areas, testID }: FocusChipsProps) {
         {label}
       </AppText>
       <div className="flex flex-wrap gap-2 overflow-x-auto">
+        {/* #51 item 7 (parity): mobile's FocusChips renders every chip
+            warningSubtle/warningText (amber) — the web port had no tone
+            prop to carry that, so it fell back to the plain neutral chip. */}
         {areas.map((focus, i) => (
-          <Chip key={i} testID={`focus-chip-${i}`} label={focus} />
+          <Chip key={i} testID={`focus-chip-${i}`} label={focus} tone="warning" />
         ))}
       </div>
     </div>

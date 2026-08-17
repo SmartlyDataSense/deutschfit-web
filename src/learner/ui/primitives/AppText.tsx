@@ -36,7 +36,8 @@ export type AppTextTone =
   | "coachInk"
   | "gold"
   | "warning"
-  | "success";
+  | "success"
+  | "successText";
 
 export type AppTextSurface = "cream" | "creamDeep" | "card" | "premium" | "gold" | "cta" | "coach";
 
@@ -92,6 +93,14 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // same hue darkened to clear it. See globals.css for the derivation.
   warning: "text-warning-red-text",
   success: "text-success-green",
+  // #51 item 1/6 (parity): `success` (above) is the vivid `--color-success-green`
+  // (~3.49:1 on bg-hero — fails AA body, same class of gap `-text` variants
+  // fixed for cta/coach/warning; `success` itself is untouched here to
+  // avoid an unrequested visual change on its 7 existing call sites).
+  // `successText` is the already-declared AA-safe `--color-success-text`
+  // (5.39:1), added narrowly for the new Chip `tone="success"` spec so
+  // that addition doesn't import a fresh contrast failure.
+  successText: "text-success-text",
 };
 
 const SIZE_CLASS: Record<AppTextSize, string> = {

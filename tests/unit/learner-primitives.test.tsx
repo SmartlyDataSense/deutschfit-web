@@ -128,6 +128,45 @@ describe("Chip", () => {
     fireEvent.click(screen.getByRole("button", { name: "B1" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  // #51 items 1/6/7 (parity): tone prop, mirrors mobile's Pill palette.
+  it("defaults to the neutral tone (byte-identical to the pre-tone idle look)", () => {
+    render(<Chip label="Neutral" />);
+    const el = screen.getByText("Neutral").parentElement;
+    expect(el?.className).toMatch(/border-line-soft/);
+    expect(el?.className).toMatch(/bg-bg-hero/);
+  });
+
+  it("renders the success tone with the AA-safe success-text color, not the vivid one", () => {
+    render(<Chip label="Solide" tone="success" />);
+    const el = screen.getByText("Solide").parentElement;
+    expect(el?.className).toMatch(/border-success-green/);
+    expect(el?.className).toMatch(/bg-bg-hero/);
+    expect(screen.getByText("Solide").className).toMatch(/text-success-text/);
+    expect(screen.getByText("Solide").className).not.toMatch(/text-success-green/);
+  });
+
+  it("renders the warning tone", () => {
+    render(<Chip label="Focus" tone="warning" />);
+    const el = screen.getByText("Focus").parentElement;
+    expect(el?.className).toMatch(/border-warning-red\b/);
+    expect(screen.getByText("Focus").className).toMatch(/text-warning-red-text/);
+  });
+
+  it("renders the gold tone", () => {
+    render(<Chip label="Fast-B2" tone="gold" />);
+    const el = screen.getByText("Fast-B2").parentElement;
+    expect(el?.className).toMatch(/border-accent-gold/);
+    expect(el?.className).toMatch(/bg-accent-gold/);
+  });
+
+  it("selected always wins over tone (still routes through ctaLabel)", () => {
+    render(<Chip label="Selected" tone="warning" selected />);
+    const el = screen.getByText("Selected").parentElement;
+    expect(el?.className).toMatch(/bg-cta\b/);
+    expect(el?.className).not.toMatch(/bg-warning/);
+    expect(screen.getByText("Selected").className).toMatch(/text-cta-label/);
+  });
 });
 
 describe("Card", () => {
