@@ -18,6 +18,9 @@
   "empty": "Aucune question dans cette simulation.",
   "emptyBody": "Ce module n'est pas disponible pour ce modelltest.",
   "emptyCta": "Retour aux modelltests",
+  "loadError": "Le modelltest n'a pas pu être chargé.",
+  "loadErrorBody": "Vérifie ta connexion et réessaie.",
+  "loadErrorCta": "Retour",
   "offline": {
     "banner": "Hors ligne — la soumission de l'examen reprendra dès que la connexion sera rétablie."
   },

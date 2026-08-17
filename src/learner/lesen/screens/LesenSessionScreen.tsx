@@ -335,11 +335,19 @@ export function LesenSessionScreen({
   if (status === "error") {
     return (
       <div className={clsx(CONTAINER_CLASS, "items-center justify-center px-6 py-8")}>
+        {/* final-review M-2: this is a LOAD-FAILURE card — app chrome, not
+            exam content — so it is localised, unlike the German exam copy
+            this screen deliberately keeps byte-identical to mobile (see
+            the class doc comment). It sits three lines above the `!current`
+            empty state that already routes through `simulation:*`; leaving
+            it German rendered a German sentence at a French/English
+            learner. Title/body/CTA all move together — a half-translated
+            error card is worse than either whole. */}
         <EmptyState
           testID="lesen-session-error"
-          title="Der Modelltest konnte nicht geladen werden"
-          description="Bitte versuche es später erneut."
-          actionLabel="Zurück"
+          title={t("simulation:loadError")}
+          description={t("simulation:loadErrorBody")}
+          actionLabel={t("simulation:loadErrorCta")}
           onAction={() => router.back()}
         />
       </div>

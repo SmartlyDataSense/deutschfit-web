@@ -18,6 +18,9 @@
   "empty": "No questions in this simulation.",
   "emptyBody": "This module isn't available for this modelltest.",
   "emptyCta": "Back to modelltests",
+  "loadError": "This modelltest couldn't be loaded.",
+  "loadErrorBody": "Check your connection and try again.",
+  "loadErrorCta": "Back",
   "offline": {
     "banner": "Offline — exam submission will resume once you're back online."
   },
