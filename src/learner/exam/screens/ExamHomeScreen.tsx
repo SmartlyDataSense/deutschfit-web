@@ -117,6 +117,12 @@ export function ExamHomeScreen() {
   }, []);
 
   useEffect(() => {
+    // Re-arm on every setup invocation (web#38 idiom, mirrors
+    // `SimulationOrchestratorScreen`/`useWebPushSettings`): StrictMode's dev
+    // double-invoke runs setup → cleanup → setup on mount, and a
+    // cleanup-only effect would leave this ref permanently `false` after
+    // that cycle, silently dropping any async work that resolves later.
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
