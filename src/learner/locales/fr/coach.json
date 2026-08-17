@@ -28,7 +28,7 @@
         "description": "Reprends une copie, ligne par ligne"
       },
       "oral": {
-        "title": "Entraînement à l'oral guidé",
+        "title": "Préparation à l'oral guidée",
         "description": "Conversation guidée, à ton rythme"
       }
     }
@@ -128,7 +128,7 @@
       "avatarInitials": "IA"
     },
     "scripted": {
-      "coachOpener": "Bonjour ! Je suis ton Betreuer. Pose-moi tes questions ou demande un exercice ciblé sur tes points faibles.",
+      "coachOpener": "Bonjour. Je suis ton Betreuer. Pose-moi tes questions ou demande un exercice ciblé sur tes points faibles.",
       "observation": {
         "overline": "Observation IA",
         "body": "Vous utilisez 'und' 11 fois en 3 min. En B2, les correcteurs attendent de la variété :",
@@ -180,7 +180,7 @@
       "optionA11yPrefix": "Choisir"
     },
     "feedback": {
-      "correct": "Richtig ! Bon connecteur.",
+      "correct": "Richtig. Bon connecteur.",
       "wrong": "Pas tout à fait — la bonne réponse est {{answer}}."
     },
     "tally": "{{correct}} / {{total}} corrects",
@@ -190,10 +190,10 @@
     "fallback": "Drill terminé.",
     "summary": {
       "overline": "Terminé",
-      "tally": "{{correct}} / {{total}} korrekt",
+      "tally": "{{correct}} / {{total}} corrects",
       "signoffPerfect": "Parfait — tu maîtrises ces connecteurs. On passe à la suite ?",
-      "signoffGood": "Super progrès ! On garde le rythme demain ?",
-      "signoffPractice": "On reprendra ces connecteurs demain — à bientôt !",
+      "signoffGood": "Super progrès. On garde le rythme demain ?",
+      "signoffPractice": "On reprendra ces connecteurs demain — à bientôt.",
       "returnCta": "Retour au Betreuer"
     }
   },

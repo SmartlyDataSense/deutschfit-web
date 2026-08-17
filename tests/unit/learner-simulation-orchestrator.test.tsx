@@ -621,7 +621,7 @@ describe("SimulationOrchestratorScreen — S8 Task 8.7 (schreiben gate + finaliz
 
     await bootToSchreibenGate();
 
-    expect(screen.getByText("Schreiben · Entraînement par module")).toBeInTheDocument();
+    expect(screen.getByText("Schreiben · Préparation par module")).toBeInTheDocument();
     expect(
       screen.getByText("Choisis un modelltest pour t'entraîner uniquement sur l'expression écrite.")
     ).toBeInTheDocument();

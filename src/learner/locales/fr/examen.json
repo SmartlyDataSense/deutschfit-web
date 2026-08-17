@@ -32,19 +32,19 @@
     "subtitle": "Choisis un modelltest publié pour lancer la simulation complète.",
     "moduleHeader": {
       "lesen": {
-        "title": "Lesen · Entraînement par module",
+        "title": "Lesen · Préparation par module",
         "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur la compréhension écrite."
       },
       "hoeren": {
-        "title": "Hören · Entraînement par module",
+        "title": "Hören · Préparation par module",
         "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur la compréhension orale."
       },
       "schreiben": {
-        "title": "Schreiben · Entraînement par module",
+        "title": "Schreiben · Préparation par module",
         "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur l'expression écrite."
       },
       "sprechen": {
-        "title": "Sprechen · Entraînement par module",
+        "title": "Sprechen · Préparation par module",
         "subtitle": "Choisis un modelltest pour t'entraîner uniquement sur l'expression orale."
       }
     },

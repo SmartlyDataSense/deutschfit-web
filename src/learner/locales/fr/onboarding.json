@@ -19,7 +19,7 @@
   "diagnostic": {
     "eyebrow": "QUESTION {{current}} / {{total}} · {{timer}}",
     "title": "Diagnostic adaptatif",
-    "category": "B1 · Grammar",
+    "category": "B1 · Grammaire",
     "questionLead": "Welcher Satz ist ",
     "questionItalic": "korrekt",
     "questionTrail": "?",
@@ -45,7 +45,7 @@
   "diagnosticResult": {
     "levelEyebrow": "Niveau geschätzt",
     "tierSuffix": {
-      "fast-b2": "fast B2",
+      "fast-b2": "presque B2",
       "solide": "solide {{level}}",
       "debutant": "débutant {{level}}"
     },
@@ -67,7 +67,7 @@
     "weaknessCount_one": "{{count}} erreur sur {{outOf}}",
     "weaknessCount_other": "{{count}} erreurs sur {{outOf}}",
     "tagLabel": {
-      "wortstellung": "Word-order in subordinate clauses",
+      "wortstellung": "Ordre des mots en subordonnée",
       "präposition": "Choix de prépositions",
       "konjugation": "Conjugaison & temps verbaux",
       "kollokation": "Faux-amis & collocations",

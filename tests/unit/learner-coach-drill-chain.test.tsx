@@ -512,7 +512,7 @@ describe("CoachDrillChainScreen (S9 Task 9.5)", () => {
     fireEvent.click(screen.getByTestId(`drill-option-${firstDrill.answer}`));
 
     expect(screen.getByTestId("coach-drill-feedback")).toHaveTextContent(
-      "Richtig ! Bon connecteur."
+      "Richtig. Bon connecteur."
     );
   });
 

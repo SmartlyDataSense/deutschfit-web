@@ -128,7 +128,7 @@
       "avatarInitials": "IA"
     },
     "scripted": {
-      "coachOpener": "Hi! I'm your Betreuer. Ask me anything or request a targeted drill on your weak points.",
+      "coachOpener": "Hi. I'm your Betreuer. Ask me anything or request a targeted drill on your weak points.",
       "observation": {
         "overline": "AI observation",
         "body": "You used 'und' 11 times in 3 min. At B2, examiners expect variety:",
@@ -180,7 +180,7 @@
       "optionA11yPrefix": "Pick"
     },
     "feedback": {
-      "correct": "Richtig! Good connector.",
+      "correct": "Richtig. Good connector.",
       "wrong": "Not quite — the right answer is {{answer}}."
     },
     "tally": "{{correct}} / {{total}} correct",
@@ -192,8 +192,8 @@
       "overline": "Done",
       "tally": "{{correct}} / {{total}} korrekt",
       "signoffPerfect": "Perfect — you've nailed these connectors. Keep going?",
-      "signoffGood": "Solid progress! Same time tomorrow?",
-      "signoffPractice": "We'll revisit these connectors tomorrow — see you soon!",
+      "signoffGood": "Solid progress. Same time tomorrow?",
+      "signoffPractice": "We'll revisit these connectors tomorrow — see you soon.",
       "returnCta": "Back to Betreuer"
     }
   },
