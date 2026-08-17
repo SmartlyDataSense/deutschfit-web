@@ -1055,11 +1055,21 @@ function FeedbackView({
   if (!hasUnifiedData) {
     const isGraded = submission?.status === "graded";
 
-    // #54 — a pure send failure (nothing was ever reserved server-side):
-    // offer an explicit retry that starts the whole upload sequence over
-    // from the retained recording, alongside the usual "back to home"
-    // escape hatch — same EmptyState-plus-secondary-AppButton layout the
-    // rejected-submission branch on `SprechenFeedbackScreen` already uses.
+    // #54 — the send failed: offer an explicit retry that starts the whole
+    // upload sequence over from the retained recording, alongside the usual
+    // "back to home" escape hatch — same EmptyState-plus-secondary-AppButton
+    // layout the rejected-submission branch on `SprechenFeedbackScreen`
+    // already uses.
+    //
+    // Deliberately does NOT claim nothing was reserved server-side. The
+    // hook's single catch (`useSprechenSession.ts:390-406`) covers the whole
+    // reserve → PUT → finalize sequence, so a failure after a successful
+    // reserve leaves an orphaned reservation behind, and retrying reserves a
+    // second one. That is harmless rather than ideal: `clientSubmissionId`
+    // is timestamp-unique, so the retry cannot collide with the abandoned
+    // attempt. Reusing the original reservation instead would mean re-PUTting
+    // to a possibly-expired signed URL — unverified server semantics this
+    // deliberately avoids.
     if (onRetry) {
       return (
         <>
