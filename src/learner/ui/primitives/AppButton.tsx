@@ -53,13 +53,16 @@ interface VariantSpec {
 }
 
 // Mirrors mobile's VARIANTS table 1:1 (bg / bgDisabled / toneIdle /
-// toneDisabled per variant) — including reusing the "inverse" tone for
-// solid's onCta label, same as mobile's comment notes.
+// toneDisabled per variant), with one deliberate web deviation: solid's
+// label tone is "ctaLabel", not mobile's "inverse"/onCta. #50 (a11y)
+// measured mobile's byte-identical "inverse" pairing at 2.87:1 on
+// `bg-cta` (fails AA body); "ctaLabel" is a learner-scoped, AA-compliant
+// (5.20:1) replacement — see `--color-cta-label` in globals.css.
 const VARIANTS: Record<AppButtonVariant, VariantSpec> = {
   solid: {
     bgIdle: "bg-cta hover:opacity-90 active:opacity-80",
     bgDisabled: "bg-line-soft",
-    toneIdle: "inverse",
+    toneIdle: "ctaLabel",
     toneDisabled: "tertiary",
   },
   outline: {

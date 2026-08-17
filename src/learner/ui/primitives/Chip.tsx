@@ -33,7 +33,10 @@ export function Chip({
   const content = (
     <>
       {leading ? <span className="mr-1 inline-flex items-center">{leading}</span> : null}
-      <AppText tone={selected ? "inverse" : "primary"} size="small" weight="medium">
+      {/* #50 (a11y): selected uses "ctaLabel", not "inverse" — measured
+          2.87:1 on bg-cta, fails AA body; ctaLabel reaches 5.20:1. See
+          --color-cta-label in globals.css. */}
+      <AppText tone={selected ? "ctaLabel" : "primary"} size="small" weight="medium">
         {label}
       </AppText>
     </>

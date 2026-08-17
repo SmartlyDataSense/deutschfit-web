@@ -31,6 +31,7 @@ export type AppTextTone =
   | "tertiary"
   | "inverse"
   | "cta"
+  | "ctaLabel"
   | "coach"
   | "coachInk"
   | "gold"
@@ -69,6 +70,13 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // as "decorative only" — never body-text-safe). `-text` are the same
   // hue, darkened to clear AA; see globals.css for the derivation.
   cta: "text-cta-text",
+  // #50 (a11y): the compliant learner-scoped label for body text ON TOP
+  // of `bg-cta` (AppButton solid / Chip selected) — see
+  // `--color-cta-label` in globals.css for the measured derivation.
+  // Distinct from `inverse` (still correct everywhere else it's used,
+  // e.g. on `bg-bg-premium`) — narrowly scoped to the two cta-background
+  // call sites that were actually failing AA.
+  ctaLabel: "text-cta-label",
   coach: "text-coach-text",
   // web#57: the on-`bg-coach` ink pairing (white, `--color-coach-ink`) —
   // distinct from `coach` above, which is the darkened AA body-text
