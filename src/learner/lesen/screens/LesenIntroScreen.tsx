@@ -65,7 +65,7 @@ import { useTranslation } from "react-i18next";
 import { Icon } from "@/learner/core/icons/Icon";
 import { AppButton, AppText, Card, EmptyState, Skeleton } from "@/learner/ui/primitives";
 
-import type { ModelltestRow } from "@/learner/core/api/mockExam";
+import type { ModelltestRow } from "@/learner/core/api/examApi";
 import { useLearnerSession } from "@/learner/core/auth/useLearnerSession";
 import { hydrateExamContext, useExamContextStore } from "@/learner/core/exam/examContext";
 import { formatExamTrackLabel } from "@/learner/core/exam/examTypes";

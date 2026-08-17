@@ -11,7 +11,7 @@
  * live `mock-exam-start` / `lesen-start` contract), so there is no
  * "legacy shape" input this indexer would ever receive here.
  */
-import type { LesenModule } from "@/learner/core/api/mockExam";
+import type { LesenModule } from "@/learner/core/api/examApi";
 import type { ExamLevel } from "@/learner/core/exam/examTypes";
 
 export interface ReadingTextRef {

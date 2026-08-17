@@ -27,24 +27,18 @@ const {
 }));
 
 // Partial mock: keep the real `normaliseReport` (pure — no reason to fake
-// it) but stub `fetchLesenSession`, same idiom as `examContext`'s partial
-// mock in `learner-lesen-intro.test.tsx`.
-vi.mock("@/learner/core/api/mockExam", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/learner/core/api/mockExam")>();
-  return {
-    ...actual,
-    fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
-  };
-});
-// Partial mock (S8 · Task 8.1 facade-hygiene): `LesenSessionScreen` now
-// imports `normaliseReport` from the `examApi` facade too (not `mockExam`
-// directly) — keep the real `normaliseReport` (pure — no reason to fake
-// it, same rationale as the `mockExam` partial mock above) and stub only
-// `submitLesen`.
+// it) but stub `fetchLesenSession` and `submitLesen`, same idiom as
+// `examContext`'s partial mock in `learner-lesen-intro.test.tsx`. web#34:
+// `useLesenSession` now imports `fetchLesenSession` from this facade too
+// (not `./mockExam` directly, which `examApi` itself still wraps
+// underneath) — folded into this single block instead of a second
+// `vi.mock("@/learner/core/api/mockExam", ...)` now that nothing in this
+// file's render tree imports that module directly anymore.
 vi.mock("@/learner/core/api/examApi", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/learner/core/api/examApi")>();
   return {
     ...actual,
+    fetchLesenSession: (...args: unknown[]) => fetchLesenSessionMock(...args),
     submitLesen: (...args: unknown[]) => submitLesenMock(...args),
   };
 });

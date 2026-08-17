@@ -22,7 +22,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 
-import { fetchLesenSession, type LesenSessionPayload } from "@/learner/core/api/mockExam";
+import { fetchLesenSession, type LesenSessionPayload } from "@/learner/core/api/examApi";
 import { buildSession, createEmptyExamSession } from "@/learner/core/exam/engine/loadModel";
 import type { ExamSession } from "@/learner/core/exam/engine/types";
 import { useExamPlayer, type ExamPlayerState } from "@/learner/core/exam/engine/useExamPlayer";

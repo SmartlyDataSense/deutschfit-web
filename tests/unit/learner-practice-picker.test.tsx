@@ -13,7 +13,7 @@ const { fetchSetsMock, loadProgressMock, pushMock, replaceMock, hydrateMock } = 
   hydrateMock: vi.fn(),
 }));
 
-vi.mock("@/learner/core/api/mockExam", () => ({
+vi.mock("@/learner/core/api/examApi", () => ({
   fetchPracticeSetsList: (...args: unknown[]) => fetchSetsMock(...args),
 }));
 vi.mock("@/learner/core/storage/practiceProgress", () => ({
