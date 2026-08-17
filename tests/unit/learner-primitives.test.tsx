@@ -153,6 +153,18 @@ describe("Chip", () => {
     expect(screen.getByText("Focus").className).toMatch(/text-warning-red-text/);
   });
 
+  // final-review I-2: the amber tone the two non-`Pill` call sites need.
+  // Narrow addition — `warning` above stays the faithful red `Pill` port.
+  it("renders the warningSubtle tone in mobile's amber pair, never the red family", () => {
+    render(<Chip label="Grammaire" tone="warningSubtle" />);
+    const el = screen.getByText("Grammaire").parentElement;
+    expect(el?.className).toMatch(/border-warning-text/);
+    expect(el?.className).toMatch(/bg-warning-subtle/);
+    expect(el?.className).not.toMatch(/warning-red/);
+    expect(screen.getByText("Grammaire").className).toMatch(/text-warning-text\b/);
+    expect(screen.getByText("Grammaire").className).not.toMatch(/text-warning-red-text/);
+  });
+
   it("renders the gold tone", () => {
     render(<Chip label="Fast-B2" tone="gold" />);
     const el = screen.getByText("Fast-B2").parentElement;

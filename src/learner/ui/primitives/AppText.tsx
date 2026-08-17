@@ -36,6 +36,7 @@ export type AppTextTone =
   | "coachInk"
   | "gold"
   | "warning"
+  | "warningText"
   | "success"
   | "successText";
 
@@ -92,6 +93,17 @@ const TONE_CLASS: Record<AppTextTone, string> = {
   // bar — the vivid `text-warning-red` fails AA there; `-text` is the
   // same hue darkened to clear it. See globals.css for the derivation.
   warning: "text-warning-red-text",
+  // final-review I-2: mobile's OTHER warning family — `tokens.warningText`
+  // (`--color-warning-text`, amber), the partner of
+  // `--color-warning-subtle`, both byte-identical to mobile's own pair.
+  // Distinct from `warning` above (`--color-warning-red-text`, the
+  // app-wide form-validation-error / destructive-label RED), and named
+  // after its token exactly the way `successText` is. Use `warningText`
+  // for advisory "here's what to work on / not shipped yet" copy on an
+  // amber `bg-warning-subtle` surface; use `warning` for genuine errors
+  // and destructive labels. Measured 5.35:1 on `--color-warning-subtle` —
+  // clears WCAG AA body text, pinned in `tests/unit/chip-tone-contrast.test.ts`.
+  warningText: "text-warning-text",
   success: "text-success-green",
   // #51 item 1/6 (parity): `success` (above) is the vivid `--color-success-green`
   // (~3.49:1 on bg-hero — fails AA body, same class of gap `-text` variants

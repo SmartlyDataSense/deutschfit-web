@@ -129,11 +129,17 @@ function HubTileCard({ tile, base }: { tile: HubTile; base: string }) {
       </AppText>
       {/* #51 item 6 (parity): tone conveys the same active/coming-soon
           distinction mobile draws via successSubtle/warningSubtle badge
-          colors — previously opacity-only, indistinguishable by color. */}
+          colors — previously opacity-only, indistinguishable by color.
+          final-review I-2: the coming-soon side was first wired to Chip's
+          `warning` tone, which is the faithful port of mobile's `Pill` and
+          renders the app-wide form-error RED — this badge is not a `Pill`
+          on mobile, and "À venir" in red reads as "broken" rather than
+          "not shipped yet". `warningSubtle` is mobile's actual amber
+          `warningSubtle`/`warningText` pair. */}
       <Chip
         testID={`${testID}-status`}
         label={statusLabel}
-        tone={disabled ? "warning" : "success"}
+        tone={disabled ? "warningSubtle" : "success"}
         disabled={disabled}
         className="mt-1"
       />

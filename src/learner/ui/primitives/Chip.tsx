@@ -18,8 +18,20 @@ import { AppText, type AppTextTone } from "./AppText";
  * `neutral` (the default) reproduces the exact idle look every existing
  * untoned call site already had, so this is additive: no call site
  * changes appearance unless it opts into a tone.
+ *
+ * `warningSubtle` (final-review I-2) is NOT part of mobile's `Pill`
+ * palette — it exists because two of the three sites #51 routed through
+ * `tone="warning"` don't use `Pill` on mobile at all: `FocusChips` and
+ * `BetreuerHubScreen`'s "À venir" badge hand-roll the amber
+ * `warningSubtle`/`warningText` token pair. Ported to `warning` they
+ * rendered in the app-wide form-error / destructive RED, so an advisory
+ * "points à travailler" list read as a list of errors and "coming soon"
+ * read as "broken". `warning` is deliberately left alone as the faithful
+ * `Pill` port for whatever ports a red `Pill` surface later — this is a
+ * narrow new tone, not a repaint, the same shape #51 already used when it
+ * added `successText` rather than repainting `success`.
  */
-export type ChipTone = "neutral" | "success" | "warning" | "gold";
+export type ChipTone = "neutral" | "success" | "warning" | "warningSubtle" | "gold";
 
 export interface ChipProps {
   readonly label: string;
@@ -45,6 +57,16 @@ const TONE_SPECS: Record<ChipTone, ChipToneSpec> = {
   // AppText.tsx's `successText` doc comment.
   success: { border: "border-success-green", bg: "bg-bg-hero", textTone: "successText" },
   warning: { border: "border-warning-red", bg: "bg-bg-hero", textTone: "warning" },
+  // final-review I-2: the amber pair mobile's FocusChips / BetreuerHub
+  // badge actually use (`tokens.warningSubtle` + `tokens.warningText`,
+  // already declared in globals.css and byte-identical to mobile's). Text
+  // on background measures 5.35:1 — AA body — pinned in
+  // `tests/unit/chip-tone-contrast.test.ts`.
+  warningSubtle: {
+    border: "border-warning-text",
+    bg: "bg-warning-subtle",
+    textTone: "warningText",
+  },
   gold: { border: "border-accent-gold", bg: "bg-accent-gold", textTone: "primary" },
 };
 

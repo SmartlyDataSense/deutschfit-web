@@ -43,9 +43,15 @@ export function FocusChips({ areas, testID }: FocusChipsProps) {
       <div className="flex flex-wrap gap-2 overflow-x-auto">
         {/* #51 item 7 (parity): mobile's FocusChips renders every chip
             warningSubtle/warningText (amber) — the web port had no tone
-            prop to carry that, so it fell back to the plain neutral chip. */}
+            prop to carry that, so it fell back to the plain neutral chip.
+            final-review I-2: #51 first wired this to Chip's `warning`
+            tone, which is the faithful port of mobile's `Pill` and renders
+            the app-wide form-error RED (`--color-warning-red-text`) —
+            mobile's FocusChips is not a `Pill` and never was red, so a
+            "points à travailler" advisory read as a list of errors. The
+            `warningSubtle` tone is the actual amber pair. */}
         {areas.map((focus, i) => (
-          <Chip key={i} testID={`focus-chip-${i}`} label={focus} tone="warning" />
+          <Chip key={i} testID={`focus-chip-${i}`} label={focus} tone="warningSubtle" />
         ))}
       </div>
     </div>
