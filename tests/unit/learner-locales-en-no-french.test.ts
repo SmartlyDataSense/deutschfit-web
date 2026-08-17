@@ -18,7 +18,16 @@
  * of this task) `sprechen:feedbackScreen.rejected.tooShort.title`. This
  * suite is the durable guard against the class recurring.
  *
- * Two independent detectors run here:
+ * web#62 (task 5 of the S15 burn-down) found the mirror-image bug: `fr`
+ * values left untranslated as literal English (or mixed-in German where
+ * French was expected) — `onboarding:diagnostic.category`,
+ * `onboarding:diagnosticResult.tagLabel.wortstellung`, and
+ * `coach:drills.summary.tally`. Detector 2 below already computes the
+ * `en`===`fr` equality this needs; it just wasn't enforced from the fr
+ * side, since the whole file frames itself around `en` hygiene. Detector 3
+ * closes that gap.
+ *
+ * Three independent detectors run here:
  *
  * 1. LINGUISTIC — scans every string leaf in every `en/*.json` file for
  *    French-only markers: French-specific orthography (é è ê à ç ù î ô,
@@ -323,32 +332,21 @@ const SPECIAL_CASE_KEYS: readonly string[] = [
  * Known non-French defects, NOT declared legitimate — allowlisted only so
  * this guard doesn't block on bugs outside this task's assigned scope.
  * Each is a real finding, reported in task-2-report.md for follow-up:
- *   - `coach:drills.summary.tally` = "{{correct}} / {{total}} korrekt" —
- *     German "korrekt" where the sibling key `drills.tally` correctly uses
- *     English "correct". Inconsistency, not a French leak.
- *   - `onboarding:diagnostic.category` = "B1 · Grammar" and
- *     `onboarding:diagnosticResult.tagLabel.wortstellung` = "Word-order in
- *     subordinate clauses" — English content also present verbatim in the
- *     fr catalog (fr-side under-translation). Not an en-catalog French
- *     leak, so out of this task's scope, but a real defect on the fr side.
  *   - `coach:chat.header.avatarInitials` / `coach:drills.header.avatarInitials`
  *     = "IA" — "IA" is the French initialism for "Intelligence
  *     Artificielle"; English initials would read "AI". Ambiguous whether
  *     this is a deliberate cross-locale badge (like the German brand
  *     tagline) or a genuine leak — flagged for a design decision, not
  *     changed here.
+ *
+ * `coach:drills.summary.tally`, `onboarding:diagnostic.category`, and
+ * `onboarding:diagnosticResult.tagLabel.wortstellung` used to sit here as
+ * fr-side under-translations tracked separately in web#62 ("out of this
+ * task's scope"). web#62 fixed all three on the fr side (task 5 of the
+ * S15 burn-down) — they are translated now, no longer byte-identical to
+ * `en`, and no exemption is needed.
  */
 const KNOWN_DEBT_KEYS: readonly string[] = [
-  "coach:drills.summary.tally",
-  "onboarding:diagnostic.category",
-  "onboarding:diagnosticResult.tagLabel.wortstellung",
-  // `onboarding:diagnosticResult.tierSuffix.fast-b2` used to sit here,
-  // filed as the same fr-side-under-translation family. That reading was
-  // wrong: `fast` is GERMAN for "almost", so this was a German leak in the
-  // `en` catalog (an English reader parses it as "quick B2"), and both its
-  // siblings were already translated on the en side. Now `"almost B2"` —
-  // no exemption needed. The fr side stays "fast B2"; the fr-direction
-  // gaps are tracked separately in web#62, not here.
   "coach:chat.header.avatarInitials",
   "coach:drills.header.avatarInitials",
 ];
@@ -578,6 +576,101 @@ describe("en locale catalogs · no leftover source-language text (web#46, web#35
 
       test("does not fire on a short properly translated pair (no false negative from over-correcting the length/space miss)", () => {
         expect(isByteIdenticalToFr("Discuss", "Discuter")).toBe(false);
+      });
+    });
+  });
+
+  /**
+   * Detector 3 — fr direction. `isByteIdenticalToFr(enValue, frValue)` is a
+   * plain equality check, so it is symmetric: an `en`/`fr` pair that is
+   * byte-identical is equally an untranslated `en` leftover in `fr` *or* an
+   * untranslated `fr` leftover in `en`, depending which catalog you assume
+   * is authoritative. Detector 2 above enforces it framed as "no French
+   * leaked into en"; this block enforces the same equality framed as "no
+   * English (or other source-language leftover) leaked into fr" — the gap
+   * web#62 found (`onboarding:diagnostic.category` = "B1 · Grammar" and
+   * `onboarding:diagnosticResult.tagLabel.wortstellung` = "Word-order in
+   * subordinate clauses" were still literally English in the fr catalog;
+   * `coach:drills.summary.tally` mixed German "korrekt" into fr where the
+   * sibling key correctly said "corrects"). Reuses `STRUCTURAL_ALLOWLIST`
+   * rather than a parallel list — the equality is the same fact viewed from
+   * either side, so a second allowlist would just be a stale copy of the
+   * first one waiting to happen. Rebuilds its own pair set and floor
+   * assertion independently of detector 2's so this block does not depend
+   * on detector 2's internal scope.
+   */
+  describe("detector 3 — structural (byte-identical-to-en) scan, fr direction (web#62)", () => {
+    const comparablePairsFr: { key: string; frValue: string; enValue: string }[] = [];
+    for (const fileName of catalogFiles) {
+      const ns = path.basename(fileName, ".json");
+      const frFlat = loadCatalog(FR_LOCALES_DIR, fileName);
+      const enFlat = loadCatalog(EN_LOCALES_DIR, fileName);
+      for (const [key, frValue] of frFlat) {
+        const enValue = enFlat.get(key);
+        if (enValue === undefined) continue; // key doesn't exist in en — a different guard's problem
+        comparablePairsFr.push({ key: `${ns}:${key}`, frValue, enValue });
+      }
+    }
+
+    test("compared more than 500 fr/en key pairs (sanity check the en-side glob isn't silently matching nothing)", () => {
+      // Mirrors detector 2's floor assertion — guards against a broken
+      // EN_LOCALES_DIR path or a key-matching bug silently iterating over
+      // zero pairs and passing vacuously.
+      expect(comparablePairsFr.length).toBeGreaterThan(500);
+    });
+
+    test("every byte-identical fr/en pair is accounted for (fixed or allowlisted)", () => {
+      const violations: { key: string; value: string }[] = [];
+      for (const { key, frValue, enValue } of comparablePairsFr) {
+        if (!isByteIdenticalToFr(frValue, enValue)) continue;
+        if (STRUCTURAL_ALLOWLIST.has(key)) continue;
+        violations.push({ key, value: frValue });
+      }
+      if (violations.length > 0) {
+        const detail = violations
+          .map((v) => `  - ${v.key} = ${JSON.stringify(v.value)}`)
+          .join("\n");
+        throw new Error(
+          `Found ${violations.length} fr value(s) byte-identical to their en counterpart, ` +
+            `not yet translated or allowlisted:\n${detail}\n\n` +
+            `Translate the value, or if it's legitimately identical (proper noun, German exam ` +
+            `vocabulary, placeholder-only, shared cognate), add its full key to one of the ` +
+            `category arrays feeding STRUCTURAL_ALLOWLIST in ` +
+            `tests/unit/learner-locales-en-no-french.test.ts and explain why.`
+        );
+      }
+      expect(violations).toEqual([]);
+    });
+
+    test("structural allowlist entries hold from the fr side too (no stale entries)", () => {
+      const identicalKeys = new Set(
+        comparablePairsFr.filter((p) => isByteIdenticalToFr(p.frValue, p.enValue)).map((p) => p.key)
+      );
+      for (const entry of STRUCTURAL_ALLOWLIST) {
+        expect(identicalKeys.has(entry)).toBe(true);
+      }
+    });
+
+    describe("discrimination — fires on planted untranslated clones, not on real translations", () => {
+      test.each([
+        ["Que veux-tu", "Que veux-tu"],
+        ["Disponible", "Disponible"],
+        ["Continuer", "Continuer"],
+      ])("fires when fr and en both say %j", (_label, value) => {
+        expect(isByteIdenticalToFr(value, value)).toBe(true);
+      });
+
+      test("does not fire on a properly translated pair", () => {
+        expect(isByteIdenticalToFr("Bientôt disponible", "Coming soon")).toBe(false);
+      });
+
+      test("fires on the exact web#62 regression shape (English prose left in fr)", () => {
+        expect(
+          isByteIdenticalToFr(
+            "Word-order in subordinate clauses",
+            "Word-order in subordinate clauses"
+          )
+        ).toBe(true);
       });
     });
   });
