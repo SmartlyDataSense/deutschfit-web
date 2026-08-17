@@ -125,7 +125,7 @@
     "header": {
       "title": "Betreuer",
       "subtitle": "Calibrated on your B2 · 63d",
-      "avatarInitials": "IA"
+      "avatarInitials": "DF"
     },
     "scripted": {
       "coachOpener": "Hi. I'm your Betreuer. Ask me anything or request a targeted drill on your weak points.",
@@ -169,7 +169,7 @@
     "header": {
       "title": "Betreuer",
       "subtitle": "Targeted drill · connectors",
-      "avatarInitials": "IA",
+      "avatarInitials": "DF",
       "backA11y": "Back",
       "closeA11y": "Exit drill"
     },

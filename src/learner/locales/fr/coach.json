@@ -125,7 +125,7 @@
     "header": {
       "title": "Betreuer",
       "subtitle": "Calibré sur votre B2 · 63j",
-      "avatarInitials": "IA"
+      "avatarInitials": "DF"
     },
     "scripted": {
       "coachOpener": "Bonjour. Je suis ton Betreuer. Pose-moi tes questions ou demande un exercice ciblé sur tes points faibles.",
@@ -169,7 +169,7 @@
     "header": {
       "title": "Betreuer",
       "subtitle": "Drill ciblé · connecteurs",
-      "avatarInitials": "IA",
+      "avatarInitials": "DF",
       "backA11y": "Retour",
       "closeA11y": "Quitter le drill"
     },
