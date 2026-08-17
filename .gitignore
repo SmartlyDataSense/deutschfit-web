@@ -38,6 +38,11 @@ yarn-error.log*
 !.env.example
 !.env.local.example
 
+# `vercel env pull` dumps — cleartext secrets, never committed (#48).
+# `.env*` above already covers these; naming them keeps the intent explicit
+# if that broad rule is ever narrowed. Pull to /tmp, not the repo root.
+.env.vercel*
+
 # vercel
 .vercel
 
