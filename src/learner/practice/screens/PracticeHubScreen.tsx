@@ -200,7 +200,16 @@ export function PracticeHubScreen() {
           description={t("apprendre:practice.unsupported")}
         />
       ) : (
-        <div role="group" aria-label={hubTitle} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          {/* web#60 sweep, final-review M-1: no wrapper
+              `role="group"`/`aria-label` here. `role="group"` is not
+              children-presentational on web (unlike mobile's `accessible`
+              View), and `hubTitle` is already the visible `<h1>` rendered
+              immediately above this div — a screen reader announced the
+              section title, entered the group, and heard it a second
+              time. Nothing here needs `aria-disabled`, so the role has no
+              other job and goes with it. Same treatment as `FocusChips` /
+              `ObservationCard` (commit `ab4a543`). */}
           {PRACTICE_MODALITIES.map((modality) => (
             <Card
               key={modality}
