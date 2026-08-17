@@ -333,11 +333,16 @@ const SPECIAL_CASE_KEYS: readonly string[] = [
  * this guard doesn't block on bugs outside this task's assigned scope.
  * Each is a real finding, reported in task-2-report.md for follow-up:
  *   - `coach:chat.header.avatarInitials` / `coach:drills.header.avatarInitials`
- *     = "IA" — "IA" is the French initialism for "Intelligence
- *     Artificielle"; English initials would read "AI". Ambiguous whether
- *     this is a deliberate cross-locale badge (like the German brand
- *     tagline) or a genuine leak — flagged for a design decision, not
- *     changed here.
+ *     = "DF" — the design decision this entry was waiting on has been
+ *     made. These were "IA" (the French initialism for "Intelligence
+ *     Artificielle", which would read "AI" in English); web#61 changed
+ *     both to "DF" — the DeutschFit brand initials — in both catalogs.
+ *     "DF" is locale-neutral, so the byte-identical fr/en values are now
+ *     correct-by-design rather than a leak, and this entry is arguably a
+ *     `SPECIAL_CASE_KEYS` member rather than debt. The exemption is still
+ *     needed either way (the values ARE identical across locales), so the
+ *     recategorisation is left for whoever next touches these lists —
+ *     recorded here so the stale "IA" justification can't mislead again.
  *
  * `coach:drills.summary.tally`, `onboarding:diagnostic.category`, and
  * `onboarding:diagnosticResult.tagLabel.wortstellung` used to sit here as
