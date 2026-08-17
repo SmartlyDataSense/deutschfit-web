@@ -147,7 +147,26 @@ describe("ModelltestsListScreen — S8 Task 8.4 (board/level-filtered full-simul
       expect(screen.getByTestId("modelltestsList.row.goethe-b1-01")).toBeInTheDocument()
     );
     expect(listModelltestsMock).toHaveBeenCalledTimes(1);
-    expect(listModelltestsMock).toHaveBeenCalledWith();
+    // web#32 — the full-simulation picker only requests Modelltests that
+    // actually carry a LESEN module (the chain's forced entry point), not
+    // the unfiltered list. See `ModelltestsListScreen`'s doc comment.
+    expect(listModelltestsMock).toHaveBeenCalledWith({ module: "LESEN" });
+  });
+
+  it("web#32: requests the LESEN-filtered list on every fetch — a Hören-only Modelltest is never even a candidate for the full-chain entry point, because the backend join never returns it here", async () => {
+    // Simulates the backend's `?module=LESEN` inner-join gate: a
+    // Hören-only row (e.g. dev's `telc-b1-hoeren-*`) is simply absent from
+    // this response — the picker does no client-side module filtering of
+    // its own, it trusts the server-side proxy filter.
+    listModelltestsMock.mockResolvedValue([row({ slug: "goethe-b1-01" })]);
+    renderWithI18n(<ModelltestsListScreen />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("modelltestsList.row.goethe-b1-01")).toBeInTheDocument()
+    );
+
+    expect(listModelltestsMock).toHaveBeenCalledWith({ module: "LESEN" });
+    expect(screen.queryByTestId("modelltestsList.row.telc-b1-hoeren-01")).not.toBeInTheDocument();
   });
 
   it("row click routes to the simulation route with exactly one query param (examSlug) — no moduleFilter anywhere", async () => {

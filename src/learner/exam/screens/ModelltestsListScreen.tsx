@@ -16,6 +16,23 @@
  * (`LesenIntroScreen`/`HoerenIntroScreen`), so this screen never needs to
  * distinguish a module drill from a full mock.
  *
+ * web#32 fix: this list is now fetched via `listModelltests({ module:
+ * "LESEN" })` instead of the unfiltered call. The full-simulation chain
+ * (`SimulationOrchestratorScreen`) always starts at LESEN — the backend's
+ * `mock-exam-start`/`mock-exam-advance` state machine is a fixed
+ * LESEN→HOEREN→SCHREIBEN chain, blind to which modules a given Modelltest
+ * actually has content for (`_shared/mock_exam.ts`'s `NEXT_MODULE` table).
+ * A Modelltest with no LESEN module (e.g. the dev `telc-b1-hoeren-*` rows,
+ * which carry HOEREN only) would still start a "full" mock at LESEN and
+ * strand the learner on an empty Lesen session with an orphaned attempt.
+ * Filtering to `?module=LESEN` reuses the backend's existing inner-join
+ * gate (`modelltests-list/index.ts`, already shipped for #59's mono-module
+ * drills) as a proxy for "this row can actually run the full chain" — no
+ * backend change needed, no new field invented on `ModelltestRow`. A row
+ * that also lacks HOEREN (the chain's second forced step) is caught
+ * downstream by `HoerenSessionScreen`'s own defensive empty state, not
+ * here — this screen only guarantees a valid *entry* point.
+ *
  * Web delta: no pull-to-refresh — RN's `RefreshControl` has no web analog.
  * The error state's retry button is the only refresh affordance (also
  * reachable from the empty state's CTA, mobile parity).
@@ -100,7 +117,9 @@ export function ModelltestsListScreen() {
     setHasError(false);
     void (async () => {
       try {
-        const rows = await listModelltests();
+        // web#32 — `?module=LESEN` proxy-filters to Modelltests that can
+        // actually run the full-simulation chain (see doc comment above).
+        const rows = await listModelltests({ module: "LESEN" });
         if (cancelled) return;
         setModelltests(rows);
       } catch {

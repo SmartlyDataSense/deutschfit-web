@@ -24,12 +24,42 @@
  * phantom client-side outcome for a leg the server never actually
  * completed).
  *
+ * web#32 fix — module-presence gate: the backend's chain
+ * (`_shared/mock_exam.ts`'s `NEXT_MODULE`) is a FIXED LESEN→HOEREN→
+ * SCHREIBEN sequence, blind to which modules a given Modelltest actually
+ * has content for. `ModelltestsListScreen` now proxy-filters its picker to
+ * `?module=LESEN` rows (closing the forward entry point), but that filter
+ * can't retroactively fix a `mock_exam_attempts` row that was already
+ * seeded against a module-incomplete exam before this fix shipped, nor
+ * does it cover a direct/deep-linked `?examSlug=` that bypasses the
+ * picker entirely — the exact "orphaned Lesen child, 409-resume loops
+ * back to the same dead end" trap the issue describes. `runBoot` therefore
+ * re-checks LESEN presence for `slug` via the SAME `listModelltests({
+ * module: "LESEN" })` proxy BEFORE calling `startSession` at all (fresh
+ * start AND resume both go through this one gate, since both share the
+ * same `slug` resolution step) — a miss flips straight to the
+ * `"unavailable"` phase and never touches `mock_exam_attempts`, so no new
+ * orphaned child is ever created. A transient failure of the presence
+ * check itself fails OPEN (treated as available) rather than blocking a
+ * perfectly good exam behind a flaky network call — same defensive
+ * posture as the `getMockAttempt`-failure fallback below.
+ *
  * Phases (`dispatch` never itself renders — it always either
  * `router.replace`s into a leg route or flips `phase` to a state this
  * screen DOES render):
  *   - `"booting"`        — default. Silent `Skeleton` only (founding-doc
  *     §17 — no spinner/percentage copy); also what's showing while a
  *     dispatched `router.replace` is in flight.
+ *   - `"unavailable"`    — web#32: the module-presence gate above found no
+ *     LESEN module for `slug`. Root testID
+ *     `simulation-orchestrator-unavailable`; `EmptyState` (no CTA of its
+ *     own, same shape as the `"error"` phase below) + a separate
+ *     `AppButton` (testID `simulation-orchestrator-unavailable-back`) that
+ *     routes to `/examen/modelltests` — the shared `simulation:empty`/
+ *     `emptyBody`/`emptyCta` copy (brief: "a real exit... a way back to
+ *     the picker") — never the generic error phase, this is an honest
+ *     "this Modelltest can't run as a full simulation" state, not a
+ *     failure.
  *   - `"schreiben_gate"` — `nextModuleForStatus` resolved to `"SCHREIBEN"`.
  *     Task 8.7's honest skip: the simulation has no Schreiben leg (P2), so
  *     this renders mobile's own `simulation:unsupportedDrill.{title,body}`
@@ -125,7 +155,14 @@
  *
  *   1. No `examSlug` prop → `readPendingMockExam(userId)`. A row → adopt
  *      `row.modelltestSlug`. No row → `router.replace('/{locale}/app/examen')`.
- *   2. `startSession({ userId, examSlug })` (`@/learner/core/exam/
+ *   2. web#32 module-presence gate — `listModelltests({ module: "LESEN" })`
+ *      and check `slug` is among the rows. Miss → `setPhase("unavailable")`
+ *      and return, BEFORE step 3 ever calls `startSession` (so a
+ *      module-incomplete exam never seeds a fresh `mock_exam_attempts` row
+ *      — see the class doc comment above). A rejected presence check fails
+ *      OPEN (treated as present) so a transient network blip can't block a
+ *      perfectly good exam.
+ *   3. `startSession({ userId, examSlug })` (`@/learner/core/exam/
  *      mockExamSession` — NOT `examApi.startMockExam` directly; that
  *      service already folds the 409 "mock_in_progress" catch into a
  *      `resumed: true` handle, so this screen never touches
@@ -150,7 +187,7 @@
  *              {…lesenAttemptId: null, hoerenAttemptId: null})` — the
  *              legacy (mobile-parity) path: correct module, no child id,
  *              the leg route re-hydrates from `examSlug` alone.
- *   3. Any other rejection from step 2 (a genuine `startSession` failure,
+ *   4. Any other rejection from step 3 (a genuine `startSession` failure,
  *      not the 409 the service already handles) → `setPhase("error")` +
  *      reset the one-shot boot ref so the retry CTA can re-run this whole
  *      function.
@@ -172,6 +209,7 @@ import { AppButton, AppText, Card, EmptyState, Skeleton } from "@/learner/ui/pri
 
 import {
   getMockAttempt,
+  listModelltests,
   nextModuleForStatus,
   normaliseReport,
   type MockAttemptRow,
@@ -196,7 +234,7 @@ export interface SimulationOrchestratorScreenProps {
   readonly examSlug?: string;
 }
 
-type Phase = "booting" | "schreiben_gate" | "finalizing" | "error";
+type Phase = "booting" | "schreiben_gate" | "finalizing" | "error" | "unavailable";
 
 interface DispatchIds {
   readonly examSlug: string;
@@ -218,6 +256,31 @@ function toExamBoardTag(board: ExamBoard): ExamBoardTag | undefined {
 function buildLegUrl(base: string, ids: DispatchIds, childId: string | null): string {
   const attemptQuery = childId ? `&attemptId=${childId}` : "";
   return `${base}?examSlug=${ids.examSlug}&mockAttemptId=${ids.mockAttemptId}${attemptQuery}`;
+}
+
+/**
+ * web#32 module-presence gate. Reuses `ModelltestsListScreen`'s exact
+ * proxy-filter primitive (`listModelltests({ module: "LESEN" })`) — the
+ * backend's `mock-exam-start`/`mock-exam-advance` chain is content-blind
+ * (fixed LESEN→HOEREN→SCHREIBEN table), so this is the only signal web can
+ * get, without a backend change, that `examSlug` can actually run as a
+ * full simulation. Fails OPEN (returns `true`) on a rejected call — a
+ * transient network failure of this defensive check must never block a
+ * perfectly good exam; that mirrors `runBoot`'s own `getMockAttempt`
+ * resume fallback below, which also degrades gracefully rather than
+ * erroring.
+ */
+async function hasLesenModule(examSlug: string): Promise<boolean> {
+  try {
+    const rows = await listModelltests({ module: "LESEN" });
+    return rows.some((row) => row.slug === examSlug);
+  } catch (err) {
+    console.warn(
+      "[SimulationOrchestratorScreen] web#32 module-presence check failed — failing open (treating the module as present) rather than blocking a possibly-fine exam.",
+      err
+    );
+    return true;
+  }
 }
 
 export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestratorScreenProps) {
@@ -316,6 +379,15 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
         slug = pending.modelltestSlug;
       }
       if (!userId) return;
+
+      // web#32 — gate BEFORE startSession so a module-incomplete exam
+      // never seeds a fresh mock_exam_attempts row (see class doc comment).
+      const available = await hasLesenModule(slug);
+      if (!isMountedRef.current) return;
+      if (!available) {
+        setPhase("unavailable");
+        return;
+      }
 
       const handle = await startSession({ userId, examSlug: slug });
       if (!isMountedRef.current) return;
@@ -429,6 +501,14 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
 
   const handleBackToExamen = useCallback((): void => {
     router.push(`/${locale}/app/examen`);
+  }, [router, locale]);
+
+  // web#32 — the "unavailable" phase's exit CTA. A real way back to the
+  // picker (not the hub, not browser history — `router.replace` calls
+  // upstream mean `router.back()` is unreliable here), same `push`-not-
+  // `back` reasoning `ModelltestsListScreen.handleBack` already uses.
+  const handleBackToModelltests = useCallback((): void => {
+    router.push(`/${locale}/app/examen/modelltests`);
   }, [router, locale]);
 
   // Schreiben-gate CTA (P2, the honest skip): advances the terminal
@@ -561,6 +641,21 @@ export function SimulationOrchestratorScreen({ examSlug }: SimulationOrchestrato
           <Skeleton.Block width="60%" height={24} />
           <Skeleton.Card />
           <Skeleton.Card />
+        </div>
+      ) : null}
+
+      {phase === "unavailable" ? (
+        <div
+          className="flex flex-col items-center gap-3"
+          data-testid="simulation-orchestrator-unavailable"
+        >
+          <EmptyState title={t("simulation:empty")} description={t("simulation:emptyBody")} />
+          <AppButton
+            testID="simulation-orchestrator-unavailable-back"
+            label={t("simulation:emptyCta")}
+            onClick={handleBackToModelltests}
+            variant="outline"
+          />
         </div>
       ) : null}
 

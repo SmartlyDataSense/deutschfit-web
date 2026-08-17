@@ -575,6 +575,46 @@ describe("LesenSessionScreen — full-simulation branch (Task 8.5)", () => {
   });
 });
 
+describe("LesenSessionScreen — web#32 empty module payload", () => {
+  beforeEach(() => {
+    fetchLesenSessionMock.mockReset();
+    submitLesenMock.mockReset();
+    advanceSessionMock.mockReset();
+    finalizeSessionMock.mockReset();
+    trackEventMock.mockReset();
+    pushMock.mockReset();
+    replaceMock.mockReset();
+    backMock.mockReset();
+    useLearnerSession.setState({
+      status: "authenticated",
+      session: { user: { id: "u1" } },
+    } as never);
+    useLesenResultsStore.getState().clear();
+    useSimulationRun.getState().clear();
+  });
+  afterEach(cleanup);
+
+  it("web#32: a ready session with zero parts renders a labelled empty state (not the silent bare-text fallback) with a working exit back to the picker", async () => {
+    fetchLesenSessionMock.mockResolvedValue({
+      attemptId: "lesen-1",
+      examSlug: "b1-01",
+      manifest,
+      module: { module_code: "LESEN", source_slug: "b1-01", parts: [] },
+    });
+
+    renderWithI18n(<LesenSessionScreen attemptId="lesen-1" mockAttemptId="mock-1" />);
+
+    await waitFor(() => expect(screen.getByTestId("lesen-session-empty")).toBeInTheDocument());
+    expect(screen.getByText("Aucune question dans cette simulation.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ce module n'est pas disponible pour ce modelltest.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("lesen-session-empty-cta"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");
+  });
+});
+
 describe("LesenResultsScreen", () => {
   beforeEach(() => {
     pushMock.mockReset();

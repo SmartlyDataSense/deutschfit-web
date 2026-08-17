@@ -348,6 +348,23 @@ describe("HoerenSessionScreen — Teil stepper, both modes (Task 5.7)", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  it("web#32: ready + 0 parts in EXAM mode (mockAttemptId present) renders the exam-specific empty state with a working exit back to the picker — practice mode's own copy/behavior (test (b) above) is untouched", async () => {
+    useHoerenSessionMock.mockImplementation(() =>
+      useMockedHoerenSession({ status: "ready", session: emptySession, attemptId: "hoeren-1" })
+    );
+
+    renderWithI18n(<HoerenSessionScreen attemptId="hoeren-1" mockAttemptId="mock-1" />);
+
+    expect(screen.getByTestId("hoeren-session-empty")).toBeInTheDocument();
+    expect(screen.getByText("Aucune question dans cette simulation.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ce module n'est pas disponible pour ce modelltest.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("hoeren-session-empty-cta"));
+    expect(pushMock).toHaveBeenCalledWith("/fr/app/examen/modelltests");
+  });
+
   it("(c) practice submit: submitHoerenSession called with a synthesized local- attemptId, store mode:practice, pushes to /fr/app/hoeren/results", async () => {
     submitHoerenSessionMock.mockResolvedValue({
       submissionId: "local-hoeren-sess-2",
