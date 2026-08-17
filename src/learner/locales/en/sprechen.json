@@ -211,6 +211,12 @@
       "title": "This topic isn't graded yet",
       "body": "The Betreuer is working on grading for this module. Try another B1 topic in the meantime.",
       "action": "Back to home"
+    },
+    "sendFailed": {
+      "title": "The upload failed",
+      "body": "Your audio is still on this device. Try the upload again — none of it is lost.",
+      "retry": "Try the upload again",
+      "secondaryCta": "Back to home"
     }
   },
   "feedbackScreen": {
